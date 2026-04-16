@@ -1,0 +1,38 @@
+<?php
+$file = ABSPATH . 'data/horarios.csv';
+if ( ! file_exists( $file ) ) {
+    echo '<p style="color:#c00;">Horários não disponíveis.</p>';
+    return;
+}
+$rows = array_map( 'str_getcsv', file( $file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ) );
+$th = 'style="color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;padding:12px 10px;text-align:center;border:none;"';
+echo '<div style="overflow-x:auto;border-radius:12px;border:1px solid #e5e5e5;margin-bottom:1rem;">';
+echo '<table style="width:100%;border-collapse:collapse;min-width:620px;background:#fff;">';
+echo '<thead><tr style="background:#7B1C2E;">';
+echo '<th '.$th.' style="text-align:left;padding-left:14px;">Escalão</th>';
+echo '<th '.$th.'>2ª</th><th '.$th.'>3ª</th><th '.$th.'>4ª</th>';
+echo '<th '.$th.'>5ª</th><th '.$th.'>6ª</th><th '.$th.'>Sáb.</th>';
+echo '</tr></thead><tbody>';
+foreach ( array_slice( $rows, 1 ) as $r ) {
+    $r = array_pad( $r, 13, '' );
+    if ( empty( trim( $r[0] ) ) ) continue;
+    echo '<tr style="border-bottom:1px solid #f0f0f0;">';
+    echo '<td style="padding:10px 14px;font-size:13px;font-weight:700;color:#7B1C2E;white-space:nowrap;">'.esc_html($r[0]).'</td>';
+    for ( $i = 1; $i <= 11; $i += 2 ) {
+        $hora = trim($r[$i] ?? '');
+        $pav  = trim($r[$i+1] ?? '');
+        if ( empty($hora) ) { echo '<td></td>'; continue; }
+        $p = strtolower($pav);
+        if ( strpos($p,'atl') !== false )    $s = 'background:#E8F0FB;color:#1a4f9c;';
+        elseif ( strpos($p,'smm') !== false || strpos($p,'maior') !== false ) $s = 'background:#FEF3E2;color:#b35c00;';
+        elseif ( strpos($p,'monser') !== false || strpos($p,'sec') !== false ) $s = 'background:#F0F7EC;color:#2d6a1f;';
+        elseif ( strpos($p,'semin') !== false ) $s = 'background:#F3EEF8;color:#5c2d8a;';
+        elseif ( strpos($p,'frei') !== false )  $s = 'background:#F5F5F5;color:#666;';
+        else $s = 'background:#f0f0f0;color:#555;';
+        echo '<td style="padding:8px;text-align:center;vertical-align:middle;"><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span style="font-size:12px;font-weight:700;color:#333;">'.esc_html($hora).'</span>';
+        if (!empty($pav)) echo '<span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;'.$s.'">'.esc_html($pav).'</span>';
+        echo '</div></td>';
+    }
+    echo '</tr>';
+}
+echo '</tbody></table></div>';
