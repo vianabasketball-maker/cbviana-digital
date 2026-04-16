@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<!-- 
+<!--
   CB Viana · jogos.html
-  v1.1 · 2026-04-16
+  v1.3 · 2026-04-16
+  ALTERAÇÕES v1.3:
+  - Score guardado via CBVGam.saveScore() no window.parent (contexto autenticado WP)
+  - Highscores lidos via CBVGam.getScores() no window.parent
+  - Notificação com nome e posição ao receber cbv_score_saved do parent
+  - Eliminado fetch directo à API (resolvia problema de cookies em iframe)
+  ALTERAÇÕES v1.2:
+  - Tentativa de fetch directo à API (não funcionava em iframe)
   ALTERAÇÕES v1.1:
-  - Drawer abre automaticamente no arranque (openDrawer() no fim do script)
+  - Drawer abre automaticamente no arranque
 -->
 <html lang="pt">
 <head>
@@ -69,6 +76,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
 #hs-close:hover{background:rgba(123,28,46,0.8);}
 .hs-title{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--gold);letter-spacing:4px;text-align:center;margin-bottom:4px;}
 .hs-sub{text-align:center;font-size:12px;color:rgba(255,255,255,0.25);letter-spacing:3px;margin-bottom:32px;}
+.hs-loading{text-align:center;padding:40px;font-size:12px;color:rgba(255,255,255,0.2);letter-spacing:2px;}
 .hs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto;}
 .hs-card{background:rgba(255,255,255,0.03);border:1px solid rgba(240,165,0,0.12);border-radius:16px;padding:20px;}
 .hs-card-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:2px;display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(240,165,0,0.1);}
@@ -79,11 +87,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
 .hs-pos.p1{background:#FFD700;color:#3d0d18;}
 .hs-pos.p2{background:#C0C0C0;color:#111;}
 .hs-pos.p3{background:#CD7F32;color:#fff;}
-.hs-pos.pN{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);}
 .hs-name{flex:1;font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hs-score{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--gold);}
 .hs-extra{font-size:10px;color:rgba(255,255,255,0.25);margin-left:4px;}
 .hs-empty{text-align:center;padding:20px;font-size:12px;color:rgba(255,255,255,0.2);letter-spacing:1px;}
+
+#score-notif{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  background:rgba(123,28,46,0.95);border:1px solid var(--gold);
+  border-radius:12px;padding:12px 24px;
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  color:#fff;letter-spacing:1px;text-align:center;
+  z-index:5000;display:none;
+  white-space:nowrap;
+}
 </style>
 </head>
 <body>
@@ -99,7 +116,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
     <div class="drawer-logo">TIMEOUT <small>CB VIANA</small></div>
   </div>
   <div class="drawer-label">Jogos</div>
-
   <div class="game-item" id="item-lancamentos" onclick="loadGame('lancamentos','Lançamentos',this)">
     <div class="gi-icon">🏀</div>
     <div class="gi-info"><div class="gi-name">Lançamentos</div><div class="gi-desc">Zona verde +2, azul +3!</div></div>
@@ -120,48 +136,52 @@ html,body{height:100%;overflow:hidden;background:var(--bg);}
     <div class="gi-icon">🃏</div>
     <div class="gi-info"><div class="gi-name">Memory</div><div class="gi-desc">Encontra os pares!</div></div>
   </div>
-
   <div class="drawer-sep"></div>
-
   <div class="hs-item" onclick="openHS()">
     <div class="hs-icon">🏆</div>
-    <div><div class="hs-name">Highscores</div><div class="hs-desc">Top 5 por jogo</div></div>
+    <div><div class="hs-name">Highscores</div><div class="hs-desc">Top 3 global por jogo</div></div>
   </div>
-
   <div class="drawer-footer">CB VIANA · ZONA DE JOGOS</div>
 </div>
 
-<!-- JOGO -->
 <div id="game-wrap">
   <iframe id="game-iframe" src="" allowfullscreen></iframe>
 </div>
 
-<!-- SPLASH -->
 <div id="splash">
   <span class="arrow">←</span>
   <h2>ZONA <span>TIMEOUT</span></h2>
-  <p>Abre o menu e escolhe um jogo</p>
+  <p>Escolhe um jogo!</p>
 </div>
 
-<!-- HIGHSCORES PANEL -->
 <div id="hs-panel">
   <div id="hs-close" onclick="closeHS()">✕</div>
   <div class="hs-title">🏆 HIGHSCORES</div>
-  <div class="hs-sub">TOP 5 — CB VIANA</div>
+  <div class="hs-sub">TOP 3 GLOBAL — CB VIANA</div>
+  <div class="hs-loading" id="hs-loading">A carregar...</div>
   <div class="hs-grid" id="hs-grid"></div>
 </div>
+
+<div id="score-notif"></div>
 
 <script>
 var BASE='/jogos/';
 var drawerOpen=false;
 
 var JOGOS=[
-  {id:'lancamentos', nome:'Lançamentos', icon:'🏀', hsKey:'cbv_hs_lanc',   scoreLabel:'pontos', extraLabel:''},
-  {id:'basketman',   nome:'BasketMan',   icon:'👮', hsKey:'cbv_hs_bman',   scoreLabel:'pontos', extraLabel:'nível'},
-  {id:'chuva_bolas', nome:'Chuva de Bolas',icon:'⬇️',hsKey:'cbv_hs_chuva', scoreLabel:'pontos', extraLabel:''},
-  {id:'puzzle',      nome:'Puzzle',      icon:'🧩', hsKey:'cbv_hs_puzzle', scoreLabel:'pontos', extraLabel:''},
-  {id:'memory',      nome:'Memory',      icon:'🃏', hsKey:'cbv_mem_v3',    scoreLabel:'pontos', extraLabel:'tentativas'}
+  {id:'lancamentos', nome:'Lançamentos',    icon:'🏀', extraLabel:''},
+  {id:'basketman',   nome:'BasketMan',      icon:'👮', extraLabel:'nível'},
+  {id:'chuva_bolas', nome:'Chuva de Bolas', icon:'⬇️', extraLabel:''},
+  {id:'puzzle',      nome:'Puzzle',         icon:'🧩', extraLabel:''},
+  {id:'memory',      nome:'Memory',         icon:'🃏', extraLabel:'tentativas'}
 ];
+
+// ── Aceder ao CBVGam do WordPress (parent do iframe) ──
+function cbvGam(){
+  return window.CBVGam ||
+    (window.parent && window.parent.CBVGam) ||
+    (window.parent && window.parent.parent && window.parent.parent.CBVGam) || null;
+}
 
 function toggleDrawer(){drawerOpen?closeDrawer():openDrawer();}
 function openDrawer(){
@@ -187,72 +207,98 @@ function loadGame(id,title,el){
   closeDrawer();
 }
 
-function getHS(key){
-  try{return JSON.parse(localStorage.getItem(key)||'[]');}catch(e){return[];}
-}
-
+// ── Highscores — lê via CBVGam.getScores() do parent ──
 function openHS(){
   closeDrawer();
-  var grid=document.getElementById('hs-grid');
-  grid.innerHTML='';
-  JOGOS.forEach(function(jogo){
-    var card=document.createElement('div');
-    card.className='hs-card';
-    var list=getHS(jogo.hsKey).slice(0,5);
-    var rows='';
-    if(!list.length){
-      rows='<div class="hs-empty">Ainda sem pontuações</div>';
-    } else {
-      list.forEach(function(entry,i){
-        var posClass=['p1','p2','p3','pN','pN'][i];
-        var medal=['1','2','3','4','5'][i];
-        var nome=entry.name||entry.nome||'Anónimo';
-        var pts=entry.score||entry.pontos||0;
-        var extra='';
-        if(jogo.extraLabel==='tentativas'&&entry.tries){
-          extra='<span class="hs-extra">'+entry.tries+' tent.</span>';
-        } else if(jogo.extraLabel==='nível'&&entry.level){
-          extra='<span class="hs-extra">nív. '+entry.level+'</span>';
+  document.getElementById('hs-grid').innerHTML='';
+  document.getElementById('hs-loading').style.display='block';
+  document.getElementById('hs-panel').classList.add('on');
+
+  var gam=cbvGam();
+  if(!gam){
+    document.getElementById('hs-loading').textContent='Faz login para ver os highscores.';
+    return;
+  }
+
+  gam.getScores(function(data){
+    document.getElementById('hs-loading').style.display='none';
+    var grid=document.getElementById('hs-grid');
+
+    JOGOS.forEach(function(jogo){
+      var card=document.createElement('div');
+      card.className='hs-card';
+      var list=data[jogo.id]||[];
+      var rows='';
+
+      if(!list.length){
+        rows='<div class="hs-empty">Ainda sem pontuações</div>';
+      }else{
+        list.forEach(function(entry,i){
+          var posClass=['p1','p2','p3'][i];
+          var nome=entry.username||'Anónimo';
+          var pts=entry.score||0;
+          var extra='';
+          if(jogo.extraLabel==='tentativas'&&entry.tries)extra='<span class="hs-extra">'+entry.tries+' tent.</span>';
+          else if(jogo.extraLabel==='nível'&&entry.level)extra='<span class="hs-extra">nív. '+entry.level+'</span>';
+          rows+='<div class="hs-row"><div class="hs-pos '+posClass+'">'+(i+1)+'</div><div class="hs-name">'+nome+'</div><div class="hs-score">'+pts+extra+'</div></div>';
+        });
+      }
+
+      card.innerHTML='<div class="hs-card-title"><span class="icon">'+jogo.icon+'</span>'+jogo.nome+'</div>'+rows;
+      grid.appendChild(card);
+    });
+  });
+}
+
+function closeHS(){document.getElementById('hs-panel').classList.remove('on');}
+
+function showNotif(msg){
+  var el=document.getElementById('score-notif');
+  el.textContent=msg;
+  el.style.display='block';
+  setTimeout(function(){el.style.display='none';},5000);
+}
+
+// ── Receber score dos jogos (basketman, etc.) via postMessage ──
+// O score é reencaminhado para o CBVGam do parent que tem os cookies WP
+window.addEventListener('message',function(e){
+  var d=e.data;
+  if(!d) return;
+
+  if(d.type==='cbv_score'){
+    // Chamar CBVGam directamente — já temos acesso via window.parent
+    var gam = window.parent && window.parent.CBVGam;
+    if(gam){
+      var entry=d.entry||{};
+      gam.saveScore(d.gameId, entry.score||0, {
+        level: entry.level||null,
+        tries: entry.tries||null
+      }, function(result){
+        if(result && result.sucesso){
+          var st = gam.getState();
+          var nome = st.display_name || st.username || 'Jogador';
+          showNotif('🏆 '+nome+' — '+(entry.score||0)+' pts · #'+result.posicao+' no ranking!');
         }
-        rows+='<div class="hs-row">'+
-          '<div class="hs-pos '+posClass+'">'+medal+'</div>'+
-          '<div class="hs-name">'+nome+'</div>'+
-          '<div class="hs-score">'+pts+extra+'</div>'+
-        '</div>';
       });
     }
-    card.innerHTML='<div class="hs-card-title"><span class="icon">'+jogo.icon+'</span>'+jogo.nome+'</div>'+rows;
-    grid.appendChild(card);
-  });
-  document.getElementById('hs-panel').classList.add('on');
-}
-function closeHS(){document.getElementById('hs-panel').classList.remove('on');}
+    // Reencaminhar também para cima (por precaução)
+    try{
+      if(window.parent) window.parent.postMessage(d,'*');
+    }catch(e){}
+  }
+
+  if(d.type==='cbv_score_saved'){
+    var nome=d.display_name||'Jogador';
+    var pos=d.posicao?'#'+d.posicao+' no ranking!':'guardado!';
+    showNotif('🏆 '+nome+' — '+d.score+' pts · '+pos);
+  }
+});
 
 var sx=0;
 document.getElementById('drawer').addEventListener('touchstart',function(e){sx=e.touches[0].clientX;});
 document.getElementById('drawer').addEventListener('touchend',function(e){if(e.changedTouches[0].clientX-sx<-50)closeDrawer();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDrawer();closeHS();}});
 
-window.addEventListener('message',function(e){
-  var d=e.data;
-  if(!d||d.type!=='cbv_score')return;
-  saveScore(d.gameId,d.name,d.score,d.extra||{});
-});
-
-function saveScore(gameId,name,score,extra){
-  var jogo=JOGOS.find(function(j){return j.id===gameId;});
-  if(!jogo)return;
-  var list=getHS(jogo.hsKey);
-  var entry={name:name||'Anónimo',score:score};
-  if(extra.tries) entry.tries=extra.tries;
-  if(extra.level) entry.level=extra.level;
-  list.push(entry);
-  list.sort(function(a,b){return b.score-a.score;});
-  list=list.slice(0,5);
-  try{localStorage.setItem(jogo.hsKey,JSON.stringify(list));}catch(e){}
-}
-
-// ── Abrir drawer automaticamente no arranque ──
 openDrawer();
 </script>
 </body>
