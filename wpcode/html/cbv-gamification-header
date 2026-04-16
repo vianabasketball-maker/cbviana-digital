@@ -1,7 +1,11 @@
 <!--
-  CBV GAMIFICATION HEADER WIDGET
-  ================================
-  WPCode → HTML Snippet → Site Wide Header → Logged-in → True
+  CB Viana · cbv-gamification-header
+  v1.1 · 2026-04-16
+  ALTERAÇÕES v1.1:
+  - Adicionado CBVGam.saveScore(gameId, score, extra, callback) — guarda highscore global via API autenticada
+  - Adicionado CBVGam.getScores(callback) — lê top 3 global de todos os jogos
+  - Escuta postMessage 'cbv_score' dos iframes e guarda automaticamente
+  - getState() agora inclui display_name e username
 -->
 
 <style>
@@ -68,7 +72,7 @@ var LEVELS = [
   { min:500, name:'MVP',          icon:'🏆', bonus:500 },
 ];
 
-var state = { acessos:0, moedas:0, nivel:1, prevNivel:1 };
+var state = { acessos:0, moedas:0, nivel:1, prevNivel:1, username:'', display_name:'' };
 
 function getLevelData(acessos){ var lv=LEVELS[0]; for(var i=0;i<LEVELS.length;i++){if(acessos>=LEVELS[i].min)lv=LEVELS[i];} return lv; }
 function getNextLevel(acessos){ for(var i=0;i<LEVELS.length;i++){if(LEVELS[i].min>acessos)return LEVELS[i];} return null; }
@@ -101,8 +105,14 @@ function fetchData(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.code)return;
-      state.acessos=d.acessos||0;state.moedas=d.moedas||0;state.nivel=d.nivel||1;state.prevNivel=state.nivel;
-      renderBar();registerAccess();
+      state.acessos=d.acessos||0;
+      state.moedas=d.moedas||0;
+      state.nivel=d.nivel||1;
+      state.prevNivel=state.nivel;
+      state.username=d.username||'';
+      state.display_name=d.display_name||'';
+      renderBar();
+      registerAccess();
       document.dispatchEvent(new CustomEvent('cbv:ready',{detail:window.CBVGam.getState()}));
     }).catch(function(){});
 }
@@ -113,7 +123,9 @@ function registerAccess(){
     .then(function(d){
       if(d.code)return;
       var oldNivel=state.nivel;
-      state.acessos=d.acessos||state.acessos;state.moedas=d.moedas||state.moedas;state.nivel=d.nivel||state.nivel;
+      state.acessos=d.acessos||state.acessos;
+      state.moedas=d.moedas||state.moedas;
+      state.nivel=d.nivel||state.nivel;
       renderBar();
       if(d.subiu&&state.nivel>oldNivel)showLevelUp(getLevelData(state.acessos));
     }).catch(function(){});
@@ -135,10 +147,40 @@ window.CBVGam = {
   },
   canPay:function(amount){return state.moedas>=amount;},
   registerAccess:function(){registerAccess();},
-  getState:function(){return{moedas:state.moedas,acessos:state.acessos,nivel:state.nivel,loggedIn:true};},
+  getState:function(){
+    return{
+      moedas:state.moedas,
+      acessos:state.acessos,
+      nivel:state.nivel,
+      loggedIn:true,
+      username:state.username,
+      display_name:state.display_name
+    };
+  },
   onReady:function(callback){
     if(state.acessos>0||state.moedas>=0){callback(window.CBVGam.getState());}
     else{document.addEventListener('cbv:ready',function(e){callback(e.detail);});}
+  },
+
+  // ── NOVO: Guardar highscore global ──
+  saveScore:function(gameId, score, extra, callback){
+    fetch('/wp-json/cbv/v1/scores',{
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({game_id:gameId, score:score, extra:extra||{}})
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){if(callback)callback(d);})
+    .catch(function(e){if(callback)callback({sucesso:false,erro:'network'});});
+  },
+
+  // ── NOVO: Ler highscores globais ──
+  getScores:function(callback){
+    fetch('/wp-json/cbv/v1/scores',{credentials:'include'})
+      .then(function(r){return r.json();})
+      .then(function(d){if(callback)callback(d);})
+      .catch(function(e){if(callback)callback({});});
   }
 };
 
@@ -168,15 +210,39 @@ function buildWidget(){
 }
 
 function injectWidget(){
-  // Injectar dentro do .cbv-user do nosso menu
   var target = document.querySelector('.cbv-user');
   if(!target) target = document.querySelector('#cbv-nav-inner');
   if(!target) target = document.querySelector('header');
   if(!target) return;
-
   var widget = buildWidget();
   target.prepend(widget);
 }
+
+// ── NOVO: Escutar postMessage dos iframes e guardar score ──
+window.addEventListener('message', function(e){
+  var d = e.data;
+  if(!d || d.type !== 'cbv_score') return;
+  var entry = d.entry || {};
+  var score = entry.score || 0;
+  var extra = {};
+  if(entry.level) extra.level = entry.level;
+  if(entry.tries) extra.tries = entry.tries;
+
+  window.CBVGam.saveScore(d.gameId, score, extra, function(result){
+    // Reenviar resultado para o iframe jogos.html para mostrar notificação
+    var iframes = document.querySelectorAll('iframe');
+    iframes.forEach(function(iframe){
+      try{
+        iframe.contentWindow.postMessage({
+          type: 'cbv_score_saved',
+          posicao: result.posicao || null,
+          score: score,
+          display_name: state.display_name || state.username || 'Jogador'
+        }, '*');
+      }catch(e){}
+    });
+  });
+});
 
 document.addEventListener('DOMContentLoaded', function(){
   injectWidget();
