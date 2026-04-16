@@ -1,0 +1,10 @@
+<?php
+if(is_user_logged_in()) {
+    $user_id = get_current_user_id();
+    $name = wp_get_current_user()->display_name;
+    $avatar = get_avatar($user_id, 32);
+    $logout = wp_logout_url('/');
+    echo $avatar . ' <a href="/account/" style="color:#F0A500;">' . $name . '</a> | <a href="' . $logout . '" style="color:#F0A500;">Sair</a>';
+} else {
+    echo '<a href="/login/" style="color:#F0A500;">Login</a> | <a href="/register/" style="color:#F0A500;">Registar</a>';
+}
