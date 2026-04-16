@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Família & Clube — CB Viana</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Barlow:wght@300;400;500&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+#cbv-formacao * { margin:0; padding:0; box-sizing:border-box; }
+#cbv-formacao {
+  font-family:'Barlow',sans-serif;
+  background:#5a1220;
+  color:#fff;
+  width:100vw;
+  position:relative;
+  left:50%; right:50%;
+  margin-left:-50vw;
+  margin-right:-50vw;
+}
+#cbv-formacao a { color:#F0A500; }
+
+/* HERO */
+#cbv-formacao .hero {
+  background:#5a1220;
+  padding:80px 40px 60px !important;
+  text-align:left;
+  border-bottom:2px solid #F0A500;
+  position:relative;
+  overflow:hidden;
+}
+#cbv-formacao .hero::before {
+  content:'';
+  position:absolute; inset:0;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(240,165,0,0.04) 60px),
+    repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(240,165,0,0.04) 60px);
+}
+#cbv-formacao .hero-label {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px; letter-spacing:5px; text-transform:uppercase;
+  color:#F0A500; margin-bottom:16px; position:relative;
+}
+#cbv-formacao .hero h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(32px,5vw,58px); font-weight:700;
+  line-height:1.15; position:relative; color:#fff;
+  max-width:700px;
+}
+#cbv-formacao .hero h1 em {
+  font-style:italic; color:#F0A500;
+}
+#cbv-formacao .hero-sub {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px; letter-spacing:4px; text-transform:uppercase;
+  color:rgba(255,255,255,0.4); margin-top:16px; position:relative;
+}
+
+/* INTRO */
+#cbv-formacao .intro-wrap {
+  background:#7B1C2E;
+  padding:60px 40px !important;
+}
+#cbv-formacao .intro-inner {
+  max-width:800px; margin:0 auto; text-align:center;
+}
+#cbv-formacao .big-quote {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(16px,2.2vw,22px);
+  font-style:italic; line-height:1.75;
+  color:#f8f0e8;
+  position:relative; padding:0 30px;
+}
+#cbv-formacao .big-quote::before {
+  content:'"';
+  font-size:80px; color:#F0A500; opacity:0.35;
+  position:absolute; left:0; top:-20px;
+  line-height:1; font-family:'Playfair Display',serif;
+}
+#cbv-formacao .quote-source {
+  margin-top:20px;
+  font-size:11px; letter-spacing:3px;
+  color:rgba(255,255,255,0.35);
+  font-family:'Barlow Condensed',sans-serif;
+  text-transform:uppercase;
+}
+
+/* GOLD LINE */
+#cbv-formacao .gold-line {
+  border:none;
+  border-top:1px solid rgba(240,165,0,0.2);
+  margin:0;
+}
+
+/* SECTION */
+#cbv-formacao .section {
+  padding:70px 40px !important;
+  max-width:900px; margin:0 auto;
+  overflow:hidden;
+}
+#cbv-formacao .section-label {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px; letter-spacing:5px; text-transform:uppercase;
+  color:#F0A500; margin-bottom:12px;
+}
+#cbv-formacao .section-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(26px,4vw,38px); font-weight:700;
+  line-height:1.15; margin-bottom:32px; color:#fff;
+}
+#cbv-formacao .body-text {
+  font-size:16px !important; line-height:1.85 !important;
+  color:rgba(255,255,255,0.78);
+  margin-bottom:20px;
+  max-width:100%;
+  word-wrap:break-word;
+}
+
+/* TABELA */
+#cbv-formacao .tabela-wrap {
+  background:#4a0f1e;
+  padding:70px 40px !important;
+}
+#cbv-formacao .tabela-inner {
+  max-width:960px; margin:0 auto;
+}
+#cbv-formacao .tabela-titulo {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(18px,2.5vw,26px);
+  font-style:italic; line-height:1.45;
+  color:#f8f0e8; margin-bottom:40px;
+  text-align:center;
+}
+#cbv-formacao .tabela-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+#cbv-formacao .tabela-col { border-radius:4px; overflow:hidden; }
+#cbv-formacao .tabela-col-header {
+  padding:16px 22px !important;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase;
+}
+#cbv-formacao .col-nao .tabela-col-header {
+  background:rgba(180,30,30,0.3);
+  border-bottom:2px solid rgba(220,50,50,0.4);
+  color:#ff8888;
+}
+#cbv-formacao .col-deve .tabela-col-header {
+  background:rgba(20,130,60,0.3);
+  border-bottom:2px solid rgba(40,180,80,0.4);
+  color:#88ffaa;
+}
+#cbv-formacao .tabela-col-body {
+  background:rgba(0,0,0,0.2);
+  border:1px solid rgba(240,165,0,0.08);
+  border-top:none;
+}
+#cbv-formacao .tabela-item {
+  padding:13px 20px !important;
+  font-size:14px; line-height:1.5;
+  color:rgba(255,255,255,0.72);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  display:flex; gap:10px; align-items:flex-start;
+}
+#cbv-formacao .tabela-item:last-child { border-bottom:none; }
+#cbv-formacao .col-nao .tabela-item .ico { color:#ff6666; flex-shrink:0; }
+#cbv-formacao .col-deve .tabela-item .ico { color:#66dd88; flex-shrink:0; }
+
+/* ESPERAMOS */
+#cbv-formacao .esperamos-wrap {
+  padding:70px 40px !important;
+  max-width:960px; margin:0 auto;
+}
+#cbv-formacao .esperamos-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px; margin-top:32px;
+}
+#cbv-formacao .esp-card {
+  background:rgba(240,165,0,0.05);
+  border:1px solid rgba(240,165,0,0.15);
+  border-radius:4px; padding:24px 20px !important;
+}
+#cbv-formacao .esp-card:hover {
+  border-color:rgba(240,165,0,0.35);
+}
+#cbv-formacao .esp-icon {
+  width:40px; height:40px; border-radius:50%;
+  border:1.5px solid #F0A500;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:14px;
+}
+#cbv-formacao .esp-icon svg {
+  width:18px; height:18px;
+  stroke:#F0A500; fill:none; stroke-width:2;
+}
+#cbv-formacao .esp-card h4 {
+  font-size:13px; font-weight:500;
+  color:#F0A500; margin-bottom:8px;
+}
+#cbv-formacao .esp-card p {
+  font-size:13px; color:rgba(255,255,255,0.58); line-height:1.55;
+}
+
+/* FONTE */
+#cbv-formacao .fonte-wrap {
+  background:#5a1220;
+  padding:36px 40px !important; text-align:center;
+  border-top:1px solid rgba(240,165,0,0.15);
+}
+#cbv-formacao .fonte-wrap p {
+  font-size:12px; color:rgba(255,255,255,0.35);
+  font-family:'Barlow Condensed',sans-serif;
+  letter-spacing:1px; margin-bottom:6px;
+}
+
+/* MOBILE */
+@media(max-width:640px){
+  #cbv-formacao .hero,
+  #cbv-formacao .intro-wrap,
+  #cbv-formacao .section,
+  #cbv-formacao .tabela-wrap,
+  #cbv-formacao .esperamos-wrap,
+  #cbv-formacao .fonte-wrap { padding-left:20px; padding-right:20px; }
+  #cbv-formacao .tabela-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div id="cbv-formacao" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;overflow:hidden;">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">CB Viana · Família &amp; Clube</div>
+    <h1>A importância da família<br>junto do <em>jovem desportista</em></h1>
+    <div class="hero-sub">Um guia para pais e encarregados de educação</div>
+  </div>
+
+  <!-- CITAÇÃO -->
+  <div class="intro-wrap">
+    <div class="intro-inner">
+      <p class="big-quote">No mundo do desporto, não são raras situações onde observamos os pais que são, que são as pessoas que mais gostam das crianças, transformarem-se nos seus maiores inimigos (...) mas é também uma realidade, que a grande maioria dos pais apoia os seus filhos, o que torna o epicentro de suporte ao desenvolvimento desportivo.</p>
+      <div class="quote-source">Raposo, 2006</div>
+    </div>
+  </div>
+
+  <div class="gold-line"></div>
+
+  <!-- TEXTO -->
+  <div class="section">
+    <div class="section-label">Reflexão</div>
+    <div class="section-title">O papel dos pais no desporto</div>
+    <p class="body-text">Todos os pais querem o melhor para os seus filhos. Esta afirmação faz com que os pais tenham uma natural e normal visão centrada nos seus filhos e uma visão afunilada da sua prática desportiva, tendo dificuldade na maior das vezes de analisar o envolvimento desportivo em que os filhos se encontram inseridos.</p>
+    <p class="body-text">Felizmente a maioria dos pais são participativos e envolvem-se no acompanhamento dos seus filhos no desporto, sendo um contributo essencial à sua formação. Mas infelizmente é um facto cada vez mais assistido e debatido no desporto: alguns pais procuram nos filhos o sucesso que nunca experimentaram como praticantes desportivos, e outros, por terem sido bons praticantes e atingido bons resultados, manifestam ressentimento pelos filhos não conseguirem alcançar feito idênticos dos seus.</p>
+    <p class="body-text">Os pais são um pilar fundamental na formação dos atletas assumindo um papel crucial para o sucesso da formação desportiva e da construção de uma carreira desportiva. Para isso têm que colaborar de forma positiva na formação da personalidade do jovem e encarar com naturalidade o treino e a competição, percebendo que cada criança e jovem são diferentes biológica e psicologicamente e existem igualmente ritmos de aprendizagem e maturação diferenciados.</p>
+    <p class="body-text">Para muitos pais o que interessa são os resultados desportivos nos treinos e nas competições. A atitude certa passará pela não criação de expectativas exageradas quando surgem os bons resultados e a não desvalorização nem comparação quando os resultados, por diversos motivos, surgem menos bons — aí tem que haver a tentativa de compreensão e da consequente aprendizagem que daí advém.</p>
+  </div>
+
+  <div class="gold-line"></div>
+
+  <!-- TABELA -->
+  <div class="tabela-wrap">
+    <div class="tabela-inner">
+      <div class="section-label" style="text-align:center;margin-bottom:14px;">Guia prático</div>
+      <p class="tabela-titulo">O que os pais devem e não devem fazer<br>para ajudar os filhos que praticam desporto</p>
+      <div class="tabela-grid">
+
+        <div class="tabela-col col-nao">
+          <div class="tabela-col-header">✗ &nbsp;O que NÃO devem fazer</div>
+          <div class="tabela-col-body">
+            <div class="tabela-item"><span class="ico">✗</span><span>Forçar os filhos a praticarem qualquer actividade desportiva</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Discutir com árbitros e juízes</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Comentar publicamente, de forma depreciativa, o comportamento de jogadores, treinadores, árbitros e outros pais</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Interferir de algum modo no trabalho do treinador</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Criticar excessivamente os resultados alcançados pelo filho</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Ajudar a criar expectativas exageradas sobre o seu futuro como praticante desportivo</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Alimentar, com elogios fáceis, atitudes de vaidade e sobranceria</span></div>
+            <div class="tabela-item"><span class="ico">✗</span><span>Proibir a prática desportiva como forma de castigo face aos maus resultados escolares</span></div>
+          </div>
+        </div>
+
+        <div class="tabela-col col-deve">
+          <div class="tabela-col-header">✓ &nbsp;O que DEVEM fazer</div>
+          <div class="tabela-col-body">
+            <div class="tabela-item"><span class="ico">✓</span><span>Estar presentes nas competições em que eles participem</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Encorajá-los a respeitarem as regras da modalidade e do espírito desportivo</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Dar um bom exemplo através de um relacionamento amigável com os pais dos adversários</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Realçar sempre o prazer de fazer desporto e a alegria de o praticar</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Elogiar o esforço realizado e os progressos conseguidos</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Aplaudir todas as marcas alcançadas, independentemente de quem as realiza</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Ajudar a conciliar a actividade escolar e desportiva</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Apoiar e acompanhar a actividade sem pressionar ou intrometer-se</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Ter sempre presente que se trata de actividade dos jovens e para jovens</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Ajudar o treinador, o dirigente e o clube na resolução dos problemas relacionados com a actividade desportiva</span></div>
+            <div class="tabela-item"><span class="ico">✓</span><span>Ter um comportamento respeitador e comedido perante as vitórias e as derrotas</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="gold-line"></div>
+
+  <!-- ESPERAMOS -->
+  <div class="esperamos-wrap">
+    <div class="section-label">O nosso pedido</div>
+    <div class="section-title">O que esperamos dos pais</div>
+    <p class="body-text">Espera-se que os pais ajam de forma a que os filhos não faltem aos treinos e que sejam um pilar de apoio ao longo de todo o processo formativo. No fundo, que deixem os seus filhos <strong style="color:#F0A500;">CRESCER</strong> como atletas e como Pessoas.</p>
+    <div class="esperamos-grid">
+      <div class="esp-card">
+        <div class="esp-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h4>Assiduidade</h4>
+        <p>Garantir que os filhos não faltam aos treinos e são pontuais.</p>
+      </div>
+      <div class="esp-card">
+        <div class="esp-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <h4>Saúde e bem-estar</h4>
+        <p>Promover boa alimentação, horas de sono e comunicar sintomas ao treinador.</p>
+      </div>
+      <div class="esp-card">
+        <div class="esp-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+        <h4>Atitude positiva</h4>
+        <p>Transmitir entusiasmo e compreensão nos momentos menos bons.</p>
+      </div>
+      <div class="esp-card">
+        <div class="esp-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h4>Respeito por todos</h4>
+        <p>Respeitar competições, regulamentos, árbitros e decisões do treinador.</p>
+      </div>
+      <div class="esp-card">
+        <div class="esp-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h4>Não misturar papéis</h4>
+        <p>Não interferir no trabalho do treinador. O papel dos pais é apoiar, não treinar.</p>
+      </div>
+      <div class="esp-card">
+        <div class="esp-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <h4>Equilíbrio escolar</h4>
+        <p>Ajudar a conciliar escola e desporto, nunca usar o treino como castigo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FONTE -->
+  <div class="fonte-wrap">
+    <p>Adaptado de: <a href="http://navalnatacao.home.sapo.pt/a_familia_e_o_desporto.htm" target="_blank">navalnatacao.home.sapo.pt</a></p>
+    <p>Jovens no Desporto. Um pódio para todos. Centro de Estudo e Formação Desportiva (IDP)</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raspadinha Diária — CB Viana</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#F0A500;
+  --gold-bright:#FFD060;
+  --wine:#7B1C2E;
+  --wine-mid:#9b2438;
+  --bg:#060109;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--bg);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+  color:#fff;
+}
+
+/* MESH */
+#mesh{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 60% at 20% 20%,rgba(123,28,46,.35) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 80%,rgba(240,165,0,.1) 0%,transparent 55%),
+    radial-gradient(ellipse 40% 50% at 50% 50%,rgba(60,10,80,.4) 0%,transparent 70%),
+    #060109;
+  animation:meshPulse 8s ease-in-out infinite alternate;
+}
+@keyframes meshPulse{0%{opacity:.85;}100%{opacity:1;}}
+
+/* STARS */
+#stars{position:fixed;inset:0;z-index:0;overflow:hidden;}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.06;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
+
+/* FX */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:500;overflow:hidden;}
+
+/* APP */
+#app{
+  position:relative;z-index:1;
+  width:100%;max-width:440px;
+  padding:32px 20px;
+  text-align:center;
+}
+
+/* HEADER */
+.hdr-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(240,165,0,0.07);border:0.5px solid rgba(240,165,0,0.22);
+  border-radius:40px;padding:5px 14px;
+  font-size:9px;font-weight:600;letter-spacing:3px;color:rgba(240,165,0,.6);text-transform:uppercase;
+  margin-bottom:14px;
+}
+.hdr-badge::before{content:'';width:5px;height:5px;background:var(--gold);border-radius:50%;animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.5);}}
+
+.hdr-title{
+  font-family:'Playfair Display',serif;
+  font-size:52px;font-weight:900;line-height:.9;
+  background:linear-gradient(160deg,var(--gold-bright) 0%,var(--gold) 40%,rgba(200,120,0,.85) 70%,var(--gold) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-size:200% 200%;animation:goldShimmer 4s ease infinite;
+  margin-bottom:6px;
+}
+@keyframes goldShimmer{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hdr-sub{font-size:11px;font-weight:300;letter-spacing:2px;color:rgba(255,255,255,.2);text-transform:uppercase;margin-bottom:32px;}
+
+/* SALDO */
+.saldo-bar{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.025);
+  border:0.5px solid rgba(240,165,0,.15);
+  border-radius:40px;padding:6px 16px;
+  font-size:13px;font-weight:600;color:var(--gold);
+  margin-bottom:32px;
+}
+.saldo-bar span{font-size:11px;color:rgba(255,255,255,.3);font-weight:400;}
+
+/* RASPADINHA CARD */
+.scratch-wrap{
+  position:relative;
+  width:280px;height:380px;
+  margin:0 auto 28px;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 0 60px rgba(240,165,0,.15),0 0 120px rgba(123,28,46,.3);
+}
+
+/* Conteúdo por baixo */
+.scratch-content{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg,#0c0420,#150830,#0a0218);
+  border:2px solid rgba(240,165,0,.3);
+  border-radius:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;
+  z-index:1;
+}
+.sc-foto{
+  width:100%;height:220px;
+  object-fit:cover;object-position:top;
+  border-radius:22px 22px 0 0;
+  display:block;
+}
+.sc-foto-placeholder{
+  width:100%;height:220px;
+  background:linear-gradient(135deg,rgba(123,28,46,.4),rgba(60,10,80,.4));
+  border-radius:22px 22px 0 0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;
+}
+.sc-info{
+  flex:1;width:100%;
+  background:linear-gradient(135deg,var(--wine),var(--wine-mid));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:16px;
+  border-radius:0 0 22px 22px;
+}
+.sc-nome{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:900;
+  color:#fff;text-align:center;line-height:1.2;
+}
+.sc-categoria{
+  font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(240,165,0,.7);
+}
+.sc-moedas{
+  font-family:'Playfair Display',serif;
+  font-size:38px;font-weight:900;
+  background:linear-gradient(135deg,var(--gold-bright),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1;
+}
+.sc-moedas-lbl{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(240,165,0,.4);
+}
+
+/* CANVAS de raspagem */
+#scratch-canvas{
+  position:absolute;inset:0;z-index:2;
+  border-radius:24px;
+  cursor:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%23F0A500" opacity="0.8"/></svg>') 16 16, crosshair;
+  touch-action:none;
+}
+
+/* Estado: já raspado */
+.scratch-wrap.revealed #scratch-canvas{display:none;}
+.scratch-wrap.revealed{
+  box-shadow:0 0 80px rgba(240,165,0,.4),0 0 160px rgba(240,165,0,.15);
+  animation:revealGlow 1s ease forwards;
+}
+@keyframes revealGlow{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.03);}
+  100%{transform:scale(1);}
+}
+
+/* INSTRUÇÃO */
+.scratch-hint{
+  font-size:12px;color:rgba(255,255,255,.25);
+  letter-spacing:1px;margin-bottom:20px;
+  animation:hintPulse 2s ease infinite;
+}
+@keyframes hintPulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+.scratch-hint.hidden{display:none;}
+
+/* BOTÃO CONTINUAR */
+#btn-continuar{
+  display:none;
+  width:100%;padding:14px;
+  border-radius:14px;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;
+  text-transform:uppercase;cursor:pointer;border:none;
+  background:linear-gradient(135deg,var(--gold),#c07800);
+  color:#1a0830;
+  transition:transform .15s,filter .15s;
+  margin-bottom:12px;
+}
+#btn-continuar:hover{transform:scale(1.02);filter:brightness(1.1);}
+#btn-continuar.show{display:block;}
+
+#btn-skip{
+  background:transparent;border:none;
+  font-size:11px;color:rgba(255,255,255,.2);
+  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
+  transition:color .2s;
+  display:block;width:100%;padding:8px;
+}
+#btn-skip:hover{color:rgba(255,255,255,.4);}
+
+/* JÁ JOGOU HOJE */
+#already-played{
+  display:none;
+  background:rgba(255,255,255,.025);
+  border:0.5px solid rgba(240,165,0,.15);
+  border-radius:20px;
+  padding:32px 24px;
+  text-align:center;
+}
+#already-played .ap-icon{font-size:48px;margin-bottom:16px;}
+#already-played .ap-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--gold);margin-bottom:8px;}
+#already-played .ap-sub{font-size:13px;color:rgba(255,255,255,.3);line-height:1.6;margin-bottom:24px;}
+#already-played .ap-btn{
+  display:inline-block;padding:12px 28px;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),#c07800);
+  color:#1a0830;font-weight:700;font-size:13px;
+  text-decoration:none;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+}
+
+/* LOADING */
+#loading{
+  font-size:13px;color:rgba(255,255,255,.2);
+  letter-spacing:2px;text-transform:uppercase;
+  animation:loadPulse 1.5s ease infinite;
+}
+@keyframes loadPulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+</style>
+</head>
+<body>
+
+<div id="mesh"></div>
+<div id="stars"></div>
+<div id="fx"></div>
+
+<div id="app">
+  <div class="hdr-badge">CB Viana · Diário</div>
+  <div class="hdr-title">Raspadinha</div>
+  <div class="hdr-sub" id="hdr-sub">O teu prémio de hoje</div>
+
+  <div class="saldo-bar">
+    🪙 <span id="saldo-val">—</span> <span>moedas</span>
+  </div>
+
+  <div id="loading">A carregar...</div>
+
+  <!-- RASPADINHA -->
+  <div id="scratch-zone" style="display:none">
+    <div class="scratch-wrap" id="scratch-wrap">
+      <div class="scratch-content" id="scratch-content">
+        <div class="sc-foto-placeholder" id="sc-foto-wrap">🏀</div>
+        <div class="sc-info">
+          <div class="sc-categoria" id="sc-categoria">—</div>
+          <div class="sc-nome" id="sc-nome">—</div>
+          <div class="sc-moedas" id="sc-moedas">—</div>
+          <div class="sc-moedas-lbl">moedas ganhas</div>
+        </div>
+      </div>
+      <canvas id="scratch-canvas"></canvas>
+    </div>
+
+    <div class="scratch-hint" id="scratch-hint">✦ Raspa para revelar ✦</div>
+    <button id="btn-continuar" onclick="continuar()">Ir para o meu perfil →</button>
+    <button id="btn-skip" onclick="skip()">Saltar por hoje</button>
+  <button id="btn-proxima" onclick="proximaRaspadinha()" style="display:none;margin-top:8px;background:transparent;border:1px solid rgba(240,165,0,.4);color:rgba(240,165,0,.7);padding:10px;border-radius:10px;font-family:DM Sans,sans-serif;font-size:12px;cursor:pointer;width:100%;">Raspar a próxima →</button>
+  </div>
+
+  <!-- JÁ JOGOU -->
+  <div id="already-played">
+    <div class="ap-icon">✅</div>
+    <div class="ap-title">Já raspaste hoje</div>
+    <div class="ap-sub">A próxima raspadinha estará disponível amanhã.<br>Continua a visitar o site para ganhar mais moedas.</div>
+    <a href="/account/" class="ap-btn">Ir para o meu perfil</a>
+  </div>
+</div>
+
+<script>
+/* ── STARS ── */
+(function(){
+  var s=document.getElementById('stars');
+  for(var i=0;i<60;i++){
+    var el=document.createElement('div');el.className='star';
+    var sz=Math.random()*2+.4;
+    el.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+sz+'px;height:'+sz+'px;--d:'+(2+Math.random()*5)+'s;animation-delay:'+(Math.random()*5)+'s;';
+    s.appendChild(el);
+  }
+})();
+
+/* ── CLOUDINARY ── */
+var CLOUD='dmwwjylsw';
+function cloudUrl(public_id,w,h){
+  return 'https://res.cloudinary.com/'+CLOUD+'/image/upload/c_fill,w_'+w+',h_'+h+',g_face/'+public_id;
+}
+
+/* ── CATEGORIAS ── */
+var CAT_LABELS={
+  'staff':'Staff & Treinadores',
+  'senior':'Equipa Sénior',
+  'sub20':'Sub-18 / Sub-20',
+  'sub16':'Sub-14 / Sub-16',
+  'sub12':'Sub-10 / Sub-12 ⭐ Raro'
+};
+
+/* ── STATE ── */
+var cartaData=null;
+var revealed=false;
+var scratching=false;
+var scratched=0;
+var totalPixels=0;
+
+/* ── INIT ── */
+var pendentesTotal=0;
+
+fetch('/wp-json/cbv/v1/raspadinha',{credentials:'include'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('saldo-val').textContent=d.moedas||0;
+    pendentesTotal=d.pendentes||0;
+
+    if(d.played||pendentesTotal<=0){
+      document.getElementById('already-played').style.display='block';
+      return;
+    }
+
+    // Mostrar quantas pendentes
+    if(pendentesTotal>1){
+      document.getElementById('hdr-sub').textContent='Tens '+pendentesTotal+' raspadinhas por raspar!';
+    }
+
+    cartaData=d.carta;
+    setupScratch(d.carta);
+    document.getElementById('scratch-zone').style.display='block';
+  })
+  .catch(function(){
+    // Modo demo — sem servidor
+    document.getElementById('loading').style.display='none';
+    cartaData={
+      id:'demo',nome:'Leonardo Viana',categoria:'senior',
+      cloudinary_url:'https://picsum.photos/seed/cbviana/280/220',
+      moedas:27
+    };
+    document.getElementById('saldo-val').textContent='42';
+    setupScratch(cartaData);
+    document.getElementById('scratch-zone').style.display='block';
+  });
+
+/* ── SETUP SCRATCH ── */
+function setupScratch(carta){
+  // Foto
+  var fotoWrap=document.getElementById('sc-foto-wrap');
+  var imgUrl=carta.url||carta.cloudinary_url||carta.img||'';
+  if(imgUrl){
+    fotoWrap.outerHTML='<img class="sc-foto" id="sc-foto-wrap" src="'+imgUrl+'" alt="'+carta.nome+'">';
+  }
+
+  document.getElementById('sc-nome').textContent=carta.nome||'—';
+  document.getElementById('sc-categoria').textContent=CAT_LABELS[carta.categoria]||carta.categoria||'—';
+  document.getElementById('sc-moedas').textContent=carta.moedas||'—';
+
+  // Canvas
+  var canvas=document.getElementById('scratch-canvas');
+  var wrap=document.getElementById('scratch-wrap');
+  canvas.width=wrap.offsetWidth||280;
+  canvas.height=wrap.offsetHeight||380;
+  totalPixels=canvas.width*canvas.height;
+
+  var ctx=canvas.getContext('2d');
+
+  // Camada metálica prateada clássica
+  var grad=ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+  grad.addColorStop(0,'#b0b0b0');
+  grad.addColorStop(.15,'#e8e8e8');
+  grad.addColorStop(.3,'#c8c8c8');
+  grad.addColorStop(.5,'#f0f0f0');
+  grad.addColorStop(.65,'#b8b8b8');
+  grad.addColorStop(.8,'#d8d8d8');
+  grad.addColorStop(1,'#a0a0a0');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Textura granulada
+  for(var gx=0;gx<canvas.width;gx+=2){
+    for(var gy=0;gy<canvas.height;gy+=2){
+      var v=Math.random()*30-15;
+      ctx.fillStyle='rgba('+(128+v)+','+(128+v)+','+(128+v)+',0.18)';
+      ctx.fillRect(gx,gy,2,2);
+    }
+  }
+
+  // Brilho diagonal
+  var shine=ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+  shine.addColorStop(0,'rgba(255,255,255,0)');
+  shine.addColorStop(.4,'rgba(255,255,255,0.22)');
+  shine.addColorStop(.5,'rgba(255,255,255,0.35)');
+  shine.addColorStop(.6,'rgba(255,255,255,0.12)');
+  shine.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=shine;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Logo CB Viana em baixo
+  ctx.font='bold 13px DM Sans,sans-serif';
+  ctx.fillStyle='rgba(80,80,80,0.5)';
+  ctx.textAlign='center';
+  ctx.fillText('CB VIANA · RASPADINHA DIÁRIA',canvas.width/2,canvas.height-20);
+
+  // Texto central
+  ctx.font='bold 18px DM Sans,sans-serif';
+  ctx.fillStyle='rgba(60,60,60,0.4)';
+  ctx.fillText('✦ RASPA AQUI ✦',canvas.width/2,canvas.height/2);
+
+  ctx.globalCompositeOperation='destination-out';
+
+  // Eventos de raspar
+  var isDown=false;
+  var lastX,lastY;
+  var radius=28;
+
+  function getPos(e){
+    var rect=canvas.getBoundingClientRect();
+    if(e.touches){
+      return{x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top};
+    }
+    return{x:e.clientX-rect.left,y:e.clientY-rect.top};
+  }
+
+  function scrape(x,y){
+    ctx.beginPath();
+    ctx.arc(x,y,radius,0,Math.PI*2);
+    ctx.fill();
+    if(lastX!==undefined){
+      ctx.beginPath();
+      ctx.moveTo(lastX,lastY);
+      ctx.lineTo(x,y);
+      ctx.lineWidth=radius*2;
+      ctx.lineCap='round';
+      ctx.stroke();
+    }
+    lastX=x;lastY=y;
+    checkReveal(ctx,canvas);
+  }
+
+  canvas.addEventListener('mousedown',function(e){isDown=true;var p=getPos(e);scrape(p.x,p.y);});
+  canvas.addEventListener('mousemove',function(e){if(!isDown)return;var p=getPos(e);scrape(p.x,p.y);});
+  canvas.addEventListener('mouseup',function(){isDown=false;lastX=undefined;lastY=undefined;});
+  canvas.addEventListener('touchstart',function(e){e.preventDefault();isDown=true;var p=getPos(e);scrape(p.x,p.y);},{passive:false});
+  canvas.addEventListener('touchmove',function(e){e.preventDefault();if(!isDown)return;var p=getPos(e);scrape(p.x,p.y);},{passive:false});
+  canvas.addEventListener('touchend',function(){isDown=false;lastX=undefined;lastY=undefined;});
+}
+
+/* ── VERIFICAR REVELAÇÃO ── */
+var checkCount=0;
+function checkReveal(ctx,canvas){
+  checkCount++;
+  if(checkCount%8!==0) return; // verificar a cada 8 eventos
+  if(revealed) return;
+
+  var data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  var transparent=0;
+  for(var i=3;i<data.length;i+=4){
+    if(data[i]<128) transparent++;
+  }
+  var pct=transparent/(canvas.width*canvas.height);
+
+  if(pct>0.55){
+    autoReveal();
+  }
+}
+
+/* ── AUTO REVEAL ── */
+function autoReveal(){
+  if(revealed) return;
+  revealed=true;
+
+  var canvas=document.getElementById('scratch-canvas');
+  var ctx=canvas.getContext('2d');
+
+  // Partículas de prata a cair — efeito raspadinha clássica
+  var particles=[];
+  var W=canvas.width,H=canvas.height;
+  for(var i=0;i<120;i++){
+    particles.push({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*3,vy:2+Math.random()*4,
+      size:3+Math.random()*8,
+      alpha:0.6+Math.random()*.4,
+      rot:Math.random()*360,
+      rotV:(Math.random()-.5)*8
+    });
+  }
+
+  var t0=performance.now();
+  function animPart(ts){
+    var t=(ts-t0)/1000;
+    ctx.globalCompositeOperation='destination-out';
+    // Apagar progressivamente o centro
+    ctx.globalAlpha=Math.min(1,t*3);
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha=1;
+
+    // Desenhar partículas prateadas
+    particles.forEach(function(p){
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.15;
+      p.rot+=p.rotV; p.alpha-=0.018;
+      if(p.alpha<=0) return;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.globalAlpha=p.alpha;
+      var pg=ctx.createLinearGradient(-p.size/2,-p.size/2,p.size/2,p.size/2);
+      pg.addColorStop(0,'#e0e0e0');pg.addColorStop(.5,'#ffffff');pg.addColorStop(1,'#a0a0a0');
+      ctx.fillStyle=pg;
+      ctx.fillRect(-p.size/2,-p.size/4,p.size,p.size/2);
+      ctx.restore();
+    });
+
+    if(t<0.9) requestAnimationFrame(animPart);
+    else{
+      document.getElementById('scratch-wrap').classList.add('revealed');
+      document.getElementById('scratch-hint').classList.add('hidden');
+      onRevealed();
+    }
+  }
+  requestAnimationFrame(animPart);
+}
+
+/* ── APÓS REVELAÇÃO ── */
+function onRevealed(){
+  if(!cartaData) return;
+
+  // Partículas
+  burst(window.innerWidth/2,window.innerHeight*.4,true);
+
+  // Zoom explosivo das moedas
+  setTimeout(function(){
+    showCoinExplosion(cartaData.moedas);
+  },300);
+
+  // Enviar ao servidor
+  fetch('/wp-json/cbv/v1/raspadinha',{
+    method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      moedas:    cartaData.moedas,
+      nome:      cartaData.nome||'Jogador CB Viana',
+      url:       cartaData.cloudinary_url||cartaData.url||'',
+      categoria: cartaData.categoria||''
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.moedas_total) document.getElementById('saldo-val').textContent=d.moedas_total;
+  })
+  .catch(function(){});
+
+  // Mostrar botões
+  setTimeout(function(){
+    document.getElementById('btn-continuar').classList.add('show');
+    document.getElementById('btn-skip').style.display='none';
+    // Se tem mais pendentes mostrar botão próxima
+    if(pendentesTotal>1){
+      document.getElementById('btn-proxima').style.display='block';
+      pendentesTotal--;
+    }
+  },2200);
+}
+
+/* ── ZOOM EXPLOSIVO MOEDAS ── */
+function showCoinExplosion(moedas){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;';
+
+  var coin=document.createElement('div');
+  coin.style.cssText='font-family:Playfair Display,serif;font-size:10px;font-weight:900;color:#F0A500;text-align:center;animation:coinZoom .8s cubic-bezier(.23,1,.32,1) forwards;text-shadow:0 0 40px rgba(240,165,0,.8),0 0 80px rgba(240,165,0,.4);';
+  coin.innerHTML='<div style="font-size:56px;line-height:1">🪙</div><div style="font-size:80px;font-weight:900;background:linear-gradient(135deg,#FFD060,#F0A500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1">+'+moedas+'</div><div style="font-size:14px;letter-spacing:4px;color:rgba(240,165,0,.6);text-transform:uppercase;margin-top:8px">moedas</div>';
+
+  var style=document.createElement('style');
+  style.textContent='@keyframes coinZoom{0%{transform:scale(0) rotate(-15deg);opacity:0;}50%{transform:scale(1.2) rotate(3deg);opacity:1;}70%{transform:scale(.95) rotate(-1deg);}100%{transform:scale(1) rotate(0);opacity:1;}}';
+  document.head.appendChild(style);
+
+  overlay.appendChild(coin);
+  document.body.appendChild(overlay);
+
+  // Mais partículas
+  setTimeout(function(){burst(window.innerWidth/2,window.innerHeight/2,true);},200);
+  setTimeout(function(){burst(window.innerWidth*.2,window.innerHeight*.3,false);burst(window.innerWidth*.8,window.innerHeight*.3,false);},400);
+
+  setTimeout(function(){
+    overlay.style.animation='fadeOutOverlay .5s ease forwards';
+    var s2=document.createElement('style');
+    s2.textContent='@keyframes fadeOutOverlay{to{opacity:0;transform:scale(1.1);}}';
+    document.head.appendChild(s2);
+    setTimeout(function(){overlay.remove();},500);
+  },1800);
+}
+
+/* ── PRÓXIMA RASPADINHA ── */
+function proximaRaspadinha(){
+  // Reset estado e carregar nova carta
+  revealed=false;
+  cartaData=null;
+  document.getElementById('scratch-zone').style.display='none';
+  document.getElementById('btn-proxima').style.display='none';
+  document.getElementById('btn-continuar').classList.remove('show');
+  document.getElementById('loading').style.display='block';
+
+  fetch('/wp-json/cbv/v1/raspadinha',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      document.getElementById('loading').style.display='none';
+      document.getElementById('saldo-val').textContent=d.moedas||0;
+      if(d.played||!d.pendentes){
+        document.getElementById('already-played').style.display='block';
+        return;
+      }
+      pendentesTotal=d.pendentes;
+      if(pendentesTotal>1){
+        document.getElementById('hdr-sub').textContent='Tens '+pendentesTotal+' raspadinhas por raspar!';
+      } else {
+        document.getElementById('hdr-sub').textContent='A tua última raspadinha!';
+      }
+      cartaData=d.carta;
+      setupScratch(d.carta);
+      document.getElementById('scratch-zone').style.display='block';
+    });
+}
+
+/* ── SKIP ── */
+function skip(){
+  window.location.href='/account/';
+}
+
+/* ── CONTINUAR ── */
+function continuar(){
+  window.location.href='/account/';
+}
+
+/* ── PARTÍCULAS ── */
+function burst(x,y,big){
+  var fx=document.getElementById('fx');
+  var cols=['#F0A500','#FFD060','#fff','#7B1C2E','#ffcc60'];
+  var n=big?50:20;
+  for(var i=0;i<n;i++){
+    var el=document.createElement('div');
+    var c=cols[Math.floor(Math.random()*cols.length)];
+    var sz=big?(4+Math.random()*10):(2+Math.random()*6);
+    var pill=Math.random()>.5;
+    el.style.cssText='position:absolute;left:'+x+'px;top:'+y+'px;width:'+sz+'px;height:'+sz*(pill?3:1)+'px;background:'+c+';border-radius:'+(pill?'4px':'50%')+';pointer-events:none;';
+    fx.appendChild(el);
+    var a=Math.random()*Math.PI*2;
+    var sp=60+Math.random()*(big?220:110);
+    var vx=Math.cos(a)*sp,vy=Math.sin(a)*sp-(big?160:80);
+    var rot=Math.random()*720*(Math.random()>.5?1:-1);
+    var t0=performance.now();
+    (function(e,vx,vy,rot){
+      function af(ts){
+        var t=(ts-t0)/1000;
+        if(t>1.8){e.remove();return;}
+        e.style.left=(x+vx*t)+'px';e.style.top=(y+vy*t+300*t*t)+'px';
+        e.style.opacity=Math.max(0,1-t/1.4);
+        e.style.transform='rotate('+(rot*t)+'deg) scale('+(1-t*.3)+')';
+        requestAnimationFrame(af);
+      }
+      requestAnimationFrame(af);
+    })(el,vx,vy,rot);
+  }
+}
+</script>
+</body>
+</html>

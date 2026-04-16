@@ -1,0 +1,101 @@
+<!-- MASCOTE CBV ANIMADA — colar num bloco HTML personalizado no Gutenberg -->
+
+<style>
+.cbv-mascote-wrap {
+  position: fixed;
+  bottom: 0;
+  right: 20px;
+  z-index: 9999;
+  width: 140px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Corpo da mascote sobe e desce suavemente */
+.cbv-mascote-body {
+  animation: cbv-bounce 0.55s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+/* Bola driba separadamente — mais rápida */
+.cbv-mascote-bola {
+  position: absolute;
+  bottom: 2px;
+  left: 6px;
+  width: 38px;
+  height: 38px;
+  background: radial-gradient(circle at 35% 35%, #f97316, #b45309);
+  border-radius: 50%;
+  border: 2px solid #92400e;
+  animation: cbv-dribble 0.55s ease-in-out infinite alternate;
+}
+
+/* Linhas da bola */
+.cbv-mascote-bola::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: 
+    linear-gradient(transparent 48%, #92400e 48%, #92400e 52%, transparent 52%),
+    linear-gradient(90deg, transparent 48%, #92400e 48%, #92400e 52%, transparent 52%);
+  opacity: 0.6;
+}
+
+@keyframes cbv-bounce {
+  0%   { transform: translateY(0px) rotate(-1deg); }
+  100% { transform: translateY(-18px) rotate(1deg); }
+}
+
+@keyframes cbv-dribble {
+  0%   { transform: translateY(0px) scaleY(1); }
+  80%  { transform: translateY(-120px) scaleY(1); }
+  100% { transform: translateY(-130px) scaleY(0.85); }
+}
+
+.cbv-mascote-img {
+  width: 140px;
+  display: block;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+}
+
+/* Botão de fechar */
+.cbv-mascote-close {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 20px;
+  height: 20px;
+  background: #7B1C2E;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  opacity: 0.8;
+}
+.cbv-mascote-close:hover { opacity: 1; }
+
+/* Entrada suave */
+.cbv-mascote-wrap {
+  animation: cbv-entrada 1s ease-out forwards;
+}
+@keyframes cbv-entrada {
+  from { transform: translateY(200px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<div class="cbv-mascote-wrap" id="cbvMascote">
+  <button class="cbv-mascote-close" onclick="document.getElementById('cbvMascote').style.display='none'">✕</button>
+  <div class="cbv-mascote-body">
+    <img class="cbv-mascote-img"
+         src="https://cbviana.com/wp-content/uploads/2026/04/cbv-mascote.webp"
+         alt="Mascote CBV">
+  </div>
+</div>

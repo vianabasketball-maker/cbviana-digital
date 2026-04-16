@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Em Construção — CB Viana</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+html, body { width: 100%; height: 100%; background: #0a0410; font-family: system-ui, sans-serif; overflow-x: hidden; }
+#page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 12px 32px;
+}
+
+/* HEADER */
+#header {
+  text-align: center;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 700px;
+}
+#logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+#club-logo {
+  width: 56px;
+  height: 56px;
+  background: #7B1C2E;
+  border-radius: 50%;
+  border: 3px solid #F0A500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+#club-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #F0A500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+#club-sub {
+  font-size: 13px;
+  color: #888;
+  letter-spacing: 1px;
+}
+#construction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #7B1C2E;
+  color: #F0A500;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 30px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  border: 1px solid #F0A500;
+}
+#page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+#page-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 0;
+}
+
+/* DIVIDER */
+.divider {
+  width: 100%;
+  max-width: 700px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #7B1C2E, #F0A500, #7B1C2E, transparent);
+  margin: 18px 0;
+}
+
+/* GAME AREA */
+#game-wrap {
+  width: 100%;
+  max-width: 700px;
+}
+#game-label {
+  text-align: center;
+  font-size: 13px;
+  color: #F0A500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+#court {
+  width: 100%;
+  height: 460px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #7B1C2E;
+  box-shadow: 0 0 40px rgba(123,28,46,0.4), 0 0 80px rgba(123,28,46,0.15);
+}
+#hud {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.hcard {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+  border: 0.5px solid rgba(255,255,255,0.08);
+}
+.hlabel { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+.hval { font-size: 24px; font-weight: 600; color: #fff; line-height: 1.2; }
+#modes {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+#modes button {
+  flex: 1; padding: 11px; font-size: 14px; font-weight: 600;
+  border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: #aaa;
+  transition: all .15s;
+  letter-spacing: .5px;
+}
+#modes button.on { background: #7B1C2E; color: #F0A500; border-color: #F0A500; }
+#tip {
+  text-align: center; font-size: 12px; color: #555;
+  margin-top: 10px; min-height: 18px; letter-spacing: .3px;
+}
+
+/* FOOTER */
+#footer {
+  margin-top: 28px;
+  text-align: center;
+  color: #444;
+  font-size: 12px;
+}
+#footer a { color: #7B1C2E; text-decoration: none; }
+</style>
+</head>
+<body>
+<div id="page">
+
+  <div id="header">
+    <div id="logo-row">
+      <div id="club-logo">🏀</div>
+      <div>
+        <div id="club-name">CB Viana</div>
+        <div id="club-sub">Clube de Basquetebol de Viana do Castelo</div>
+      </div>
+    </div>
+    <div id="construction-badge">🚧 Em Construção</div>
+    <div id="page-title" id="ptitle">Esta página está a ser preparada</div>
+    <div id="page-desc">Estamos a trabalhar para te trazer algo incrível. Enquanto esperas — joga!</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="game-wrap">
+    <div id="game-label">🏀 Passa o tempo a treinar</div>
+    <div id="modes">
+      <button class="on" onclick="setMode(2,this)">2 Pontos</button>
+      <button onclick="setMode(3,this)">⭐ 3 Pontos</button>
+    </div>
+    <div id="court"><canvas id="cv" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas></div>
+    <div id="hud">
+      <div class="hcard"><div class="hlabel">Pontos</div><div class="hval" id="hpts">0</div></div>
+      <div class="hcard"><div class="hlabel">Acertos</div><div class="hval" id="hmade">0</div></div>
+      <div class="hcard"><div class="hlabel">Falhas</div><div class="hval" id="hmiss">0</div></div>
+      <div class="hcard"><div class="hlabel">%</div><div class="hval" id="hpct">—</div></div>
+    </div>
+    <div id="tip">Mantém premido para carregar · Verde = +2 · Azul = +3 · Fora = erro</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="footer">
+    © 2025 Clube de Basquetebol de Viana do Castelo · <a href="/">← Voltar ao início</a>
+  </div>
+
+</div>
+
+<script>
+
+// Safe ellipse wrapper to prevent negative radius errors
+var _ellipse = CanvasRenderingContext2D.prototype.ellipse;
+CanvasRenderingContext2D.prototype.ellipse = function(x,y,rx,ry,rot,sA,eA,ccw){
+  rx = Math.max(0.01, Math.abs(rx));
+  ry = Math.max(0.01, Math.abs(ry));
+  return _ellipse.call(this,x,y,rx,ry,rot,sA,eA,ccw);
+};
+
+// Set page title from URL param ?page=momentos etc
+var params = new URLSearchParams(window.location.search);
+var pageName = params.get('page');
+var titles = {
+  'momentos': 'Momentos',
+  'eventos': 'Eventos',
+  'galeria': 'Galeria',
+  'contacto': 'Contacto',
+  'junta-te': 'Junta-te a Nós'
+};
+if (pageName && titles[pageName]) {
+  document.getElementById('page-title').textContent = titles[pageName] + ' — Em Breve!';
+}
+
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W,H,mode=2;
+var pts=0,made=0,miss=0,pressing=false,power=0,pTimer=null;
+var ball=null,particles=[],flash=null;
+var Z2_LO=0.36,Z2_HI=0.64,Z3_LO=0.47,Z3_HI=0.56,RIM_R=24;
+
+function resize(){
+  var r=document.getElementById('court').getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=r.height*dpr;
+  cv.style.width=r.width+'px';cv.style.height=r.height+'px';
+  ctx.scale(dpr,dpr);W=r.width;H=r.height;
+}
+window.addEventListener('resize',function(){resize();});
+var el=document.getElementById('court');
+el.addEventListener('mousedown',dn);
+el.addEventListener('touchstart',function(e){e.preventDefault();dn();},{passive:false});
+document.addEventListener('mouseup',up);
+document.addEventListener('touchend',up);
+
+function dn(){if(ball)return;pressing=true;power=0;pTimer=setInterval(function(){power=Math.min(1,power+0.016);},16);}
+function up(){if(!pressing)return;pressing=false;clearInterval(pTimer);launch(power);}
+function setMode(m,btn){mode=m;document.querySelectorAll('#modes button').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
+function HY(){return mode===3?H*0.17:H*0.26;}
+function HX(){return W*0.5;}
+
+function launch(p){
+  var inZ3=p>=Z3_LO&&p<=Z3_HI,inZ2=p>=Z2_LO&&p<=Z2_HI;
+  var score=inZ3?3:inZ2?2:0;
+  var err=score===0?(Math.random()-0.5)*W*0.42:(Math.random()-0.5)*4;
+  ball={phase:1,sx:W*0.5,sy:H*0.86,tx:HX()+err,ty:HY()-4,t:0,dur:58,score:score,spin:0,counted:false};
+  if(score===0){miss++;flash={t:70,text:p<Z2_LO?'Pouca força!':'Demasiada força!',ok:false};updateHUD();}
+}
+
+function confetti(x,y){
+  var cols=['#F0A500','#7B1C2E','#fff','#ff9900','#44aaff'];
+  for(var i=0;i<50;i++){
+    var a=Math.random()*Math.PI*2,spd=2+Math.random()*7;
+    particles.push({x:x,y:y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-6,
+      col:cols[Math.floor(Math.random()*cols.length)],w:3+Math.random()*6,h:3+Math.random()*5,
+      rot:Math.random()*6,rv:(Math.random()-.5)*0.3,life:1});
+  }
+}
+
+function drawBG(){
+  var sky=ctx.createLinearGradient(0,0,0,H*0.62);
+  sky.addColorStop(0,'#04010a');sky.addColorStop(1,'#120620');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+
+  // stars
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  for(var i=0;i<80;i++){
+    var sx=(Math.sin(i*127.1)*0.5+0.5)*W;
+    var sy=(Math.sin(i*311.7)*0.5+0.5)*H*0.55;
+    var sr=0.4+Math.sin(i*91.3)*0.4;
+    ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();
+  }
+
+  // crowd
+  for(var i=0;i<45;i++){
+    var cx=i/45*W,ch=12+Math.sin(i*1.9)*8+Math.cos(i*3.1)*5;
+    var ci=Math.floor(i/3)%2===0?'#0d0420':'#110528';
+    ctx.fillStyle=ci;
+    ctx.beginPath();ctx.ellipse(cx,H*0.57+ch,8,ch,0,0,Math.PI*2);ctx.fill();
+  }
+
+  // arena lights
+  for(var i=0;i<4;i++){
+    var lx=W*(0.15+i*0.23),ly=H*0.06;
+    var lg=ctx.createRadialGradient(lx,ly,0,lx,ly,H*0.3);
+    lg.addColorStop(0,'rgba(255,240,200,0.08)');lg.addColorStop(1,'rgba(255,240,200,0)');
+    ctx.fillStyle=lg;ctx.fillRect(0,0,W,H*0.6);
+    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='rgba(255,250,220,0.9)';ctx.fill();
+  }
+
+  // floor
+  var fl=ctx.createLinearGradient(0,H*0.57,0,H);
+  fl.addColorStop(0,'#b06828');fl.addColorStop(0.3,'#8a4a10');fl.addColorStop(1,'#3a1804');
+  ctx.fillStyle=fl;
+  ctx.beginPath();ctx.moveTo(0,H*0.59);ctx.lineTo(W,H*0.59);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+
+  // floor planks
+  ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;
+  for(var i=0;i<16;i++){var fy=H*0.59+i*(H*0.41/16);ctx.beginPath();ctx.moveTo(0,fy);ctx.lineTo(W,fy);ctx.stroke();}
+
+  // court lines
+  ctx.strokeStyle='rgba(255,210,140,0.25)';ctx.lineWidth=1.5;
+  ctx.strokeRect(W*0.25,H*0.59,W*0.5,H*0.41);
+  ctx.beginPath();ctx.arc(W*0.5,H*0.59,W*0.14,0,Math.PI);ctx.stroke();
+  ctx.strokeStyle='rgba(100,160,255,0.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(W*0.5,H*0.93,W*0.4,Math.PI*1.07,Math.PI*1.93);ctx.stroke();
+
+  // center line
+  ctx.strokeStyle='rgba(255,210,140,0.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H*0.72);ctx.lineTo(W,H*0.72);ctx.stroke();
+}
+
+function drawStructure(){
+  var hy=HY(),hx=HX();
+  // pole
+  var pg=ctx.createLinearGradient(hx+38,0,hx+54,0);
+  pg.addColorStop(0,'#333');pg.addColorStop(0.4,'#ccc');pg.addColorStop(1,'#333');
+  ctx.fillStyle=pg;ctx.fillRect(hx+38,hy-65,16,H);
+
+  // arm
+  ctx.lineWidth=9;ctx.strokeStyle='#555';
+  ctx.beginPath();ctx.moveTo(hx+38,hy-55);ctx.lineTo(hx+42,hy-55);ctx.stroke();
+  ctx.lineWidth=7;ctx.strokeStyle='#aaa';
+  ctx.beginPath();ctx.moveTo(hx+38,hy-55);ctx.lineTo(hx+42,hy-55);ctx.stroke();
+
+  // board shadow
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.beginPath();ctx.roundRect(hx-44,hy-85,86,58,5);ctx.fill();
+
+  // board glass
+  var bg=ctx.createLinearGradient(hx-42,hy-83,hx+42,hy-27);
+  bg.addColorStop(0,'rgba(170,215,255,0.12)');
+  bg.addColorStop(0.5,'rgba(215,235,255,0.22)');
+  bg.addColorStop(1,'rgba(150,205,255,0.09)');
+  ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(hx-42,hy-83,84,56,5);ctx.fill();
+
+  // board sheen
+  ctx.strokeStyle='rgba(200,225,255,0.9)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(hx-42,hy-83,84,56,5);ctx.stroke();
+
+  // inner square
+  ctx.strokeStyle='rgba(255,70,70,0.95)';ctx.lineWidth=2;
+  ctx.strokeRect(hx-17,hy-68,34,30);
+
+  // bracket board→rim
+  ctx.lineWidth=6;ctx.strokeStyle='#777';
+  ctx.beginPath();ctx.moveTo(hx,hy-27);ctx.lineTo(hx,hy-6);ctx.stroke();
+  ctx.lineWidth=4;ctx.strokeStyle='#bbb';
+  ctx.beginPath();ctx.moveTo(hx,hy-27);ctx.lineTo(hx,hy-6);ctx.stroke();
+  ctx.lineWidth=5;ctx.strokeStyle='#888';
+  ctx.beginPath();ctx.moveTo(hx-10,hy-8);ctx.lineTo(hx+10,hy-8);ctx.stroke();
+}
+
+function drawRimBack(){
+  var hy=HY(),hx=HX();
+  ctx.beginPath();ctx.ellipse(hx,hy,RIM_R,6,0,0,Math.PI);
+  ctx.strokeStyle='#6a3000';ctx.lineWidth=8;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(hx,hy,RIM_R,6,0,0,Math.PI);
+  ctx.strokeStyle='#a04800';ctx.lineWidth=5;ctx.stroke();
+}
+
+function drawRimFront(){
+  var hy=HY(),hx=HX();
+  ctx.beginPath();ctx.ellipse(hx,hy,RIM_R,6,0,Math.PI,Math.PI*2);
+  ctx.strokeStyle='#6a3000';ctx.lineWidth=8;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(hx,hy,RIM_R,6,0,Math.PI,Math.PI*2);
+  ctx.strokeStyle='#F08000';ctx.lineWidth=5;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(hx,hy-1,RIM_R,5,0,Math.PI,Math.PI*2);
+  ctx.strokeStyle='rgba(255,190,70,0.6)';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(hx,hy,RIM_R,6,0,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,140,0,0.12)';ctx.lineWidth=18;ctx.stroke();
+}
+
+function drawNet(tp){
+  var hy=HY(),hx=HX(),netH=42,segs=12,sway=tp?Math.sin(tp*Math.PI)*5:0;
+  ctx.lineWidth=1.3;
+  for(var i=0;i<segs;i++){
+    var a1=(i/segs)*Math.PI*2;
+    var a2=((i+1)/segs)*Math.PI*2;
+    var x1=hx+Math.cos(a1)*RIM_R*0.88,y1=hy+Math.sin(a1)*5.5;
+    var mx=hx+Math.cos((a1+a2)/2)*(RIM_R*0.42)+sway*Math.cos(a1),my=hy+netH*0.55;
+    var ex=hx+Math.cos((a1+a2)/2)*3+sway*0.5,ey=hy+netH;
+    ctx.strokeStyle='rgba(230,230,230,'+(0.4+Math.abs(Math.sin(a1))*0.35)+')';
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.quadraticCurveTo(mx,my,ex,ey);ctx.stroke();
+  }
+  ctx.beginPath();ctx.ellipse(hx,hy+netH*0.44,Math.max(1,RIM_R*0.6),3.5,0,0,Math.PI*2);
+  ctx.strokeStyle='rgba(215,215,215,0.35)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(hx,hy+netH,Math.max(1,RIM_R*0.32+Math.abs(sway)*0.3),Math.max(0.5,2.5),0,0,Math.PI*2);
+  ctx.strokeStyle='rgba(215,215,215,0.4)';ctx.lineWidth=1;ctx.stroke();
+}
+
+function drawBall(x,y,spin,r){
+  r=r||20;ctx.save();ctx.translate(x,y);ctx.rotate(spin);
+  var g=ctx.createRadialGradient(-r*0.3,-r*0.38,r*0.04,r*0.08,r*0.1,r*1.35);
+  g.addColorStop(0,'#fbb060');g.addColorStop(0.28,'#e37222');
+  g.addColorStop(0.65,'#b24d12');g.addColorStop(1,'#5c2000');
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+
+  ctx.strokeStyle='rgba(50,10,0,0.48)';ctx.lineWidth=1.6;
+  ctx.beginPath();ctx.ellipse(0,0,r,r*0.25,0,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.ellipse(0,0,r*0.25,r,Math.PI*0.5,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(-r*0.48,-r*0.48,r*0.8,0.28,1.42);ctx.stroke();
+  ctx.beginPath();ctx.arc(r*0.48,r*0.48,r*0.8,Math.PI+0.28,Math.PI+1.42);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.strokeStyle='rgba(60,15,0,0.32)';ctx.lineWidth=1.5;ctx.stroke();
+
+  var hl=ctx.createRadialGradient(-r*0.3,-r*0.36,0,-r*0.25,-r*0.3,r*0.38);
+  hl.addColorStop(0,'rgba(255,255,255,0.58)');hl.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fillStyle=hl;ctx.fill();
+  ctx.restore();
+}
+
+function drawPower(){
+  var BW=18,BH=130,px=W*0.5+40,py=H*0.86-BH*0.5;
+  ctx.fillStyle='rgba(0,0,0,0.7)';ctx.beginPath();ctx.roundRect(px-3,py-3,BW+6,BH+6,10);ctx.fill();
+  ctx.fillStyle='#0d0d0d';ctx.beginPath();ctx.roundRect(px,py,BW,BH,7);ctx.fill();
+
+  function zy(v){return py+BH-v*BH;}
+  ctx.fillStyle='rgba(220,40,40,0.6)';ctx.fillRect(px,zy(Z2_LO),BW,BH*Z2_LO);
+  ctx.fillStyle='rgba(40,200,70,0.4)';ctx.fillRect(px,zy(Z2_HI),BW,BH*(Z2_HI-Z2_LO));
+  ctx.fillStyle='rgba(60,130,255,0.65)';ctx.fillRect(px,zy(Z3_HI),BW,BH*(Z3_HI-Z3_LO));
+  ctx.fillStyle='rgba(220,40,40,0.6)';ctx.fillRect(px,py,BW,BH*(1-Z2_HI));
+
+  if(pressing&&power>0){
+    var col=power>=Z3_LO&&power<=Z3_HI?'#4488ff':power>=Z2_LO&&power<=Z2_HI?'#30ee60':'#ee3030';
+    var fh=power*BH;
+    ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(px,py+BH-fh,BW,fh,7);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.beginPath();ctx.roundRect(px,py+BH-fh,BW,4,3);ctx.fill();
+  }
+
+  function zLine(v,lbl,c){
+    var ly=zy(v);ctx.strokeStyle=c;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(px-6,ly);ctx.lineTo(px+BW+3,ly);ctx.stroke();
+    ctx.fillStyle=c;ctx.font='600 10px system-ui';ctx.textAlign='left';ctx.fillText(lbl,px+BW+6,ly+4);
+  }
+  zLine(Z3_HI,'+3','#5599ff');zLine(Z3_LO,'+3','#5599ff');
+  zLine(Z2_HI,'+2','#44dd66');zLine(Z2_LO,'+2','#44dd66');
+
+  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(px,py,BW,BH,7);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 10px system-ui';
+  ctx.textAlign='center';ctx.fillText('PWR',px+BW/2,py-7);
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+function ease(t){return t<.5?2*t*t:-1+(4-2*t)*t;}
+
+function frame(){
+  ctx.clearRect(0,0,W,H);
+  drawBG();drawStructure();drawRimBack();
+
+  particles=particles.filter(function(p){
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life-=0.02;p.rot+=p.rv;
+    if(p.life<=0)return false;
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+    ctx.globalAlpha=p.life;ctx.fillStyle=p.col;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    ctx.restore();ctx.globalAlpha=1;return true;
+  });
+
+  var tp=0;
+  if(ball){
+    ball.t++;
+    if(ball.phase===1){
+      var t=ball.t/ball.dur;
+      if(t>=1){
+        if(ball.score>0){ball.phase=2;ball.t=0;ball.dur=32;ball.sx2=ball.tx;ball.sy2=ball.ty;}
+        else{ball.phase=3;ball.t=0;ball.dur=28;ball.sx2=ball.tx;ball.sy2=ball.ty;ball.tx2=ball.tx+(Math.random()-0.5)*W*0.35;ball.ty2=ball.ty+H*0.28;}
+      } else {
+        var et=ease(t),bx=lerp(ball.sx,ball.tx,et),by=lerp(ball.sy,ball.ty,et)-Math.sin(Math.PI*t)*H*0.52;
+        ball.spin+=0.11;drawBall(bx,by,ball.spin);
+      }
+    } else if(ball.phase===2){
+      var t2=ball.t/ball.dur;tp=t2;
+      if(t2>=1){ball=null;}
+      else{
+        if(t2>=0.45&&!ball.counted){
+          ball.counted=true;pts+=ball.score;made++;
+          flash={t:70,text:ball.score===3?'TRIPLO! +3':'CESTO! +2',ok:true};
+          confetti(HX(),HY());updateHUD();
+        }
+        var r2=Math.max(2,20*(1-t2*0.42)),bx2=lerp(ball.sx2,HX(),t2),by2=lerp(ball.sy2,HY()+44,ease(t2));
+        ball.spin+=0.08;drawBall(bx2,by2,ball.spin,r2);
+      }
+    } else if(ball.phase===3){
+      var t3=ball.t/ball.dur;
+      if(t3>=1){ball=null;}
+      else{
+        var bx3=lerp(ball.sx2,ball.tx2,t3),by3=lerp(ball.sy2,ball.ty2,ease(t3))-Math.sin(Math.PI*t3)*50;
+        ball.spin+=0.16;drawBall(bx3,by3,ball.spin);
+      }
+    }
+  } else {
+    var bob=pressing?Math.sin(Date.now()/90)*3:0;
+    ctx.beginPath();ctx.ellipse(W*0.5,H*0.876,18,3.8,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fill();
+    drawBall(W*0.5,H*0.86+bob,pressing?Date.now()/280:0);
+    drawPower();
+  }
+
+  drawRimFront();drawNet(tp);
+
+  if(flash&&flash.t>0){
+    flash.t--;
+    ctx.globalAlpha=Math.min(1,flash.t/18);
+    ctx.font='700 32px system-ui';ctx.textAlign='center';
+    ctx.fillStyle=flash.ok?'#F0A500':'#ff5544';
+    var fy=H*0.44-(70-flash.t)*0.4;
+    // text shadow
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillText(flash.text,W/2+2,fy+2);
+    ctx.fillStyle=flash.ok?'#F0A500':'#ff5544';ctx.fillText(flash.text,W/2,fy);
+    ctx.globalAlpha=1;
+  }
+
+  ctx.font='600 11px system-ui';ctx.fillStyle='rgba(240,165,0,0.18)';
+  ctx.textAlign='right';ctx.fillText('CB VIANA',W-12,H-10);
+  requestAnimationFrame(frame);
+}
+
+function updateHUD(){
+  document.getElementById('hpts').textContent=pts;
+  document.getElementById('hmade').textContent=made;
+  document.getElementById('hmiss').textContent=miss;
+  document.getElementById('hpct').textContent=(made+miss)>0?Math.round(made/(made+miss)*100)+'%':'—';
+}
+
+setTimeout(function(){resize();frame();},80);
+</script>
+</body>
+</html>
