@@ -1,0 +1,304 @@
+/*
+  CB Viana — Página de Inscrições
+  ==================================
+  WPCode → PHP Snippet → Run Everywhere
+  Shortcode: [cbv_inscricoes]
+*/
+
+add_shortcode('cbv_inscricoes', function(){
+
+  // ── Calcular escalão pelo ano de nascimento ──
+  $escaloes = [
+    2023 => 'Baby Basket (2023)',
+    2022 => 'Baby Basket (2022)',
+    2021 => 'Mini-8 (2021)',
+    2020 => 'Mini-8 (2020)',
+    2019 => 'Mini-10 (2019)',
+    2018 => 'Mini-10 (2018)',
+    2017 => 'Mini-12 (2017)',
+    2016 => 'Mini-12 (2016)',
+    2015 => 'Sub-14 (2015)',
+    2014 => 'Sub-14 (2014)',
+    2013 => 'Sub-16 (2013)',
+    2012 => 'Sub-16 (2012)',
+    2011 => 'Sub-18 (2011)',
+    2010 => 'Sub-18 (2010)',
+  ];
+
+  // ── Processar formulário ──
+  $success = false;
+  $error   = '';
+
+  if(isset($_POST['cbv_insc_submit']) && wp_verify_nonce($_POST['cbv_insc_nonce'], 'cbv_inscricao')){
+    $nome      = sanitize_text_field($_POST['nome'] ?? '');
+    $apelido   = sanitize_text_field($_POST['apelido'] ?? '');
+    $dob       = sanitize_text_field($_POST['data_nascimento'] ?? '');
+    $tel       = sanitize_text_field($_POST['telefone'] ?? '');
+    $email     = sanitize_email($_POST['email'] ?? '');
+    $primeira  = isset($_POST['primeira_vez']) ? 'Sim' : 'Não';
+    $clube_ant = sanitize_text_field($_POST['clube_anterior'] ?? '');
+    $obs       = sanitize_textarea_field($_POST['observacoes'] ?? '');
+
+    // Dados pais (se menor)
+    $ano_nasc  = (int)date('Y', strtotime($dob));
+    $idade     = date('Y') - $ano_nasc;
+    $menor     = $idade < 18;
+
+    $pai_nome  = sanitize_text_field($_POST['pai_nome'] ?? '');
+    $pai_tel   = sanitize_text_field($_POST['pai_tel'] ?? '');
+    $pai_email = sanitize_email($_POST['pai_email'] ?? '');
+
+    // Determinar escalão
+    $escalao = $escaloes[$ano_nasc] ?? ($ano_nasc >= 2009 ? 'Sénior' : 'Verificar com a direcção');
+
+    if(!$nome || !$apelido || !$dob || !$tel || !$email){
+      $error = 'Por favor preenche todos os campos obrigatórios.';
+    } elseif(!is_email($email)){
+      $error = 'Email inválido.';
+    } else {
+      // Enviar email
+      $to      = 'vianabasketball@gmail.com';
+      $subject = 'Pedido de Inscrição — ' . $nome . ' ' . $apelido;
+
+      $msg  = "PEDIDO DE INSCRIÇÃO — CB VIANA\n";
+      $msg .= str_repeat('=', 40) . "\n\n";
+      $msg .= "DADOS DO ATLETA\n";
+      $msg .= "Nome: $nome $apelido\n";
+      $msg .= "Data de Nascimento: $dob\n";
+      $msg .= "Escalão: $escalao\n";
+      $msg .= "Telefone: $tel\n";
+      $msg .= "Email: $email\n";
+      $msg .= "Primeira vez no basquetebol: $primeira\n";
+      if(!$primeira && $clube_ant) $msg .= "Clube anterior: $clube_ant\n";
+      if($obs) $msg .= "Observações: $obs\n";
+
+      if($menor){
+        $msg .= "\nDADOS DO ENCARREGADO DE EDUCAÇÃO\n";
+        $msg .= "Nome: $pai_nome\n";
+        $msg .= "Telefone: $pai_tel\n";
+        $msg .= "Email: $pai_email\n";
+      }
+
+      $headers = ['Content-Type: text/plain; charset=UTF-8', 'From: CB Viana <noreply@cbviana.com>'];
+      if($email) $headers[] = 'Reply-To: ' . $nome . ' ' . $apelido . ' <' . $email . '>';
+
+      $sent = wp_mail($to, $subject, $msg, $headers);
+
+      if($sent){
+        // Email de confirmação ao atleta/encarregado
+        $reply_to = $menor && $pai_email ? $pai_email : $email;
+        $reply_name = $menor && $pai_nome ? $pai_nome : "$nome $apelido";
+        $conf_msg  = "Olá $reply_name,\n\n";
+        $conf_msg .= "Recebemos o teu pedido de inscrição para $nome $apelido no CB Viana.\n\n";
+        $conf_msg .= "Escalão previsto: $escalao\n\n";
+        $conf_msg .= "Em breve entraremos em contacto com todas as informações necessárias.\n\n";
+        $conf_msg .= "Obrigado pelo interesse no Clube Basquete Viana!\n\n";
+        $conf_msg .= "CB Viana\ncbasqueteviana@gmail.com\n+351 917 815 629";
+        wp_mail($reply_to, 'Pedido de Inscrição recebido — CB Viana', $conf_msg, $headers);
+        $success = true;
+      } else {
+        $error = 'Erro ao enviar. Por favor contacta-nos por email ou telefone.';
+      }
+    }
+  }
+
+  ob_start();
+  ?>
+  <style>
+  .cbv-insc-wrap{max-width:700px;margin:0 auto;padding:40px 20px;font-family:'DM Sans',system-ui,sans-serif;}
+  .cbv-insc-hero{text-align:center;margin-bottom:40px;}
+  .cbv-insc-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(240,165,0,0.08);border:0.5px solid rgba(240,165,0,0.3);border-radius:30px;padding:5px 14px;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:rgba(240,165,0,0.7);margin-bottom:12px;}
+  .cbv-insc-title{font-family:'Teko','Barlow Condensed',sans-serif;font-size:42px;font-weight:700;color:#F0A500;letter-spacing:2px;margin-bottom:8px;}
+  .cbv-insc-sub{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;}
+  .cbv-insc-form{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(0,0,0,0.08);overflow:hidden;}
+  .cbv-insc-section{padding:28px 32px;border-bottom:1px solid #f1f5f9;}
+  .cbv-insc-section:last-child{border:none;}
+  .cbv-insc-section-title{font-family:'Teko','Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7B1C2E;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+  .cbv-insc-section-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(123,28,46,0.2),transparent);}
+  .cbv-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .cbv-row.full{grid-template-columns:1fr;}
+  .cbv-field{display:flex;flex-direction:column;gap:6px;}
+  .cbv-field label{font-size:12px;font-weight:600;letter-spacing:.5px;color:#374151;}
+  .cbv-field label span{color:#7B1C2E;}
+  .cbv-field input,.cbv-field select,.cbv-field textarea{padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:'DM Sans',system-ui;color:#111;transition:border-color .2s;background:#fafafa;width:100%;}
+  .cbv-field input:focus,.cbv-field select:focus,.cbv-field textarea:focus{outline:none;border-color:#7B1C2E;background:#fff;}
+  .cbv-field textarea{resize:vertical;min-height:80px;}
+  .cbv-escalao-box{background:#f9f0e8;border:1.5px solid rgba(240,165,0,0.4);border-radius:8px;padding:12px 16px;font-size:13px;color:#7B1C2E;font-weight:600;display:none;}
+  .cbv-check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+  .cbv-check-row input[type=checkbox]{width:18px;height:18px;accent-color:#7B1C2E;margin-top:2px;flex-shrink:0;}
+  .cbv-check-row label{font-size:13px;color:#374151;line-height:1.5;}
+  .cbv-menor-section{display:none;margin-top:4px;}
+  .cbv-submit-wrap{padding:24px 32px;background:#f9fafb;}
+  .cbv-submit{width:100%;padding:14px;background:#7B1C2E;color:#F0A500;font-family:'Teko','Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;text-transform:uppercase;border:none;border-radius:10px;cursor:pointer;transition:background .2s;}
+  .cbv-submit:hover{background:#9b2438;}
+  .cbv-success{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:24px;text-align:center;}
+  .cbv-success-icon{font-size:48px;margin-bottom:12px;}
+  .cbv-success-title{font-family:'Teko',sans-serif;font-size:24px;font-weight:700;color:#166534;margin-bottom:8px;}
+  .cbv-success-msg{font-size:14px;color:#166534;line-height:1.6;}
+  .cbv-error{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:12px 16px;font-size:13px;color:#991b1b;margin-bottom:20px;}
+  @media(max-width:600px){.cbv-row{grid-template-columns:1fr;}.cbv-insc-section{padding:20px 16px;}.cbv-submit-wrap{padding:16px;}}
+  </style>
+
+  <div class="cbv-insc-wrap">
+    <div class="cbv-insc-hero">
+      <div class="cbv-insc-badge">🏀 CB Viana</div>
+      <div class="cbv-insc-title">Junta-te a Nós</div>
+      <div class="cbv-insc-sub">Preenche o formulário e entraremos em contacto com todas as informações sobre inscrição, mensalidades e próximos passos.</div>
+    </div>
+
+    <?php if($success): ?>
+      <div class="cbv-success">
+        <div class="cbv-success-icon">🎉</div>
+        <div class="cbv-success-title">Pedido Enviado!</div>
+        <div class="cbv-success-msg">Obrigado pelo interesse no CB Viana!<br>Em breve entraremos em contacto com todas as informações necessárias.<br>Verifica também a tua caixa de email.</div>
+      </div>
+    <?php else: ?>
+      <?php if($error): ?><div class="cbv-error">⚠️ <?php echo esc_html($error); ?></div><?php endif; ?>
+
+      <form method="post" class="cbv-insc-form" id="cbv-insc-form">
+        <?php wp_nonce_field('cbv_inscricao', 'cbv_insc_nonce'); ?>
+
+        <!-- ATLETA -->
+        <div class="cbv-insc-section">
+          <div class="cbv-insc-section-title">Dados do Atleta</div>
+
+          <div class="cbv-row">
+            <div class="cbv-field">
+              <label>Nome <span>*</span></label>
+              <input type="text" name="nome" required placeholder="Nome próprio" value="<?php echo esc_attr($_POST['nome'] ?? ''); ?>">
+            </div>
+            <div class="cbv-field">
+              <label>Apelido <span>*</span></label>
+              <input type="text" name="apelido" required placeholder="Apelido" value="<?php echo esc_attr($_POST['apelido'] ?? ''); ?>">
+            </div>
+          </div>
+
+          <div class="cbv-row">
+            <div class="cbv-field">
+              <label>Data de Nascimento <span>*</span></label>
+              <input type="date" name="data_nascimento" id="cbv-dob" required value="<?php echo esc_attr($_POST['data_nascimento'] ?? ''); ?>">
+            </div>
+            <div class="cbv-field">
+              <label>Escalão (calculado automaticamente)</label>
+              <div class="cbv-escalao-box" id="cbv-escalao">—</div>
+            </div>
+          </div>
+
+          <div class="cbv-row">
+            <div class="cbv-field">
+              <label>Telefone <span>*</span></label>
+              <input type="tel" name="telefone" required placeholder="+351 9XX XXX XXX" value="<?php echo esc_attr($_POST['telefone'] ?? ''); ?>">
+            </div>
+            <div class="cbv-field">
+              <label>Email <span>*</span></label>
+              <input type="email" name="email" required placeholder="email@exemplo.com" value="<?php echo esc_attr($_POST['email'] ?? ''); ?>">
+            </div>
+          </div>
+
+          <div class="cbv-check-row">
+            <input type="checkbox" name="primeira_vez" id="cbv-primeira" <?php checked(isset($_POST['cbv_insc_submit']) && !isset($_POST['primeira_vez']), false); ?>>
+            <label for="cbv-primeira">É a primeira vez que pratica basquetebol</label>
+          </div>
+
+          <div class="cbv-row full" id="cbv-clube-row" style="display:none;">
+            <div class="cbv-field">
+              <label>Clube anterior</label>
+              <input type="text" name="clube_anterior" placeholder="Nome do clube anterior" value="<?php echo esc_attr($_POST['clube_anterior'] ?? ''); ?>">
+            </div>
+          </div>
+
+          <div class="cbv-row full">
+            <div class="cbv-field">
+              <label>Observações</label>
+              <textarea name="observacoes" placeholder="Informações adicionais que consideres relevantes..."><?php echo esc_textarea($_POST['observacoes'] ?? ''); ?></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENCARREGADO (menores) -->
+        <div class="cbv-insc-section cbv-menor-section" id="cbv-menor-section">
+          <div class="cbv-insc-section-title">Encarregado de Educação <small style="font-size:11px;color:#999;font-family:system-ui;">(atleta menor de idade)</small></div>
+
+          <div class="cbv-row">
+            <div class="cbv-field">
+              <label>Nome completo <span>*</span></label>
+              <input type="text" name="pai_nome" placeholder="Nome do encarregado" value="<?php echo esc_attr($_POST['pai_nome'] ?? ''); ?>">
+            </div>
+            <div class="cbv-field">
+              <label>Grau de parentesco</label>
+              <select name="parentesco">
+                <option value="Pai">Pai</option>
+                <option value="Mãe">Mãe</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="cbv-row">
+            <div class="cbv-field">
+              <label>Telefone <span>*</span></label>
+              <input type="tel" name="pai_tel" placeholder="+351 9XX XXX XXX" value="<?php echo esc_attr($_POST['pai_tel'] ?? ''); ?>">
+            </div>
+            <div class="cbv-field">
+              <label>Email <span>*</span></label>
+              <input type="email" name="pai_email" placeholder="email@exemplo.com" value="<?php echo esc_attr($_POST['pai_email'] ?? ''); ?>">
+            </div>
+          </div>
+        </div>
+
+        <div class="cbv-submit-wrap">
+          <button type="submit" name="cbv_insc_submit" class="cbv-submit">Enviar Pedido de Inscrição →</button>
+          <p style="text-align:center;font-size:11px;color:#999;margin-top:12px;">Ao submeter, aceitas que os teus dados sejam utilizados para fins de contacto pelo CB Viana.</p>
+        </div>
+      </form>
+    <?php endif; ?>
+  </div>
+
+  <script>
+  (function(){
+    var escaloes = {
+      2023:'Baby Basket',2022:'Baby Basket',
+      2021:'Mini-8',2020:'Mini-8',
+      2019:'Mini-10',2018:'Mini-10',
+      2017:'Mini-12',2016:'Mini-12',
+      2015:'Sub-14',2014:'Sub-14',
+      2013:'Sub-16',2012:'Sub-16',
+      2011:'Sub-18',2010:'Sub-18',
+      2009:'Sénior',2008:'Sénior',2007:'Sénior'
+    };
+
+    var dob = document.getElementById('cbv-dob');
+    var esc = document.getElementById('cbv-escalao');
+    var menorSec = document.getElementById('cbv-menor-section');
+    var primeiraCheck = document.getElementById('cbv-primeira');
+    var clubeRow = document.getElementById('cbv-clube-row');
+
+    function updateEscalao(){
+      if(!dob.value) return;
+      var ano = new Date(dob.value).getFullYear();
+      var nome = escaloes[ano] || (ano >= 2006 ? 'Sénior' : 'Verificar com a direcção');
+      esc.textContent = '🏀 ' + nome + ' (' + ano + ')';
+      esc.style.display = 'block';
+      // Mostrar secção encarregado se menor
+      var idade = new Date().getFullYear() - ano;
+      if(idade < 18){
+        menorSec.style.display = 'block';
+      } else {
+        menorSec.style.display = 'none';
+      }
+    }
+
+    if(dob){ dob.addEventListener('change', updateEscalao); updateEscalao(); }
+
+    // Mostrar clube anterior se não é primeira vez
+    if(primeiraCheck){
+      primeiraCheck.addEventListener('change', function(){
+        clubeRow.style.display = this.checked ? 'none' : 'grid';
+      });
+      clubeRow.style.display = primeiraCheck.checked ? 'none' : 'grid';
+    }
+  })();
+  </script>
+  <?php
+  return ob_get_clean();
+});
