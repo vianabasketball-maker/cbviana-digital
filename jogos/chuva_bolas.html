@@ -244,6 +244,12 @@ function tryStart(){
         }
         overlay.classList.add("visible");
         reportScore('chuva_bolas', score, {});
+        // Reportar score global
+        try{
+            var msg={type:'cbv_score',gameId:'chuva_bolas',entry:{score:score}};
+            if(window.parent) window.parent.postMessage(msg,'*');
+            if(window.parent&&window.parent.parent) window.parent.parent.postMessage(msg,'*');
+        }catch(e){}
     }
     function startGame() {
         document.getElementById('entry-screen').style.display='none';
