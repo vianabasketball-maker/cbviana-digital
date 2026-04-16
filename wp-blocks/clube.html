@@ -1,0 +1,1168 @@
+<p><br /><br /><br /><br /> <style>
+/* ============================================================<br />
+   CB VIANA — PÁGINA CLUBE<br />
+   Sistema dinâmico via cbviana-config.json<br />
+   Cloudinary: dmwwjylsw / pasta: clube/<br />
+   ============================================================ */</p>
+<p>:root {<br />
+  --bordo: #7B1C2E;<br />
+  --bordo-dark: #5a1220;<br />
+  --bordo-light: #9a2a3e;<br />
+  --gold: #F0A500;<br />
+  --gold-light: #f5c040;<br />
+  --gold-dim: rgba(240,165,0,0.15);<br />
+  --white: #fff;<br />
+  --cream: #f8f0e8;<br />
+  --text-muted: rgba(255,255,255,0.6);<br />
+  --cloud-base: https://res.cloudinary.com/dmwwjylsw/image/upload;<br />
+  --cloud-folder: clube;<br />
+}</p>
+<p>* { margin: 0; padding: 0; box-sizing: border-box; }</p>
+<p>body {<br />
+  font-family: 'Barlow', sans-serif;<br />
+  background: var(--bordo-dark);<br />
+  color: #fff;<br />
+  overflow-x: hidden;<br />
+}</p>
+<p>/* ── LOADING ── */<br />
+#loading {<br />
+  position: fixed; inset: 0;<br />
+  background: var(--bordo-dark);<br />
+  display: flex; align-items: center; justify-content: center;<br />
+  z-index: 9999;<br />
+  transition: opacity 0.5s;<br />
+}<br />
+#loading .spinner {<br />
+  width: 48px; height: 48px;<br />
+  border: 3px solid var(--gold-dim);<br />
+  border-top-color: var(--gold);<br />
+  border-radius: 50%;<br />
+  animation: spin 0.8s linear infinite;<br />
+}<br />
+@keyframes spin { to { transform: rotate(360deg); } }</p>
+<p>/* ── HERO ── */<br />
+.hero {<br />
+  position: relative;<br />
+  min-height: 520px;<br />
+  background: var(--bordo-dark);<br />
+  display: flex; flex-direction: column;<br />
+  align-items: center; justify-content: center;<br />
+  text-align: center;<br />
+  padding: 80px 40px 60px;<br />
+  overflow: hidden;<br />
+}<br />
+.hero::before {<br />
+  content: '';<br />
+  position: absolute; inset: 0;<br />
+  background:<br />
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(240,165,0,0.04) 60px),<br />
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(240,165,0,0.04) 60px);<br />
+}<br />
+.hero-badge {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 11px; letter-spacing: 5px;<br />
+  text-transform: uppercase;<br />
+  color: var(--gold);<br />
+  margin-bottom: 20px;<br />
+  position: relative;<br />
+}<br />
+.hero h1 {<br />
+  font-family: 'Playfair Display', serif;<br />
+  font-size: clamp(64px, 10vw, 110px);<br />
+  font-weight: 900;<br />
+  line-height: 0.9;<br />
+  letter-spacing: -2px;<br />
+  position: relative;<br />
+}<br />
+.hero h1 .cb { color: rgba(255,255,255,0.2); }<br />
+.hero h1 .viana { color: var(--gold); }<br />
+.hero-sub {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 15px; letter-spacing: 8px;<br />
+  text-transform: uppercase;<br />
+  color: rgba(255,255,255,0.5);<br />
+  margin-top: 20px;<br />
+  position: relative;<br />
+}<br />
+.hero-line {<br />
+  width: 80px; height: 2px;<br />
+  background: var(--gold);<br />
+  margin: 28px auto;<br />
+  position: relative;<br />
+}</p>
+<p>/* ── STATS BAND ── */<br />
+.stats-band {<br />
+  background: var(--gold);<br />
+  display: grid;<br />
+  grid-template-columns: repeat(4, 1fr);<br />
+}<br />
+.stat-item {<br />
+  padding: 24px 20px;<br />
+  text-align: center;<br />
+  border-right: 1px solid rgba(123,28,46,0.2);<br />
+  transition: background 0.2s;<br />
+}<br />
+.stat-item:last-child { border-right: none; }<br />
+.stat-item:hover { background: var(--gold-light); }<br />
+.stat-num {<br />
+  font-family: 'Playfair Display', serif;<br />
+  font-size: 36px; font-weight: 700;<br />
+  color: var(--bordo-dark);<br />
+  line-height: 1;<br />
+}<br />
+.stat-lbl {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 11px; letter-spacing: 2px;<br />
+  text-transform: uppercase;<br />
+  color: var(--bordo);<br />
+  margin-top: 4px;<br />
+}</p>
+<p>/* ── SECTIONS SHARED ── */<br />
+.section { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }<br />
+.section-label {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 11px; letter-spacing: 5px;<br />
+  text-transform: uppercase; color: var(--gold);<br />
+  margin-bottom: 12px;<br />
+}<br />
+.section-title {<br />
+  font-family: 'Playfair Display', serif;<br />
+  font-size: clamp(32px, 5vw, 48px);<br />
+  font-weight: 700; line-height: 1.1;<br />
+  margin-bottom: 32px;<br />
+}<br />
+.gold-line {<br />
+  width: 100%; height: 1px;<br />
+  background: linear-gradient(90deg, var(--gold), transparent);<br />
+  margin: 0;<br />
+  opacity: 0.3;<br />
+}</p>
+<p>/* ── MISSÃO ── */<br />
+.mission-wrap {<br />
+  background: var(--bordo);<br />
+  padding: 80px 40px;<br />
+}<br />
+.mission-inner {<br />
+  max-width: 800px; margin: 0 auto; text-align: center;<br />
+}<br />
+.mission-quote {<br />
+  font-family: 'Playfair Display', serif;<br />
+  font-size: clamp(20px, 3vw, 28px);<br />
+  font-style: italic;<br />
+  line-height: 1.6;<br />
+  color: var(--cream);<br />
+  position: relative;<br />
+  padding: 0 20px;<br />
+}<br />
+.mission-quote::before {<br />
+  content: '"';<br />
+  font-size: 100px; color: var(--gold);<br />
+  position: absolute; left: -20px; top: -30px;<br />
+  line-height: 1; opacity: 0.4;<br />
+  font-family: 'Playfair Display', serif;<br />
+}<br />
+.mission-tagline {<br />
+  margin-top: 32px;<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 13px; letter-spacing: 6px;<br />
+  text-transform: uppercase; color: var(--gold);<br />
+  display: flex; align-items: center; justify-content: center; gap: 20px;<br />
+}<br />
+.mission-tagline span::before { content: '·'; margin-right: 20px; opacity: 0.4; }<br />
+.mission-tagline span:first-child::before { display: none; }</p>
+<p>/* ── HISTÓRIA ── */<br />
+.history-grid {<br />
+  display: grid;<br />
+  grid-template-columns: 1fr 380px;<br />
+  gap: 80px; align-items: start;<br />
+}<br />
+.history-text p {<br />
+  font-size: 16px; line-height: 1.8;<br />
+  color: rgba(255,255,255,0.75);<br />
+  margin-bottom: 20px;<br />
+}<br />
+/* Timeline */<br />
+.timeline { position: relative; }<br />
+.tl-item {<br />
+  display: flex; gap: 20px;<br />
+  padding-bottom: 32px;<br />
+  position: relative;<br />
+  opacity: 0;<br />
+  transform: translateX(20px);<br />
+  transition: opacity 0.5s, transform 0.5s;<br />
+}<br />
+.tl-item.visible { opacity: 1; transform: translateX(0); }<br />
+.tl-item::after {<br />
+  content: '';<br />
+  position: absolute; left: 16px; top: 34px; bottom: 0;<br />
+  width: 1px;<br />
+  background: linear-gradient(180deg, rgba(240,165,0,0.5), transparent);<br />
+}<br />
+.tl-item:last-child::after { display: none; }<br />
+.tl-dot {<br />
+  width: 32px; height: 32px; border-radius: 50%;<br />
+  background: var(--bordo-dark);<br />
+  border: 2px solid var(--gold);<br />
+  color: var(--gold);<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 10px; font-weight: 600;<br />
+  display: flex; align-items: center; justify-content: center;<br />
+  flex-shrink: 0; z-index: 1; margin-top: 2px;<br />
+}<br />
+.tl-year {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 12px; letter-spacing: 2px;<br />
+  color: var(--gold); margin-bottom: 4px;<br />
+}<br />
+.tl-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }</p>
+<p>/* ── PALMARÉS DINÂMICO ── */<br />
+.palmares-wrap { background: #4a0f1e; padding: 80px 0; }<br />
+.palmares-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }<br />
+.palmares-filters {<br />
+  display: flex; gap: 8px; flex-wrap: wrap;<br />
+  margin-bottom: 40px;<br />
+}<br />
+.filter-btn {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 12px; letter-spacing: 2px; text-transform: uppercase;<br />
+  padding: 8px 20px;<br />
+  border: 1px solid rgba(240,165,0,0.3);<br />
+  background: transparent; color: rgba(255,255,255,0.6);<br />
+  cursor: pointer; border-radius: 2px;<br />
+  transition: all 0.2s;<br />
+}<br />
+.filter-btn:hover, .filter-btn.active {<br />
+  background: var(--gold); color: var(--bordo-dark);<br />
+  border-color: var(--gold);<br />
+}<br />
+.palmares-grid {<br />
+  display: grid;<br />
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));<br />
+  gap: 16px;<br />
+}<br />
+.palm-card {<br />
+  background: rgba(255,255,255,0.04);<br />
+  border: 1px solid rgba(240,165,0,0.15);<br />
+  border-radius: 4px; padding: 24px 20px;<br />
+  transition: border-color 0.2s, transform 0.2s;<br />
+  position: relative; overflow: hidden;<br />
+}<br />
+.palm-card::before {<br />
+  content: '';<br />
+  position: absolute; top: 0; left: 0;<br />
+  width: 3px; height: 100%;<br />
+  background: var(--gold);<br />
+}<br />
+.palm-card:hover {<br />
+  border-color: rgba(240,165,0,0.4);<br />
+  transform: translateY(-2px);<br />
+}<br />
+.palm-card[style*="display:none"] { display: none !important; }<br />
+.palm-tipo {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;<br />
+  color: var(--gold); margin-bottom: 8px;<br />
+}<br />
+.palm-titulo {<br />
+  font-size: 15px; font-weight: 500;<br />
+  color: #fff; margin-bottom: 6px; line-height: 1.3;<br />
+}<br />
+.palm-epoca {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 13px; color: var(--text-muted);<br />
+}<br />
+.palm-img {<br />
+  width: 100%; height: 140px;<br />
+  object-fit: contain;<br />
+  object-position: center center;<br />
+  border-radius: 2px; margin-bottom: 14px;<br />
+  background: rgba(0,0,0,0.25);<br />
+  padding: 8px;<br />
+}<br />
+.palm-img-placeholder {<br />
+  width: 100%; height: 80px;<br />
+  background: rgba(240,165,0,0.05);<br />
+  border: 1px dashed rgba(240,165,0,0.2);<br />
+  border-radius: 2px; margin-bottom: 14px;<br />
+  display: flex; align-items: center; justify-content: center;<br />
+}<br />
+.palm-img-placeholder span {<br />
+  font-size: 11px; color: rgba(240,165,0,0.3);<br />
+  font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;<br />
+}</p>
+<p>/* ── GALERIA MOMENTOS ── */<br />
+.galeria-section { padding: 80px 40px; }<br />
+.galeria-grid {<br />
+  display: grid;<br />
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));<br />
+  gap: 4px; margin-top: 40px;<br />
+}<br />
+.galeria-item {<br />
+  position: relative; overflow: hidden;<br />
+  aspect-ratio: 4/3; cursor: pointer;<br />
+  background: rgba(0,0,0,0.3);<br />
+}<br />
+.galeria-item img {<br />
+  width: 100%; height: 100%; object-fit: cover;<br />
+  transition: transform 0.4s;<br />
+}<br />
+.galeria-item:hover img { transform: scale(1.05); }<br />
+.galeria-overlay {<br />
+  position: absolute; inset: 0;<br />
+  background: linear-gradient(180deg, transparent 50%, rgba(90,18,32,0.9) 100%);<br />
+  opacity: 0; transition: opacity 0.3s;<br />
+  display: flex; align-items: flex-end; padding: 16px;<br />
+}<br />
+.galeria-item:hover .galeria-overlay { opacity: 1; }<br />
+.galeria-caption { font-size: 13px; color: #fff; line-height: 1.3; }<br />
+.galeria-placeholder {<br />
+  background: rgba(240,165,0,0.04);<br />
+  border: 1px dashed rgba(240,165,0,0.15);<br />
+  display: flex; flex-direction: column;<br />
+  align-items: center; justify-content: center; gap: 8px;<br />
+}<br />
+.galeria-placeholder span {<br />
+  font-size: 11px; color: rgba(240,165,0,0.3);<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  letter-spacing: 1px; text-align: center; padding: 0 20px;<br />
+}</p>
+<p>/* ── MURAL GALHARDETES ── */<br />
+.galhardetes-mural {<br />
+  display: flex;<br />
+  flex-wrap: wrap;<br />
+  gap: 32px;<br />
+  justify-content: center;<br />
+  align-items: flex-start; /* alinha pelo topo */<br />
+  padding: 50px 24px 32px;<br />
+  background: rgba(0,0,0,0.2);<br />
+  border-radius: 8px;<br />
+  border: 1px solid rgba(240,165,0,0.1);<br />
+  margin-top: 40px;<br />
+  position: relative;<br />
+}<br />
+/* Cordel no topo */<br />
+.galhardetes-mural::before {<br />
+  content: '';<br />
+  position: absolute;<br />
+  top: 22px; left: 20px; right: 20px;<br />
+  height: 2px;<br />
+  background: linear-gradient(90deg,<br />
+    transparent 0%,<br />
+    rgba(180,130,40,0.8) 5%,<br />
+    rgba(200,150,50,0.9) 50%,<br />
+    rgba(180,130,40,0.8) 95%,<br />
+    transparent 100%<br />
+  );<br />
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);<br />
+}</p>
+<p>.galhardete-item {<br />
+  display: flex;<br />
+  flex-direction: column;<br />
+  align-items: center;<br />
+  gap: 0;<br />
+  cursor: pointer;<br />
+  transition: transform 0.3s;<br />
+  transform-origin: top center;<br />
+}<br />
+.galhardete-item:hover {<br />
+  transform: rotate(-4deg) scale(1.1);<br />
+}</p>
+<p>/* Prego metálico */<br />
+.galhardete-prego {<br />
+  position: relative;<br />
+  width: 14px;<br />
+  height: 14px;<br />
+  z-index: 2;<br />
+  margin-bottom: -2px;<br />
+}<br />
+.galhardete-prego::before {<br />
+  /* Cabeça do prego — círculo metálico */<br />
+  content: '';<br />
+  position: absolute;<br />
+  top: 0; left: 50%;<br />
+  transform: translateX(-50%);<br />
+  width: 12px; height: 12px;<br />
+  border-radius: 50%;<br />
+  background: radial-gradient(circle at 35% 35%,<br />
+    #e8d080 0%, #c8a830 40%, #8a6810 100%<br />
+  );<br />
+  box-shadow:<br />
+    0 2px 4px rgba(0,0,0,0.6),<br />
+    inset 0 1px 2px rgba(255,255,255,0.3);<br />
+}<br />
+.galhardete-prego::after {<br />
+  /* Haste do prego */<br />
+  content: '';<br />
+  position: absolute;<br />
+  top: 10px; left: 50%;<br />
+  transform: translateX(-50%);<br />
+  width: 2px; height: 16px;<br />
+  background: linear-gradient(180deg, #b89020, #7a5c10);<br />
+  box-shadow: 1px 0 2px rgba(0,0,0,0.3);<br />
+}</p>
+<p>/* Cordinha de cada galhardete */<br />
+.galhardete-fio {<br />
+  width: 1px;<br />
+  height: 22px;<br />
+  background: linear-gradient(180deg, rgba(200,150,50,0.8), rgba(180,130,40,0.4));<br />
+  margin-top: 14px;<br />
+  position: relative;<br />
+}</p>
+<p>/* Imagem do galhardete */<br />
+.galhardete-img-wrap {<br />
+  width: 110px;<br />
+  box-shadow:<br />
+    3px 6px 16px rgba(0,0,0,0.6),<br />
+    0 0 0 1px rgba(255,255,255,0.06);<br />
+  border-radius: 0 0 6px 6px;<br />
+  overflow: hidden;<br />
+  transition: box-shadow 0.3s;<br />
+}<br />
+.galhardete-item:hover .galhardete-img-wrap {<br />
+  box-shadow:<br />
+    6px 12px 28px rgba(0,0,0,0.8),<br />
+    0 0 0 1px rgba(240,165,0,0.4);<br />
+}<br />
+.galhardete-img-wrap img {<br />
+  width: 100%;<br />
+  height: 155px;<br />
+  object-fit: contain;<br />
+  object-position: center top;<br />
+  display: block;<br />
+  background: rgba(255,255,255,0.03);<br />
+}<br />
+.galhardete-img-placeholder {<br />
+  width: 110px; height: 155px;<br />
+  background: rgba(240,165,0,0.04);<br />
+  border: 1px dashed rgba(240,165,0,0.2);<br />
+  display: flex; align-items: center; justify-content: center;<br />
+}<br />
+.galhardete-img-placeholder span {<br />
+  font-size: 9px; color: rgba(240,165,0,0.3);<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  letter-spacing: 1px; text-align: center; padding: 4px;<br />
+}<br />
+/* Nome do galhardete */<br />
+.galhardete-nome {<br />
+  margin-top: 8px;<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 10px; letter-spacing: 1px;<br />
+  color: rgba(255,255,255,0.45);<br />
+  text-align: center;<br />
+  max-width: 110px;<br />
+  line-height: 1.3;<br />
+}</p>
+<p>@media (max-width: 600px) {<br />
+  .galhardete-img-wrap { width: 80px; }<br />
+  .galhardete-img-wrap img { height: 115px; }<br />
+  .galhardete-img-placeholder { width: 80px; height: 115px; }<br />
+  .galhardete-nome { max-width: 80px; font-size: 9px; }<br />
+  .galhardetes-mural { gap: 18px; }<br />
+}</p>
+<p>/* ── IMPRENSA ── */<br />
+.imprensa-wrap { background: var(--bordo); padding: 80px 0; }<br />
+.imprensa-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }<br />
+.imprensa-grid {<br />
+  display: grid;<br />
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));<br />
+  gap: 20px; margin-top: 40px;<br />
+}<br />
+.news-card {<br />
+  background: rgba(0,0,0,0.2);<br />
+  border: 1px solid rgba(240,165,0,0.15);<br />
+  border-radius: 4px; overflow: hidden;<br />
+  transition: border-color 0.2s;<br />
+}<br />
+.news-card:hover { border-color: rgba(240,165,0,0.4); }<br />
+.news-img-wrap {<br />
+  height: 160px; overflow: hidden;<br />
+  background: rgba(0,0,0,0.3);<br />
+  position: relative;<br />
+}<br />
+.news-img-wrap img {<br />
+  width: 100%; height: 100%; object-fit: cover;<br />
+  transition: transform 0.4s;<br />
+}<br />
+.news-card:hover .news-img-wrap img { transform: scale(1.05); }<br />
+.news-img-placeholder {<br />
+  width: 100%; height: 100%;<br />
+  display: flex; align-items: center; justify-content: center;<br />
+  background: rgba(240,165,0,0.03);<br />
+  border-bottom: 1px dashed rgba(240,165,0,0.15);<br />
+}<br />
+.news-img-placeholder span {<br />
+  font-size: 11px; color: rgba(240,165,0,0.3);<br />
+  font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;<br />
+}<br />
+.news-body { padding: 20px; }<br />
+.news-source {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;<br />
+  color: var(--gold); margin-bottom: 8px;<br />
+}<br />
+.news-headline { font-size: 15px; color: #fff; line-height: 1.4; margin-bottom: 10px; }<br />
+.news-date { font-size: 12px; color: var(--text-muted); }</p>
+<p>/* ── VALORES ── */<br />
+.valores-grid {<br />
+  display: grid;<br />
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));<br />
+  gap: 20px; margin-top: 40px;<br />
+}<br />
+.valor-card {<br />
+  padding: 32px 24px; text-align: center;<br />
+  border: 1px solid rgba(240,165,0,0.15);<br />
+  border-radius: 4px;<br />
+  transition: background 0.2s;<br />
+}<br />
+.valor-card:hover { background: rgba(240,165,0,0.05); }<br />
+.valor-icon {<br />
+  width: 52px; height: 52px; border-radius: 50%;<br />
+  border: 2px solid var(--gold);<br />
+  margin: 0 auto 20px;<br />
+  display: flex; align-items: center; justify-content: center;<br />
+}<br />
+.valor-icon svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2; }<br />
+.valor-titulo { font-size: 14px; font-weight: 500; color: var(--gold); margin-bottom: 10px; letter-spacing: 1px; }<br />
+.valor-texto { font-size: 13px; color: var(--text-muted); line-height: 1.6; }</p>
+<p>/* ── CONTACTOS ── */<br />
+.contactos-wrap {<br />
+  background: var(--bordo-dark);<br />
+  border-top: 1px solid rgba(240,165,0,0.2);<br />
+  padding: 60px 40px; text-align: center;<br />
+}<br />
+.contactos-inner { max-width: 700px; margin: 0 auto; }<br />
+.contactos-grid {<br />
+  display: flex; justify-content: center; gap: 60px;<br />
+  flex-wrap: wrap; margin: 32px 0;<br />
+}<br />
+.contacto-item .lbl {<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;<br />
+  color: var(--gold); margin-bottom: 6px;<br />
+}<br />
+.contacto-item .val { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.5; }<br />
+.horario-box {<br />
+  display: inline-block;<br />
+  border: 1px solid rgba(240,165,0,0.3);<br />
+  padding: 16px 40px; border-radius: 2px;<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 15px; letter-spacing: 2px;<br />
+  color: var(--gold);<br />
+}</p>
+<p>/* ── SECÇÃO OCULTA (activada via JSON) ── */<br />
+.hidden-section { display: none; }<br />
+.hidden-section.active { display: block; }</p>
+<p>/* ── FADE IN ── */<br />
+.fade-in {<br />
+  opacity: 0; transform: translateY(20px);<br />
+  transition: opacity 0.6s, transform 0.6s;<br />
+}<br />
+.fade-in.visible { opacity: 1; transform: translateY(0); }</p>
+<p>/* ── RESPONSIVE ── */<br />
+@media (max-width: 768px) {<br />
+  .stats-band { grid-template-columns: repeat(2, 1fr); }<br />
+  .history-grid { grid-template-columns: 1fr; }<br />
+  .section { padding: 60px 20px; }<br />
+  .palmares-inner, .imprensa-inner { padding: 0 20px; }<br />
+  .galeria-section { padding: 60px 20px; }<br />
+  .contactos-wrap { padding: 60px 20px; }<br />
+  .contactos-grid { gap: 32px; }<br />
+  .hero { padding: 60px 20px 50px; }<br />
+}</p>
+<p>/* ── LIGHTBOX ── */<br />
+#lightbox {<br />
+  display: none;<br />
+  position: fixed; inset: 0; z-index: 9999;<br />
+  background: rgba(0,0,0,0.92);<br />
+  align-items: center; justify-content: center;<br />
+  flex-direction: column;<br />
+}<br />
+#lightbox.open { display: flex; }<br />
+#lightbox img {<br />
+  max-width: 90vw; max-height: 82vh;<br />
+  object-fit: contain;<br />
+  border: 1px solid rgba(240,165,0,0.3);<br />
+  border-radius: 4px;<br />
+}<br />
+#lightbox-caption {<br />
+  margin-top: 14px;<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 14px; letter-spacing: 2px;<br />
+  color: rgba(255,255,255,0.7);<br />
+  text-align: center;<br />
+}<br />
+#lightbox-close {<br />
+  position: absolute; top: 20px; right: 28px;<br />
+  font-size: 32px; color: var(--gold);<br />
+  cursor: pointer; line-height: 1;<br />
+  background: none; border: none;<br />
+  font-family: sans-serif;<br />
+}<br />
+#lightbox-close:hover { color: #fff; }<br />
+#lightbox-prev, #lightbox-next {<br />
+  position: absolute; top: 50%; transform: translateY(-50%);<br />
+  font-size: 40px; color: var(--gold);<br />
+  cursor: pointer; background: none; border: none;<br />
+  padding: 0 20px; line-height: 1;<br />
+  font-family: sans-serif;<br />
+}<br />
+#lightbox-prev:hover, #lightbox-next:hover { color: #fff; }<br />
+#lightbox-prev { left: 10px; }<br />
+#lightbox-next { right: 10px; }<br />
+#lightbox-counter {<br />
+  position: absolute; top: 22px; left: 50%;<br />
+  transform: translateX(-50%);<br />
+  font-family: 'Barlow Condensed', sans-serif;<br />
+  font-size: 12px; letter-spacing: 3px;<br />
+  color: rgba(255,255,255,0.4);<br />
+}<br />
+.galeria-item { cursor: zoom-in; }<br />
+.palm-card { cursor: zoom-in; }<br />
+</style></p>
+<p> </p>
+<p> </p>
+<div id="loading">
+<div class="spinner"> </div>
+</div>
+<div id="app" style="opacity: 0; transition: opacity 0.5s; width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;">
+<p><!-- HERO --></p>
+<section id="hero" class="hero">
+<div id="hero-badge" class="hero-badge">Clube de Basquete de Viana do Castelo</div>
+<h1><span class="cb">CB </span><span class="viana">VIANA</span></h1>
+<div class="hero-sub">Basquetebol · Viana do Castelo</div>
+<div class="hero-line"> </div>
+<p id="hero-fundacao" style="font-size: 13px; color: rgba(255,255,255,0.4); letter-spacing: 2px; font-family: 'Barlow Condensed',sans-serif; text-transform: uppercase;"> </p>
+</section>
+<p><!-- STATS --></p>
+<div id="stats-band" class="stats-band"> </div>
+<p><!-- MISSÃO --></p>
+<div class="mission-wrap">
+<div class="mission-inner fade-in">
+<div class="section-label">A Nossa Missão</div>
+<div id="missao-tagline" class="mission-tagline"> </div>
+</div>
+</div>
+<div class="gold-line"> </div>
+<p><!-- HISTÓRIA --></p>
+<div class="section">
+<div class="history-grid">
+<div>
+<div class="section-label">A Nossa História</div>
+<div id="historia-titulo" class="section-title"> </div>
+<div id="historia-parags"> </div>
+</div>
+<div id="timeline" class="timeline"> </div>
+</div>
+</div>
+<div class="gold-line"> </div>
+<p><!-- PALMARÉS --></p>
+<div class="palmares-wrap">
+<div class="palmares-inner">
+<div class="section-label">Conquistas</div>
+<div class="section-title">Palmarés</div>
+<div id="palmares-filters" class="palmares-filters"> </div>
+<div id="palmares-grid" class="palmares-grid"> </div>
+</div>
+</div>
+<p><!-- GALERIA MOMENTOS --></p>
+<div id="sec-momentos" class="galeria-section hidden-section">
+<div class="section-label">Memórias</div>
+<div class="section-title">Momentos</div>
+<div id="momentos-grid" class="galeria-grid"> </div>
+</div>
+<p><!-- GALHARDETES (secção opcional) --></p>
+<div id="sec-galhardetes" class="hidden-section">
+<div class="section" style="padding-top: 0;">
+<div class="section-label">Coleção</div>
+<div class="section-title">Galhardetes</div>
+<div id="galhardetes-grid"> </div>
+</div>
+</div>
+<p><!-- IMPRENSA --></p>
+<div id="sec-imprensa-wrap" class="imprensa-wrap">
+<div class="imprensa-inner">
+<div class="section-label">Media</div>
+<div class="section-title">Na Imprensa</div>
+<div id="imprensa-grid" class="imprensa-grid"> </div>
+</div>
+</div>
+<p><!-- VALORES --></p>
+<div class="section fade-in">
+<div class="section-label">Identidade</div>
+<div class="section-title">Os Nossos Valores</div>
+<div id="valores-grid" class="valores-grid"> </div>
+</div>
+<p><!-- CONTACTOS --></p>
+<div class="contactos-wrap">
+<div class="contactos-inner fade-in">
+<div class="section-label">Encontra-nos</div>
+<div class="section-title" style="font-size: 28px;">Serviços Administrativos</div>
+<div id="contactos-grid" class="contactos-grid"> </div>
+<div id="horario-box" class="horario-box"> </div>
+</div>
+</div>
+<p><!-- LIGHTBOX --></p>
+<div id="lightbox"><button id="lightbox-close">✕</button>
+<div id="lightbox-counter"> </div>
+<p><button id="lightbox-prev">‹</button><br /><img id="lightbox-img" alt="" /></p>
+<div id="lightbox-caption"> </div>
+<p><button id="lightbox-next">›</button></p>
+</div>
+</div>
+<p><!-- #app --></p>
+<p><script><br />
+/* ============================================================<br />
+   CONFIGURAÇÃO — editar aqui OU em cbviana-config.json<br />
+   Para adicionar: palmares, momentos, galhardetes, imprensa<br />
+   ============================================================ */</p>
+<p>const CLOUD = 'https://res.cloudinary.com/dmwwjylsw/image/upload';<br />
+const FOLDER = '';</p>
+<p>/* Cache dos public_ids reais buscados via API Cloudinary */<br />
+let _assetMap = null;</p>
+<p>async function getAssetMap() {<br />
+  if (_assetMap) return _assetMap;<br />
+  try {<br />
+    const r = await fetch(`https://res.cloudinary.com/dmwwjylsw/image/list/all.json`);<br />
+    const data = await r.json();<br />
+    _assetMap = {};<br />
+    (data.resources || []).forEach(a => {<br />
+      // Remove pasta e sufixo aleatório do Cloudinary<br />
+      const base = a.public_id<br />
+        .replace(/^clube\//, '')<br />
+        .replace(/_[a-z0-9]{4,8}$/i, '');<br />
+      _assetMap[base] = a.public_id;<br />
+      // Também mapear sem extensão (para PNGs uploaded como PNG)<br />
+      const baseNoExt = base.replace(/\.(png|jpg|jpeg|webp)$/i, '');<br />
+      if(baseNoExt !== base) _assetMap[baseNoExt] = a.public_id;<br />
+    });<br />
+  } catch(e) {<br />
+    _assetMap = {};<br />
+  }<br />
+  return _assetMap;<br />
+}</p>
+<p>function cloudImg(nome, w=800) {<br />
+  if (_assetMap && _assetMap[nome]) {<br />
+    return `${CLOUD}/w_${w},q_auto,f_auto/${_assetMap[nome]}`;<br />
+  }<br />
+  // Tentar sem e com extensão<br />
+  const base = nome.replace(/\.(png|jpg|jpeg)$/i,'');<br />
+  if (_assetMap && _assetMap[base]) {<br />
+    return `${CLOUD}/w_${w},q_auto,f_auto/${_assetMap[base]}`;<br />
+  }<br />
+  const path = FOLDER ? `${FOLDER}/${nome}` : nome;<br />
+  return `${CLOUD}/w_${w},q_auto,f_auto/${path}`;<br />
+}</p>
+<p>const CONFIG = {</p>
+<p>  /* ── HERO ── */<br />
+  hero: {<br />
+    badge: "Clube de Basquete de Viana do Castelo",<br />
+    fundacao: "Fundado em 1997 · Quase três décadas de paixão"<br />
+  },</p>
+<p>  /* ── ESTATÍSTICAS (edita os valores) ── */<br />
+  stats: [<br />
+    { num: "1997", label: "Fundação" },<br />
+    { num: "170+", label: "Atletas" },<br />
+    { num: "15",   label: "Equipas" },<br />
+    { num: "28+",  label: "Anos" }<br />
+  ],</p>
+<p>  /* ── MISSÃO ── */<br />
+  missao: {<br />
+    texto: "Nascemos da paixão pelo basquetebol e pelo compromisso com o desenvolvimento desportivo e humano de Viana do Castelo. Formamos atletas, construímos pessoas.",<br />
+    tagline: ["Fair-Play", "Perseverança", "Espírito de Equipa"]<br />
+  },</p>
+<p>  /* ── HISTÓRIA ── */<br />
+  historia: {<br />
+    titulo: "Quase três décadas de basquetebol",<br />
+    paragrafos: [<br />
+      "Fundado em 1997 por um pequeno grupo de entusiastas, o CB Viana tornou-se uma referência no basquetebol do Norte de Portugal. Crescemos ano após ano, tornando-nos uma das instituições desportivas mais ativas do distrito.",<br />
+      "Com mais de 170 atletas distribuídos por 15 equipas — do Sub-8 aos veteranos — o clube forma gerações de jogadores e contribui ativamente para o desenvolvimento da comunidade. Em 2020, fomos distinguidos como Equipa do Ano na Gala do Desporto de Viana do Castelo."<br />
+    ],<br />
+    timeline: [<br />
+      { ano: "1997", texto: "Fundação do clube por entusiastas do basquetebol de Viana do Castelo" },<br />
+      { ano: "2004–08", texto: "Participação no Campeonato Nacional da 1.ª Divisão" },<br />
+      { ano: "2011/12", texto: "Campeões distritais em SUB-14, SUB-16 e SUB-18 Masculinos" },<br />
+      { ano: "2012/13", texto: "Repetição do tri-campeonato distrital masculino" },<br />
+      { ano: "2015/16", texto: "Campeões recebidos na Câmara Municipal de Viana do Castelo" },<br />
+      { ano: "2019",    texto: "II Torneio Internacional — FC Porto sagra-se campeão em Viana" },<br />
+      { ano: "2020",    texto: "Equipa do Ano — Gala do Desporto. Regresso à 1.ª Divisão Nacional" },<br />
+      { ano: "2025/26", texto: "Campeões distritais Mini-12. Juniores na Taça Nacional de Seniores" }<br />
+    ]<br />
+  },</p>
+<p>  /* ── PALMARÉS — ADICIONA QUANTOS QUEIRAS ──<br />
+     tipos disponíveis: "distrital" | "nacional" | "especial"<br />
+     imagem: nome do ficheiro no Cloudinary (sem extensão) — opcional<br />
+  ── */<br />
+  palmares: [<br />
+    { titulo: "Campeão Distrital Mini-12 Masculino",    epoca: "2025/26",  tipo: "distrital", imagem: "trofeu-mini12-masculino-crop" },<br />
+    { titulo: "Campeão Distrital Mini-12 Masculino",    epoca: "2024/25",  tipo: "distrital", imagem: "trofeu-mini12-masculino-crop" },<br />
+    { titulo: "Campeão Distrital Cadetes Fem. SUB-16",  epoca: "2024/25",  tipo: "distrital", imagem: "trofeu-sub16-femininos-crop" },<br />
+    { titulo: "Campeão Distrital Júniores Fem. SUB-18", epoca: "2023/24",  tipo: "distrital", imagem: "trofeu-sub18-femininos-crop" },<br />
+    { titulo: "Campeão Distrital SUB-18 Masculinos",    epoca: "2012/13",  tipo: "distrital", imagem: "placa-sub18-masc-2012-2013" },<br />
+    { titulo: "Campeão Distrital SUB-16 Masculinos",    epoca: "2012/13",  tipo: "distrital", imagem: "placa-sub16-masc-2012-2013" },<br />
+    { titulo: "Campeão Distrital SUB-14 Masculinos",    epoca: "2012/13",  tipo: "distrital", imagem: "placa-sub14-masc-2012-2013" },<br />
+    { titulo: "Campeão Distrital SUB-18 Masculinos",    epoca: "2011/12",  tipo: "distrital", imagem: "placa-sub18-masc-2011-2012" },<br />
+    { titulo: "Campeão Distrital SUB-16 Masculinos",    epoca: "2011/12",  tipo: "distrital", imagem: "placa-sub16-masc-2011-2012" },<br />
+    { titulo: "Campeão Distrital SUB-14 Masculinos",    epoca: "2011/12",  tipo: "distrital", imagem: "placa-sub14-masc-2011-2012" },<br />
+    { titulo: "Equipa do Ano",                          epoca: "2020",     tipo: "especial",  imagem: "jornal-equipa-ano-2020" },<br />
+    { titulo: "1.ª Divisão Nacional",                   epoca: "2004–08",  tipo: "nacional",  imagem: "jornal-aurora-campeoes-2016" },<br />
+    { titulo: "2.º Classificado Circuito Nacional Mini-12", epoca: "2025", tipo: "nacional",  imagem: "trofeu-mini12-masculino-crop" }<br />
+  ],</p>
+<p>  /* ── SECÇÕES OPCIONAIS — true/false para ativar ── */<br />
+  secoes: {<br />
+    momentos:    true,<br />
+    galhardetes: true,<br />
+    imprensa:    true<br />
+  },</p>
+<p>  /* ── MOMENTOS (galeria de fotos) ── */<br />
+  momentos: [<br />
+    { imagem: "trofeu-3-juntos",               legenda: "Três troféus distritais" },<br />
+    { imagem: "prateleira-trofeus",            legenda: "Sala de troféus" },<br />
+    { imagem: "prateleira-plaques",            legenda: "Participações e conquistas" },<br />
+    { imagem: "placas-parede-2011-2012",       legenda: "Campeões 2011/12 e 2012/13" },<br />
+    { imagem: "jornal-equipa-ano-2020",        legenda: "Equipa do Ano 2020" },<br />
+    { imagem: "jornal-juniores-dobradinha-2025", legenda: "Juniores — dobradinha 2025" },<br />
+    { imagem: "momentos-prateleira-geral",     legenda: "Medalhas, galhardetes e troféus" }<br />
+  ],</p>
+<p>  /* ── GALHARDETES ── */<br />
+  galhardetes: [<br />
+    { imagem: "Salesiano_Porto",    legenda: "Centro Antigos Alunos Salesianos — Porto" },<br />
+    { imagem: "Seixal",             legenda: "Município do Seixal" },<br />
+    { imagem: "Vila_do_conde",      legenda: "Junta de Freguesia — Vila do Conde" },<br />
+    { imagem: "Barcelos",           legenda: "Basquete Clube de Barcelos" },<br />
+    { imagem: "Evora",              legenda: "GDR André de Resende — Évora" },<br />
+    { imagem: "Famalicao",          legenda: "Famalicense Atlético Clube" },<br />
+    { imagem: "Portuzelo",          legenda: "Assoc. C. e D. Santa Marta de Portuzelo" },<br />
+    { imagem: "Salesiano_Estoril",  legenda: "Salesianos Estoril" }<br />
+  ],</p>
+<p>  /* ── IMPRENSA ── */<br />
+  imprensa: [<br />
+    { fonte: "Altominho", data: "Fevereiro 2025",  imagem: "jornal-juniores-dobradinha-2025",  titulo: "Juniores celebram \"dobradinha\" e vão disputar a Taça Nacional de Seniores" },<br />
+    { fonte: "Altominho", data: "Março 2025",      imagem: "jornal-iniciados-campeoes-2025",   titulo: "Iniciados campeões graças \"ao espírito de equipa e de união\"" },<br />
+    { fonte: "Altominho", data: "Janeiro 2024",    imagem: "jornal-altominho-feminina-2024",   titulo: "\"Se ganhasse o Euromilhões, construía um pavilhão e o CB Viana subia de divisão\"" },<br />
+    { fonte: "Altominho", data: "Dezembro 2023",   imagem: "jornal-feminina-fase-subida-2023", titulo: "Equipa feminina do CB Viana sonha disputar a fase de subida" },<br />
+    { fonte: "Altominho", data: "Maio 2023",       imagem: "jornal-jorge-resende-2023",        titulo: "\"Jorge Resende tem sido um bombeiro no Clube de Basquete de Viana\"" },<br />
+    { fonte: "Altominho", data: "Setembro 2019",   imagem: "jornal-torneio-internacional-2019",titulo: "Basquete foi o \"desporto-rei\" em Viana — II Torneio Internacional" },<br />
+    { fonte: "Aurora do Lima", data: "2016",       imagem: "jornal-aurora-campeoes-2016",      titulo: "Executivo municipal recebeu os campeões do Clube de Basquete de Viana" },<br />
+    { fonte: "Record", data: "s/d",                imagem: "jornal-record-sub16-selecao",       titulo: "Uma equipa, uma seleção — Sub-16 de Viana do Castelo" }<br />
+  ],</p>
+<p>  /* ── VALORES ── */<br />
+  valores: [<br />
+    { titulo: "Formação",     texto: "Do Sub-8 ao sénior, acompanhamos cada atleta no seu crescimento pessoal e desportivo." },<br />
+    { titulo: "Fair-Play",    texto: "O respeito pelo adversário, pelo árbitro e pelo jogo é inegociável." },<br />
+    { titulo: "Comunidade",   texto: "Somos um clube da cidade. A nossa força vem das famílias, adeptos e parceiros." },<br />
+    { titulo: "Perseverança", texto: "Nunca desistimos. A derrota é aprendizagem, a vitória é conquista coletiva." },<br />
+    { titulo: "Inclusão",     texto: "O basquetebol é para todos. Não cortamos sonhos a ninguém." },<br />
+    { titulo: "Excelência",   texto: "Procuramos o melhor em cada treino, em cada jogo, em cada pessoa." }<br />
+  ],</p>
+<p>  /* ── CONTACTOS ── */<br />
+  contactos: {<br />
+    itens: [<br />
+      { label: "Localização", valor: "Sala nº 15 — 1.º Andar\nPavilhão Municipal de Stª Maria Maior" },<br />
+      { label: "Email",       valor: "cbasqueteviana@gmail.com" },<br />
+      { label: "Website",     valor: "www.cbviana.com" }<br />
+    ],<br />
+    horario: "Segunda a Sexta-feira · 18h00 às 19h30"<br />
+  }</p>
+<p>};</p>
+<p>/* ============================================================<br />
+   RENDER ENGINE — não precisas de tocar aqui<br />
+   ============================================================ */</p>
+<p>function imgOrPlaceholder(nome, cls, w=600) {<br />
+  if (!nome) return `</p>
+<div class="${cls}-placeholder"><span>Imagem em breve</span></div>
+<p>`;<br />
+  return `<img class="${cls}" src="${cloudImg(nome,w)}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='
+
+<div class=\\'${cls}-placeholder\\'><span>${nome}</span></div>
+<p>'">`;<br />
+}</p>
+<p>function render() {<br />
+  /* hero */<br />
+  setText('hero-badge',   CONFIG.hero.badge);<br />
+  setText('hero-fundacao',CONFIG.hero.fundacao);</p>
+<p>  /* stats */<br />
+  setHTML('stats-band', CONFIG.stats.map(s =><br />
+    `</p>
+<div class="stat-item">
+<div class="stat-num">${s.num}</div>
+<div class="stat-lbl">${s.label}</div>
+</div>
+<p>`<br />
+  ).join(''));</p>
+<p>  /* missão */<br />
+  setText('missao-texto', CONFIG.missao.texto);<br />
+  setHTML('missao-tagline', CONFIG.missao.tagline.map(t => `<span>${t}</span>`).join(''));</p>
+<p>  /* história */<br />
+  setText('historia-titulo', CONFIG.historia.titulo);<br />
+  setHTML('historia-parags', CONFIG.historia.paragrafos.map(p =><br />
+    `</p>
+<p style="font-size:16px;line-height:1.8;color:rgba(255,255,255,0.75);margin-bottom:20px;">${p}</p>
+<p>`<br />
+  ).join(''));</p>
+<p>  /* timeline */<br />
+  setHTML('timeline', CONFIG.historia.timeline.map((t, i) =><br />
+    `</p>
+<div class="tl-item" style="transition-delay:${i*0.08}s">
+<div class="tl-dot">${String(t.ano).slice(-2)}</div>
+<div>
+<div class="tl-year">${t.ano}</div>
+<div class="tl-desc">${t.texto}</div>
+</div></div>
+<p>`<br />
+  ).join(''));</p>
+<p>  /* palmarés */<br />
+  const tipos = ['todos', ...new Set(CONFIG.palmares.map(p => p.tipo))];<br />
+  setHTML('palmares-filters', tipos.map((t, i) =><br />
+    `<button class="filter-btn ${i===0?'active':''}" data-tipo="${t}">${t}</button>`<br />
+  ).join(''));<br />
+  setHTML('palmares-grid', CONFIG.palmares.map(p =><br />
+    `</p>
+<div class="palm-card" data-tipo="${p.tipo}">
+      ${p.imagem ? imgOrPlaceholder(p.imagem,'palm-img',400) : ''}</p>
+<div class="palm-tipo">${p.tipo}</div>
+<div class="palm-titulo">${p.titulo}</div>
+<div class="palm-epoca">${p.epoca}</div>
+</p></div>
+<p>`<br />
+  ).join(''));</p>
+<p>  /* filtros palmarés */<br />
+  const filtersEl = document.getElementById('palmares-filters');<br />
+  if (filtersEl) filtersEl.addEventListener('click', e => {<br />
+    if (!e.target.classList.contains('filter-btn')) return;<br />
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));<br />
+    e.target.classList.add('active');<br />
+    const tipo = e.target.dataset.tipo;<br />
+    document.querySelectorAll('.palm-card').forEach(c => {<br />
+      c.style.display = (tipo === 'todos' || c.dataset.tipo === tipo) ? '' : 'none';<br />
+    });<br />
+  });</p>
+<p>  /* momentos */<br />
+  if (CONFIG.secoes.momentos) {<br />
+    addClass('sec-momentos', 'active');<br />
+    setHTML('momentos-grid', CONFIG.momentos.map(m =><br />
+      `</p>
+<div class="galeria-item${m.imagem?'':' galeria-placeholder'}">
+        ${m.imagem<br />
+          ? `<img src="${cloudImg(m.imagem,600)}" alt="${m.legenda}" loading="lazy"
+              onerror="this.parentNode.classList.add('galeria-placeholder');this.remove();"></p>
+<div class="galeria-overlay">
+<div class="galeria-caption">${m.legenda}</div>
+</div>
+<p>`<br />
+          : `<span>${m.legenda}</span>`}
+      </div>
+<p>`<br />
+    ).join(''));<br />
+  }</p>
+<p>  /* galhardetes — mural pendurado */<br />
+  if (CONFIG.secoes.galhardetes && CONFIG.galhardetes.length > 0) {<br />
+    addClass('sec-galhardetes', 'active');<br />
+    setHTML('galhardetes-grid', `</p>
+<div class="galhardetes-mural" id="galhardetes-mural">
+        ${CONFIG.galhardetes.map((g, i) => {<br />
+          const imgUrl = cloudImg(g.imagem, 400);<br />
+          return `</p>
+<div class="galhardete-item" style="transition-delay:${i*0.05}s" onclick="openLightbox(window._galhardetesList, ${i})">
+<div class="galhardete-prego"></div>
+<div class="galhardete-fio"></div>
+<div class="galhardete-img-wrap">
+              <img src="${imgUrl}" alt="${g.legenda}" loading="lazy"
+                onerror="this.parentNode.outerHTML='
+
+<div class=\'galhardete-img-placeholder\'><span>${g.imagem}</span></div>
+<p>'">
+            </p></div>
+<div class="galhardete-nome">${g.legenda}</div>
+</p></div>
+<p>`;<br />
+        }).join('')}
+      </p></div>
+<p>    `);<br />
+    // Guardar lista para lightbox<br />
+    window._galhardetesList = CONFIG.galhardetes.map(g => ({<br />
+      src: cloudImg(g.imagem, 1200),<br />
+      caption: g.legenda<br />
+    }));<br />
+  }</p>
+<p>  /* imprensa */<br />
+  if (CONFIG.secoes.imprensa) {<br />
+    setHTML('imprensa-grid', CONFIG.imprensa.map(n =><br />
+      `</p>
+<div class="news-card">
+<div class="news-img-wrap">
+          ${n.imagem<br />
+            ? `<img src="${cloudImg(n.imagem,400)}" alt="" loading="lazy"
+                onerror="this.parentNode.innerHTML='
+
+<div class=\\'news-img-placeholder\\'><span>${n.imagem}</span></div>
+<p>'">`<br />
+            : `</p>
+<div class="news-img-placeholder"><span>Imagem em breve</span></div>
+<p>`}
+        </p></div>
+<div class="news-body">
+<div class="news-source">${n.fonte}</div>
+<div class="news-headline">${n.titulo}</div>
+<div class="news-date">${n.data}</div>
+</p></div>
+</p></div>
+<p>`<br />
+    ).join(''));<br />
+  } else {<br />
+    setStyle('sec-imprensa-wrap', 'display', 'none');<br />
+  }</p>
+<p>  /* valores */<br />
+  const icons = [<br />
+    '<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>',<br />
+    '<circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>',<br />
+    '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',<br />
+    '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',<br />
+    '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',<br />
+    '<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>'<br />
+  ];<br />
+  setHTML('valores-grid', CONFIG.valores.map((v, i) =><br />
+    `</p>
+<div class="valor-card fade-in">
+<div class="valor-icon"><svg viewBox="0 0 24 24">${icons[i % icons.length]}</svg></div>
+<div class="valor-titulo">${v.titulo}</div>
+<div class="valor-texto">${v.texto}</div>
+</p></div>
+<p>`<br />
+  ).join(''));</p>
+<p>  /* contactos */<br />
+  setHTML('contactos-grid', CONFIG.contactos.itens.map(c =><br />
+    `</p>
+<div class="contacto-item">
+<div class="lbl">${c.label}</div>
+<div class="val">${c.valor.replace(/\n/g,'<br />')}</div>
+</p></div>
+<p>`<br />
+  ).join(''));<br />
+  setText('horario-box', CONFIG.contactos.horario);<br />
+}</p>
+<p>/* ── SCROLL ANIMATIONS ── */<br />
+function initObserver() {<br />
+  const obs = new IntersectionObserver((entries) => {<br />
+    entries.forEach(e => {<br />
+      if (e.isIntersecting) {<br />
+        e.target.classList.add('visible');<br />
+        obs.unobserve(e.target);<br />
+      }<br />
+    });<br />
+  }, { threshold: 0.1 });<br />
+  document.querySelectorAll('.fade-in, .tl-item').forEach(el => obs.observe(el));<br />
+}</p>
+<p>/* ── HELPER: set com verificação de null ── */<br />
+function setHTML(id, html) {<br />
+  const el = document.getElementById(id);<br />
+  if (el) el.innerHTML = html;<br />
+}<br />
+function setText(id, text) {<br />
+  const el = document.getElementById(id);<br />
+  if (el) el.textContent = text;<br />
+}<br />
+function setStyle(id, prop, val) {<br />
+  const el = document.getElementById(id);<br />
+  if (el) el.style[prop] = val;<br />
+}<br />
+function addClass(id, cls) {<br />
+  const el = document.getElementById(id);<br />
+  if (el) el.classList.add(cls);<br />
+}</p>
+<p>/* ── RENDER SEGURO ── */<br />
+function renderSafe() {<br />
+  try { render(); } catch(e) { console.warn('CBViana render error:', e); }<br />
+}</p>
+<p>/* ── INIT — aguarda DOM + Cloudinary asset list ── */<br />
+async function init() {<br />
+  await getAssetMap(); /* busca public_ids reais da pasta clube/ */<br />
+  renderSafe();<br />
+  setTimeout(initLightbox, 300);<br />
+  initObserver();<br />
+  const loading = document.getElementById('loading');<br />
+  const app = document.getElementById('app');<br />
+  if (loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }<br />
+  if (app) setTimeout(() => app.style.opacity = '1', 100);<br />
+}</p>
+<p>if (document.readyState === 'loading') {<br />
+  document.addEventListener('DOMContentLoaded', init);<br />
+} else {<br />
+  init();<br />
+}</p>
+<p>/* ── LIGHTBOX ENGINE ── */<br />
+let _lbItems = [];<br />
+let _lbIndex = 0;</p>
+<p>function openLightbox(items, index) {<br />
+  _lbItems = items;<br />
+  _lbIndex = index;<br />
+  showLbItem();<br />
+  document.getElementById('lightbox').classList.add('open');<br />
+  document.body.style.overflow = 'hidden';<br />
+}</p>
+<p>function showLbItem() {<br />
+  const item = _lbItems[_lbIndex];<br />
+  document.getElementById('lightbox-img').src = item.src;<br />
+  document.getElementById('lightbox-caption').textContent = item.caption || '';<br />
+  document.getElementById('lightbox-counter').textContent =<br />
+    `${_lbIndex + 1} / ${_lbItems.length}`;<br />
+  const prev = document.getElementById('lightbox-prev');<br />
+  const next = document.getElementById('lightbox-next');<br />
+  prev.style.opacity = _lbItems.length > 1 ? '1' : '0';<br />
+  next.style.opacity = _lbItems.length > 1 ? '1' : '0';<br />
+}</p>
+<p>function closeLightbox() {<br />
+  document.getElementById('lightbox').classList.remove('open');<br />
+  document.body.style.overflow = '';<br />
+}</p>
+<p>document.getElementById('lightbox-close').addEventListener('click', closeLightbox);<br />
+document.getElementById('lightbox').addEventListener('click', function(e) {<br />
+  if (e.target === this) closeLightbox();<br />
+});<br />
+document.getElementById('lightbox-prev').addEventListener('click', function(e) {<br />
+  e.stopPropagation();<br />
+  _lbIndex = (_lbIndex - 1 + _lbItems.length) % _lbItems.length;<br />
+  showLbItem();<br />
+});<br />
+document.getElementById('lightbox-next').addEventListener('click', function(e) {<br />
+  e.stopPropagation();<br />
+  _lbIndex = (_lbIndex + 1) % _lbItems.length;<br />
+  showLbItem();<br />
+});<br />
+document.addEventListener('keydown', function(e) {<br />
+  const lb = document.getElementById('lightbox');<br />
+  if (!lb.classList.contains('open')) return;<br />
+  if (e.key === 'Escape') closeLightbox();<br />
+  if (e.key === 'ArrowLeft') { _lbIndex = (_lbIndex - 1 + _lbItems.length) % _lbItems.length; showLbItem(); }<br />
+  if (e.key === 'ArrowRight') { _lbIndex = (_lbIndex + 1) % _lbItems.length; showLbItem(); }<br />
+});</p>
+<p>/* Ativar lightbox nas galerias e palmares após render */<br />
+function initLightbox() {<br />
+  /* Galeria Momentos */<br />
+  const galeriaItems = document.querySelectorAll('#momentos-grid .galeria-item img');<br />
+  const galeriaList = Array.from(galeriaItems).map(img => ({<br />
+    src: img.src.replace(/w_\d+/, 'w_1600'),<br />
+    caption: img.alt<br />
+  }));<br />
+  galeriaItems.forEach((img, i) => {<br />
+    img.parentElement.addEventListener('click', () => openLightbox(galeriaList, i));<br />
+  });</p>
+<p>  /* Palmarés */<br />
+  const palmItems = document.querySelectorAll('#palmares-grid .palm-card img');<br />
+  const palmList = Array.from(palmItems).map(img => ({<br />
+    src: img.src.replace(/w_\d+/, 'w_1600'),<br />
+    caption: img.closest('.palm-card')?.querySelector('.palm-titulo')?.textContent || ''<br />
+  }));<br />
+  palmItems.forEach((img, i) => {<br />
+    img.closest('.palm-card').addEventListener('click', () => openLightbox(palmList, i));<br />
+  });</p>
+<p>  /* Imprensa */<br />
+  const newsItems = document.querySelectorAll('#imprensa-grid .news-card img');<br />
+  const newsList = Array.from(newsItems).map(img => ({<br />
+    src: img.src.replace(/w_\d+/, 'w_1600'),<br />
+    caption: img.closest('.news-card')?.querySelector('.news-headline')?.textContent || ''<br />
+  }));<br />
+  newsItems.forEach((img, i) => {<br />
+    img.closest('.news-card').addEventListener('click', () => openLightbox(newsList, i));<br />
+  });<br />
+}</p>
+<p></script><br /><br /></p>
