@@ -1,0 +1,187 @@
+<!--
+  CBV GAMIFICATION HEADER WIDGET
+  ================================
+  WPCode → HTML Snippet → Site Wide Header → Logged-in → True
+-->
+
+<style>
+#cbv-gam-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(123,28,46,0.85);
+  border: 1px solid rgba(240,165,0,0.25);
+  border-radius: 40px;
+  padding: 5px 14px 5px 8px;
+  backdrop-filter: blur(12px);
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  cursor: pointer;
+  transition: border-color .3s;
+}
+#cbv-gam-bar:hover { border-color: rgba(240,165,0,0.55); }
+.cbv-level-badge { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:1.5px solid rgba(240,165,0,0.5);background:radial-gradient(circle at 35% 35%,rgba(240,165,0,0.18),transparent 70%);flex-shrink:0; }
+.cbv-gam-info { display:flex;flex-direction:column;gap:2px; }
+.cbv-gam-top { display:flex;align-items:center;gap:6px; }
+.cbv-level-name { font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,165,0,0.7); }
+.cbv-coins { display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:#F0A500; }
+.cbv-coins-icon { font-size:11px; }
+.cbv-progress-wrap { width:80px;height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden; }
+.cbv-progress-fill { height:100%;border-radius:2px;background:linear-gradient(90deg,#F0A500,#FFD060);transition:width 1s cubic-bezier(.4,0,.2,1); }
+.cbv-tooltip { position:fixed;top:70px;right:10px;background:linear-gradient(160deg,#0c0420,#150830);border:0.5px solid rgba(240,165,0,0.22);border-radius:16px;padding:16px 18px;min-width:220px;opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .25s,transform .25s;z-index:99999;text-align:left; }
+#cbv-gam-bar:hover .cbv-tooltip { opacity:1;pointer-events:auto;transform:translateY(0); }
+.cbv-tooltip-title { font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(240,165,0,0.5);margin-bottom:10px; }
+.cbv-tooltip-row { display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:5px; }
+.cbv-tooltip-row span:last-child { color:#F0A500;font-weight:600; }
+.cbv-tooltip-levels { margin-top:12px;border-top:0.5px solid rgba(240,165,0,0.1);padding-top:10px; }
+.cbv-lvl-row { display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:4px; }
+.cbv-lvl-row.active { color:rgba(255,255,255,0.85); }
+.cbv-lvl-row.active .cbv-lvl-name { color:#F0A500; }
+.cbv-lvl-icon { width:18px;text-align:center; }
+.cbv-lvl-name { flex:1; }
+.cbv-lvl-req { font-size:9px; }
+#cbv-levelup { position:fixed;top:80px;right:20px;z-index:99999;background:linear-gradient(135deg,#7B1C2E,#9b2438);border:1.5px solid #F0A500;border-radius:16px;padding:16px 20px;display:none;flex-direction:column;align-items:center;gap:4px;box-shadow:0 8px 32px rgba(240,165,0,0.3);animation:lvlSlide .4s cubic-bezier(.23,1,.32,1);text-align:center;font-family:'DM Sans',sans-serif; }
+@keyframes lvlSlide { from{transform:translateX(120%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+#cbv-levelup .lu-icon { font-size:32px; }
+#cbv-levelup .lu-title { font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(240,165,0,0.7); }
+#cbv-levelup .lu-name { font-size:18px;font-weight:700;color:#F0A500; }
+#cbv-levelup .lu-bonus { font-size:11px;color:rgba(255,255,255,0.5); }
+</style>
+
+<div id="cbv-levelup">
+  <div class="lu-icon" id="lu-icon">⭐</div>
+  <div class="lu-title">Subiste de Nível!</div>
+  <div class="lu-name" id="lu-name"></div>
+  <div class="lu-bonus" id="lu-bonus"></div>
+</div>
+
+<script>
+(function(){
+
+var LEVELS = [
+  { min:0,   name:'Curioso',      icon:'👀', bonus:0   },
+  { min:10,  name:'Adepto',       icon:'🏀', bonus:5   },
+  { min:30,  name:'Adepto Fiel',  icon:'⭐', bonus:15  },
+  { min:75,  name:'Bronze',       icon:'🥉', bonus:40  },
+  { min:150, name:'Prata',        icon:'🥈', bonus:100 },
+  { min:300, name:'Ouro',         icon:'🥇', bonus:250 },
+  { min:500, name:'MVP',          icon:'🏆', bonus:500 },
+];
+
+var state = { acessos:0, moedas:0, nivel:1, prevNivel:1 };
+
+function getLevelData(acessos){ var lv=LEVELS[0]; for(var i=0;i<LEVELS.length;i++){if(acessos>=LEVELS[i].min)lv=LEVELS[i];} return lv; }
+function getNextLevel(acessos){ for(var i=0;i<LEVELS.length;i++){if(LEVELS[i].min>acessos)return LEVELS[i];} return null; }
+function getProgressPct(acessos){ var cur=getLevelData(acessos);var nxt=getNextLevel(acessos);if(!nxt)return 100;return Math.round(((acessos-cur.min)/(nxt.min-cur.min))*100); }
+
+function renderBar(){
+  var bar=document.getElementById('cbv-gam-bar'); if(!bar)return;
+  var lv=getLevelData(state.acessos);var nxt=getNextLevel(state.acessos);var pct=getProgressPct(state.acessos);
+  document.getElementById('cbv-badge-icon').textContent=lv.icon;
+  document.getElementById('cbv-level-name').textContent=lv.name;
+  document.getElementById('cbv-coins-val').textContent=state.moedas;
+  document.getElementById('cbv-prog-fill').style.width=pct+'%';
+  document.getElementById('cbv-tt-acessos').textContent=state.acessos;
+  document.getElementById('cbv-tt-moedas').textContent=state.moedas;
+  document.getElementById('cbv-tt-prox').textContent=nxt?nxt.min+' acessos':'Nível máximo!';
+  document.querySelectorAll('.cbv-lvl-row').forEach(function(r){ r.classList.remove('active'); if(r.dataset.lvl===lv.name)r.classList.add('active'); });
+}
+
+function showLevelUp(lv){
+  var el=document.getElementById('cbv-levelup');
+  document.getElementById('lu-icon').textContent=lv.icon;
+  document.getElementById('lu-name').textContent=lv.name;
+  document.getElementById('lu-bonus').textContent='+'+lv.bonus+' 🪙 de bónus';
+  el.style.display='flex';
+  setTimeout(function(){el.style.display='none';},4000);
+}
+
+function fetchData(){
+  fetch('/wp-json/cbv/v1/gamification',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.code)return;
+      state.acessos=d.acessos||0;state.moedas=d.moedas||0;state.nivel=d.nivel||1;state.prevNivel=state.nivel;
+      renderBar();registerAccess();
+      document.dispatchEvent(new CustomEvent('cbv:ready',{detail:window.CBVGam.getState()}));
+    }).catch(function(){});
+}
+
+function registerAccess(){
+  fetch('/wp-json/cbv/v1/gamification',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'acesso',value:1})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.code)return;
+      var oldNivel=state.nivel;
+      state.acessos=d.acessos||state.acessos;state.moedas=d.moedas||state.moedas;state.nivel=d.nivel||state.nivel;
+      renderBar();
+      if(d.subiu&&state.nivel>oldNivel)showLevelUp(getLevelData(state.acessos));
+    }).catch(function(){});
+}
+
+window.CBVGam = {
+  addCoins:function(amount,callback){
+    fetch('/wp-json/cbv/v1/gamification',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'moedas',value:amount})})
+      .then(function(r){return r.json();})
+      .then(function(d){if(d.code){if(callback)callback({sucesso:false,erro:d.code});return;}state.moedas=d.moedas||state.moedas;state.nivel=d.nivel||state.nivel;renderBar();if(d.subiu)showLevelUp(getLevelData(state.acessos));if(callback)callback({sucesso:true,moedas:state.moedas,nivel:state.nivel,subiu:d.subiu||false});})
+      .catch(function(e){if(callback)callback({sucesso:false,erro:'network'});});
+  },
+  payCoins:function(amount,callback){
+    if(state.moedas<amount){if(callback)callback({sucesso:false,erro:'moedas_insuficientes',moedas:state.moedas});return;}
+    fetch('/wp-json/cbv/v1/gamification',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'pagar',value:amount})})
+      .then(function(r){return r.json();})
+      .then(function(d){if(d.code){if(callback)callback({sucesso:false,erro:d.code});return;}state.moedas=d.moedas!==undefined?d.moedas:state.moedas-amount;renderBar();if(callback)callback({sucesso:true,moedas:state.moedas});})
+      .catch(function(e){if(callback)callback({sucesso:false,erro:'network'});});
+  },
+  canPay:function(amount){return state.moedas>=amount;},
+  registerAccess:function(){registerAccess();},
+  getState:function(){return{moedas:state.moedas,acessos:state.acessos,nivel:state.nivel,loggedIn:true};},
+  onReady:function(callback){
+    if(state.acessos>0||state.moedas>=0){callback(window.CBVGam.getState());}
+    else{document.addEventListener('cbv:ready',function(e){callback(e.detail);});}
+  }
+};
+
+function buildWidget(){
+  var w = document.createElement('div');
+  w.id = 'cbv-gam-bar';
+  w.onclick = function(){ window.location.href='/colecao/'; };
+  w.innerHTML =
+    '<div class="cbv-level-badge"><span id="cbv-badge-icon">👀</span></div>'+
+    '<div class="cbv-gam-info">'+
+      '<div class="cbv-gam-top">'+
+        '<span class="cbv-level-name" id="cbv-level-name">Curioso</span>'+
+        '<span class="cbv-coins"><span class="cbv-coins-icon">🪙</span><span id="cbv-coins-val">0</span></span>'+
+      '</div>'+
+      '<div class="cbv-progress-wrap"><div class="cbv-progress-fill" id="cbv-prog-fill" style="width:0%"></div></div>'+
+    '</div>'+
+    '<div class="cbv-tooltip">'+
+      '<div class="cbv-tooltip-title">O teu perfil</div>'+
+      '<div class="cbv-tooltip-row"><span>Acessos</span><span id="cbv-tt-acessos">0</span></div>'+
+      '<div class="cbv-tooltip-row"><span>Moedas</span><span id="cbv-tt-moedas">0</span></div>'+
+      '<div class="cbv-tooltip-row"><span>Próximo nível</span><span id="cbv-tt-prox">—</span></div>'+
+      '<div class="cbv-tooltip-levels">'+
+        LEVELS.map(function(l){return '<div class="cbv-lvl-row" data-lvl="'+l.name+'"><span class="cbv-lvl-icon">'+l.icon+'</span><span class="cbv-lvl-name">'+l.name+'</span><span class="cbv-lvl-req">'+l.min+' ac.</span></div>';}).join('')+
+      '</div>'+
+    '</div>';
+  return w;
+}
+
+function injectWidget(){
+  // Injectar dentro do .cbv-user do nosso menu
+  var target = document.querySelector('.cbv-user');
+  if(!target) target = document.querySelector('#cbv-nav-inner');
+  if(!target) target = document.querySelector('header');
+  if(!target) return;
+
+  var widget = buildWidget();
+  target.prepend(widget);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  injectWidget();
+  fetchData();
+});
+
+})();
+</script>
