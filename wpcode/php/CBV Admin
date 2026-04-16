@@ -1,0 +1,166 @@
+/*
+  CBV ADMIN — Página de Administração Gamificação
+  =================================================
+  Colar no WPCode como PHP Snippet
+  Location: Run Everywhere
+  
+  Adiciona uma página no menu wp-admin: CBV Admin
+*/
+
+add_action('admin_menu', function(){
+  add_menu_page(
+    'CBV Gamificação',
+    'CBV Admin',
+    'manage_options',
+    'cbv-admin',
+    'cbv_admin_page',
+    'dashicons-awards',
+    30
+  );
+});
+
+function cbv_admin_page(){
+  if(!current_user_can('manage_options')) return;
+
+  // Acções POST
+  if(isset($_POST['cbv_action']) && check_admin_referer('cbv_admin_nonce')){
+    $uid    = (int)$_POST['cbv_uid'];
+    $action = sanitize_text_field($_POST['cbv_action']);
+
+    if($action === 'reset_raspadinha'){
+      delete_user_meta($uid,'cbv_raspadinha_data');
+      update_user_meta($uid,'cbv_rasp_pendentes', max(1,(int)get_user_meta($uid,'cbv_rasp_pendentes',true)));
+      echo '<div class="notice notice-success"><p>Raspadinha reiniciada para o utilizador #'.$uid.'</p></div>';
+    }
+    if($action === 'add_raspadinha'){
+      $pendentes = min(7, (int)get_user_meta($uid,'cbv_rasp_pendentes',true) + 1);
+      update_user_meta($uid,'cbv_rasp_pendentes',$pendentes);
+      echo '<div class="notice notice-success"><p>Raspadinha adicionada. Total: '.$pendentes.'</p></div>';
+    }
+    if($action === 'reset_gamification'){
+      delete_user_meta($uid,'cbv_acessos');
+      delete_user_meta($uid,'cbv_moedas');
+      delete_user_meta($uid,'cbv_nivel');
+      delete_user_meta($uid,'cbv_acessos_hoje');
+      delete_user_meta($uid,'cbv_data_hoje');
+      delete_user_meta($uid,'cbv_raspadinha_data');
+      delete_user_meta($uid,'cbv_colecao');
+      echo '<div class="notice notice-success"><p>Gamificação reiniciada para o utilizador #'.$uid.'</p></div>';
+    }
+    if($action === 'add_coins'){
+      $amount = (int)$_POST['cbv_amount'];
+      $moedas = (int)get_user_meta($uid,'cbv_moedas',true);
+      update_user_meta($uid,'cbv_moedas',$moedas+$amount);
+      echo '<div class="notice notice-success"><p>'.$amount.' moedas adicionadas ao utilizador #'.$uid.'</p></div>';
+    }
+    if($action === 'set_coins'){
+      $amount = (int)$_POST['cbv_amount'];
+      update_user_meta($uid,'cbv_moedas',$amount);
+      echo '<div class="notice notice-success"><p>Moedas definidas para '.$amount.' no utilizador #'.$uid.'</p></div>';
+    }
+  }
+
+  // Listar utilizadores com dados de gamificação
+  $users = get_users(['role__not_in'=>['administrator'],'orderby'=>'registered','order'=>'DESC']);
+
+  ?>
+  <div class="wrap">
+    <h1 style="color:#7B1C2E;">🏀 CBV — Administração de Gamificação</h1>
+    <p style="color:#666;margin-bottom:20px;">Gestão de moedas, acessos e raspadinhas dos utilizadores.</p>
+
+    <table class="wp-list-table widefat fixed striped" style="margin-top:20px;">
+      <thead>
+        <tr>
+          <th>Utilizador</th>
+          <th>Email</th>
+          <th>Acessos</th>
+          <th>Moedas</th>
+          <th>Nível</th>
+          <th>Raspadinhas</th>
+          <th>Colecção</th>
+          <th>Acções</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach($users as $user):
+          $acessos  = (int)get_user_meta($user->ID,'cbv_acessos',true);
+          $moedas   = (int)get_user_meta($user->ID,'cbv_moedas',true);
+          $nivel    = (int)get_user_meta($user->ID,'cbv_nivel',true);
+          $rasp     = get_user_meta($user->ID,'cbv_raspadinha_data',true);
+          $colecao  = json_decode(get_user_meta($user->ID,'cbv_colecao',true) ?: '[]', true);
+          $niveis   = ['','Curioso','Adepto','Adepto Fiel','Bronze','Prata','Ouro','MVP'];
+          $nivel_nome = $niveis[$nivel] ?? 'Curioso';
+          $hoje     = date('Y-m-d');
+          $rasp_hoje = $rasp === $hoje;
+          $pendentes_rasp = (int)get_user_meta($user->ID,'cbv_rasp_pendentes',true);
+        ?>
+        <tr>
+          <td><strong><?php echo esc_html($user->display_name); ?></strong><br><small style="color:#999">#<?php echo $user->ID; ?></small></td>
+          <td><?php echo esc_html($user->user_email); ?></td>
+          <td><?php echo $acessos; ?></td>
+          <td><strong style="color:#F0A500;"><?php echo $moedas; ?> 🪙</strong></td>
+          <td><?php echo $nivel_nome; ?></td>
+          <td>
+            <strong style="color:#F0A500;"><?php echo $pendentes_rasp; ?> pendente(s)</strong><br>
+            <small style="color:#999;"><?php echo $rasp ?: 'nunca jogou'; ?><?php if($rasp_hoje) echo ' ✓'; ?></small>
+          </td>
+          <td><?php echo count($colecao); ?> cartas</td>
+          <td>
+            <form method="post" style="display:inline;">
+              <?php wp_nonce_field('cbv_admin_nonce'); ?>
+              <input type="hidden" name="cbv_uid" value="<?php echo $user->ID; ?>">
+
+              <!-- Reset raspadinha -->
+              <button type="submit" name="cbv_action" value="reset_raspadinha"
+                style="background:#7B1C2E;color:#F0A500;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;margin:2px;"
+                onclick="return confirm('Reiniciar raspadinha de <?php echo esc_js($user->display_name); ?>?')">
+                🎰 Reset Raspadinha
+              </button>
+
+              <!-- Add raspadinha -->
+              <button type="submit" name="cbv_action" value="add_raspadinha"
+                style="background:#2271b1;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;margin:2px;">
+                🎰 +1 Raspadinha
+              </button>
+
+              <!-- Reset completo -->
+              <button type="submit" name="cbv_action" value="reset_gamification"
+                style="background:#cc0000;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;margin:2px;"
+                onclick="return confirm('ATENÇÃO: Reset completo de gamificação de <?php echo esc_js($user->display_name); ?>?')">
+                ⚠️ Reset Total
+              </button>
+            </form>
+
+            <!-- Adicionar moedas -->
+            <form method="post" style="display:inline-flex;align-items:center;gap:4px;margin:2px;">
+              <?php wp_nonce_field('cbv_admin_nonce'); ?>
+              <input type="hidden" name="cbv_uid" value="<?php echo $user->ID; ?>">
+              <input type="number" name="cbv_amount" value="10" min="1" max="9999"
+                style="width:60px;padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:11px;">
+              <button type="submit" name="cbv_action" value="add_coins"
+                style="background:#F0A500;color:#7B1C2E;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;">
+                +🪙
+              </button>
+              <button type="submit" name="cbv_action" value="set_coins"
+                style="background:#333;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">
+                =🪙
+              </button>
+            </form>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+
+    <div style="margin-top:30px;padding:16px;background:#f9f9f9;border-left:4px solid #7B1C2E;border-radius:4px;">
+      <h3 style="margin-bottom:8px;">Legenda</h3>
+      <p style="font-size:12px;color:#666;">
+        <strong>🎰 Reset Raspadinha</strong> — permite ao utilizador jogar a raspadinha hoje de novo<br>
+        <strong>⚠️ Reset Total</strong> — apaga todos os dados de gamificação (acessos, moedas, nível, colecção)<br>
+        <strong>+🪙</strong> — adiciona o número de moedas ao saldo actual<br>
+        <strong>=🪙</strong> — define o saldo exacto de moedas
+      </p>
+    </div>
+  </div>
+  <?php
+}
