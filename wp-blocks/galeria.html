@@ -1,0 +1,268 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.cbg-wrap{max-width:1100px;margin:0 auto;padding:16px;font-family:Arial,sans-serif}
+.cbg-back{display:none;align-items:center;gap:8px;margin-bottom:20px;cursor:pointer;background:none;border:2px solid #7B1C2E;color:#7B1C2E;font-size:0.9em;font-weight:bold;padding:6px 14px;border-radius:20px}
+.cbg-back.v{display:flex}
+.cbg-album-header{display:none;margin-bottom:16px}
+.cbg-album-header.v{display:block}
+.cbg-album-epoca{font-size:0.8em;font-weight:800;color:#fff;background:#7B1C2E;display:inline-block;padding:3px 12px;border-radius:4px;letter-spacing:2px;margin-bottom:8px}
+.cbg-album-titulo{font-size:1.1em;color:#7B1C2E;font-weight:800;text-transform:uppercase;letter-spacing:2px}
+.cbg-ano-grupo{margin-bottom:32px}
+.cbg-ano-label{font-size:1em;font-weight:800;color:#fff;background:#7B1C2E;display:inline-block;padding:4px 16px;border-radius:4px;margin-bottom:14px;letter-spacing:2px}
+.cbg-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+
+.cbg-card{cursor:pointer;border-radius:10px;overflow:hidden;border:2px solid transparent;transition:border-color 0.2s,transform 0.15s}
+.cbg-card:hover{border-color:#F0A500;transform:translateY(-3px)}
+
+.cbg-capa-wrap{position:relative;overflow:hidden;aspect-ratio:4/3;background:#222}
+.cbg-slides{position:absolute;inset:0;display:flex}
+.cbg-slide{position:absolute;inset:0;opacity:0;transition:opacity 0.5s}
+.cbg-slide.ativo{opacity:1}
+.cbg-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.cbg-dots{position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;gap:4px;z-index:2}
+.cbg-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);transition:background 0.3s}
+.cbg-dot.ativo{background:#F0A500}
+
+.cbg-info{padding:10px 12px 12px;background:#7B1C2E}
+.cbg-nome{font-size:0.85em;font-weight:bold;color:#F0A500;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbg-cnt{font-size:0.75em;color:#d4899a;margin-top:3px}
+
+.cbg-fotos{display:none;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cbg-fotos.v{display:grid}
+.cbg-thumb{cursor:pointer;border-radius:8px;overflow:hidden;aspect-ratio:1;border:2px solid transparent;transition:border-color 0.2s;position:relative}
+.cbg-thumb:hover{border-color:#F0A500}
+.cbg-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s}
+.cbg-thumb:hover img{transform:scale(1.07)}
+
+.cbg-msg{text-align:center;padding:40px;color:#7B1C2E;font-size:1em}
+.cbg-lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:9999;justify-content:center;align-items:center;flex-direction:column}
+.cbg-lb.v{display:flex}
+.cbg-lb img{max-width:88vw;max-height:76vh;object-fit:contain;border:3px solid #F0A500;border-radius:6px}
+.cbg-lb-x{position:absolute;top:16px;right:22px;color:#fff;font-size:28px;cursor:pointer;background:none;border:none;line-height:1}
+.cbg-lb-btn{position:absolute;top:50%;transform:translateY(-50%);background:#7B1C2E;color:#F0A500;border:none;font-size:2em;padding:8px 14px;cursor:pointer;border-radius:6px;line-height:1}
+.cbg-lb-btn.p{left:10px}
+.cbg-lb-btn.n{right:10px}
+.cbg-lb-titulo{color:#F0A500;margin-top:12px;font-size:0.9em;text-align:center;max-width:80vw}
+.cbg-lb-num{color:#888;font-size:0.8em;margin-top:4px}
+.cbg-rodape{text-align:center;margin-top:24px}
+.cbg-rodape a{color:#7B1C2E;font-size:0.85em;text-decoration:none;border-bottom:1px solid #F0A500}
+</style>
+
+<div class="cbg-wrap">
+  <button class="cbg-back" id="cbg-back" onclick="cbgVoltar()">&#8592; Voltar aos álbuns</button>
+  <div class="cbg-album-header" id="cbg-album-header">
+    <div class="cbg-album-epoca" id="cbg-album-epoca"></div>
+    <div class="cbg-album-titulo" id="cbg-tit"></div>
+  </div>
+  <div id="cbg-albums"></div>
+  <div id="cbg-fotos" class="cbg-fotos"></div>
+  <div class="cbg-rodape"><a href="https://www.flickr.com/photos/136430889@N05" target="_blank">Ver no Flickr &rarr;</a></div>
+</div>
+
+<div class="cbg-lb" id="cbg-lb">
+  <button class="cbg-lb-x" onclick="cbgFecha()">&#10005;</button>
+  <button class="cbg-lb-btn p" onclick="cbgNav(-1)">&#8249;</button>
+  <img id="cbg-lb-img" src="" alt="">
+  <button class="cbg-lb-btn n" onclick="cbgNav(1)">&#8250;</button>
+  <div class="cbg-lb-titulo" id="cbg-lb-t"></div>
+  <div class="cbg-lb-num" id="cbg-lb-n"></div>
+</div>
+
+<script>
+var CBG_KEY='615d446b553f45a1a89ea5214aab2a09';
+var CBG_UID='136430889@N05';
+var cbgFotos=[];
+var cbgIdx=0;
+var cbgCbN=0;
+var cbgTimers={};
+var cbgPreloaded={};
+
+function cbgJsonp(url,cb){
+  var name='cbgCb'+(cbgCbN++);
+  window[name]=function(d){cb(d);delete window[name];var s=document.getElementById(name);if(s)s.remove();};
+  var s=document.createElement('script');
+  s.id=name;s.src=url+'&jsoncallback='+name;
+  document.head.appendChild(s);
+}
+
+function cbgApi(method,params,cb){
+  var url='https://api.flickr.com/services/rest/?method='+method+'&api_key='+CBG_KEY+'&user_id='+encodeURIComponent(CBG_UID)+'&format=json&per_page=500';
+  for(var k in params)url+='&'+k+'='+encodeURIComponent(params[k]);
+  cbgJsonp(url,cb);
+}
+
+function cbgUrl(f,s){return'https://live.staticflickr.com/'+f.server+'/'+f.id+'_'+f.secret+'_'+s+'.jpg';}
+
+function cbgExtrairEpoca(nome,dataCriacao){
+  var m=nome.match(/(\d{4})[-\/](\d{2,4})/);
+  if(m){var a1=m[1],a2=m[2].length===2?m[1].slice(0,2)+m[2]:m[2];return a1+'-'+a2.slice(-2);}
+  var m2=nome.match(/\b(19\d{2}|20\d{2})\b/);
+  if(m2)return m2[1];
+  var ts=parseInt(dataCriacao||0,10);
+  if(ts)return String(new Date(ts*1000).getFullYear());
+  return 'Outros';
+}
+
+function cbgOrdenarEpoca(a,b){
+  function pA(s){var m=s.match(/\d{4}/);return m?parseInt(m[0],10):0;}
+  return pA(b)-pA(a);
+}
+
+function cbgStartSlideshow(card,albumId){
+  if(cbgPreloaded[albumId]){
+    cbgAnimar(card,cbgPreloaded[albumId]);
+    return;
+  }
+  cbgApi('flickr.photosets.getPhotos',{photoset_id:albumId,per_page:5},function(d){
+    if(!d||d.stat!=='ok')return;
+    var fotos=d.photoset.photo;
+    cbgPreloaded[albumId]=fotos;
+    if(card.matches && card.matches(':hover')){
+      cbgAnimar(card,fotos);
+    }
+  });
+}
+
+function cbgAnimar(card,fotos){
+  var wrap=card.querySelector('.cbg-capa-wrap');
+  if(!wrap||fotos.length<2)return;
+
+  var slides=wrap.querySelectorAll('.cbg-slide');
+  var dots=wrap.querySelectorAll('.cbg-dot');
+
+  fotos.forEach(function(f,i){
+    if(slides[i])slides[i].querySelector('img').src=cbgUrl(f,'q');
+  });
+
+  var cur=0;
+  function mostrar(i){
+    slides.forEach(function(s,j){
+      s.classList.toggle('ativo',j===i);
+      if(dots[j])dots[j].classList.toggle('ativo',j===i);
+    });
+  }
+  mostrar(0);
+
+  var albumId=card.dataset.albumId;
+  cbgTimers[albumId]=setInterval(function(){
+    cur=(cur+1)%Math.min(fotos.length,slides.length);
+    mostrar(cur);
+  },900);
+}
+
+function cbgStopSlideshow(card){
+  var albumId=card.dataset.albumId;
+  if(cbgTimers[albumId]){clearInterval(cbgTimers[albumId]);delete cbgTimers[albumId];}
+  var wrap=card.querySelector('.cbg-capa-wrap');
+  if(!wrap)return;
+  wrap.querySelectorAll('.cbg-slide').forEach(function(s,i){s.classList.toggle('ativo',i===0);});
+  wrap.querySelectorAll('.cbg-dot').forEach(function(d,i){d.classList.toggle('ativo',i===0);});
+}
+
+function cbgInit(){
+  document.getElementById('cbg-albums').innerHTML='<div class="cbg-msg">A carregar álbuns...</div>';
+  cbgApi('flickr.photosets.getList',{},function(d){
+    if(!d||d.stat!=='ok'){
+      document.getElementById('cbg-albums').innerHTML='<div class="cbg-msg" style="color:#c00">Erro ao carregar. Tenta recarregar a página.</div>';
+      return;
+    }
+    var sets=d.photosets.photoset;
+    if(!sets||!sets.length){
+      document.getElementById('cbg-albums').innerHTML='<div class="cbg-msg">Nenhum álbum encontrado.</div>';
+      return;
+    }
+    var porEpoca={};
+    sets.forEach(function(s){
+      var nome=(s.title&&s.title._content)||'';
+      var epoca=cbgExtrairEpoca(nome,s.date_create);
+      if(!porEpoca[epoca])porEpoca[epoca]=[];
+      porEpoca[epoca].push(s);
+    });
+    var epocas=Object.keys(porEpoca).sort(cbgOrdenarEpoca);
+    var html='';
+    epocas.forEach(function(epoca){
+      var label=epoca==='Outros'?'Sem data':('Época '+epoca);
+      html+='<div class="cbg-ano-grupo"><div class="cbg-ano-label">'+label+'</div><div class="cbg-albums">';
+      porEpoca[epoca].forEach(function(s){
+        var capa=cbgUrl({server:s.server,id:s.primary,secret:s.secret},'q');
+        var nome=(s.title&&s.title._content)||'Álbum';
+        var cnt=s.photos+' foto'+(s.photos==1?'':'s');
+        var nomeEsc=nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        var epocaEsc=label.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        var slidesHtml='';
+        var dotsHtml='';
+        for(var i=0;i<5;i++){
+          slidesHtml+='<div class="cbg-slide'+(i===0?' ativo':'')+'"><img src="'+(i===0?capa:'')+'" alt=""></div>';
+          dotsHtml+='<div class="cbg-dot'+(i===0?' ativo':'')+'"></div>';
+        }
+        html+='<div class="cbg-card" data-album-id="'+s.id+'" onclick="cbgAbre(\''+s.id+'\',\''+nomeEsc+'\',\''+epocaEsc+'\')">'
+          +'<div class="cbg-capa-wrap">'
+          +'<div class="cbg-slides">'+slidesHtml+'</div>'
+          +'<div class="cbg-dots">'+dotsHtml+'</div>'
+          +'</div>'
+          +'<div class="cbg-info"><div class="cbg-nome">'+nome+'</div><div class="cbg-cnt">'+cnt+'</div></div>'
+          +'</div>';
+      });
+      html+='</div></div>';
+    });
+    document.getElementById('cbg-albums').innerHTML=html;
+
+    document.querySelectorAll('.cbg-card').forEach(function(card){
+      card.addEventListener('mouseenter',function(){cbgStartSlideshow(card,card.dataset.albumId);});
+      card.addEventListener('mouseleave',function(){cbgStopSlideshow(card);});
+    });
+  });
+}
+
+window.cbgAbre=function(id,nome,epoca){
+  document.getElementById('cbg-albums').style.display='none';
+  document.getElementById('cbg-fotos').innerHTML='<div class="cbg-msg">A carregar fotos...</div>';
+  document.getElementById('cbg-fotos').classList.add('v');
+  document.getElementById('cbg-back').classList.add('v');
+  document.getElementById('cbg-tit').textContent=nome;
+  document.getElementById('cbg-album-epoca').textContent=epoca||'';
+  document.getElementById('cbg-album-header').classList.add('v');
+  cbgApi('flickr.photosets.getPhotos',{photoset_id:id},function(d){
+    if(!d||d.stat!=='ok'){
+      document.getElementById('cbg-fotos').innerHTML='<div class="cbg-msg" style="color:#c00">Erro ao carregar fotos.</div>';
+      return;
+    }
+    cbgFotos=d.photoset.photo;
+    var html='';
+    cbgFotos.forEach(function(f,i){
+      html+='<div class="cbg-thumb" onclick="cbgLb('+i+')">'
+        +'<img src="'+cbgUrl(f,'q')+'" alt="'+(f.title||'')+'" loading="lazy">'
+        +'</div>';
+    });
+    document.getElementById('cbg-fotos').innerHTML=html;
+  });
+};
+
+window.cbgVoltar=function(){
+  document.getElementById('cbg-albums').style.display='';
+  document.getElementById('cbg-fotos').classList.remove('v');
+  document.getElementById('cbg-fotos').innerHTML='';
+  document.getElementById('cbg-back').classList.remove('v');
+  document.getElementById('cbg-album-header').classList.remove('v');
+};
+
+window.cbgLb=function(i){
+  cbgIdx=i;var f=cbgFotos[i];
+  document.getElementById('cbg-lb-img').src=cbgUrl(f,'b');
+  document.getElementById('cbg-lb-t').textContent=f.title||'';
+  document.getElementById('cbg-lb-n').textContent=(i+1)+' / '+cbgFotos.length;
+  document.getElementById('cbg-lb').classList.add('v');
+};
+
+window.cbgNav=function(d){cbgIdx=(cbgIdx+d+cbgFotos.length)%cbgFotos.length;cbgLb(cbgIdx);};
+window.cbgFecha=function(){document.getElementById('cbg-lb').classList.remove('v');};
+document.getElementById('cbg-lb').addEventListener('click',function(e){if(e.target===this)cbgFecha();});
+document.addEventListener('keydown',function(e){
+  if(!document.getElementById('cbg-lb').classList.contains('v'))return;
+  if(e.key==='Escape')cbgFecha();
+  if(e.key==='ArrowRight')cbgNav(1);
+  if(e.key==='ArrowLeft')cbgNav(-1);
+});
+
+cbgInit();
+</script>
