@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Chuva de Bolas — CB Viana</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f0f1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        .game-header { margin-bottom: 12px; text-align: center; }
+        .stats-container { display: flex; gap: 30px; font-size: 24px; font-weight: bold; text-shadow: 2px 2px #000; }
+        #score { color: #ffcc00; }
+        #lives  { color: #ff4d4d; }
+        #gameCanvas {
+            background: radial-gradient(circle, #2c3e50 0%, #000 100%);
+            border: 5px solid #F0A500;
+            border-radius: 15px;
+            cursor: none;
+            box-shadow: 0 0 30px rgba(240,165,0,0.4);
+            display: block;
+        }
+        .instructions { margin-top: 12px; color: #888; font-size: 13px; }
+        #overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.82);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 18px;
+            text-align: center;
+        }
+        #overlay.visible { display: flex; }
+        #overlay h2 { font-size: 36px; color: #ff4d4d; text-shadow: 0 0 20px #ff4d4d88; letter-spacing: 2px; }
+        #overlay .final-score { font-size: 22px; color: #ffcc00; }
+        #overlay .final-score span { font-size: 40px; font-weight: 900; }
+        #overlay button {
+            margin-top: 8px; padding: 14px 40px; font-size: 18px; font-weight: 700;
+            background: #F0A500; color: #7B1C2E; border: none; border-radius: 30px;
+            cursor: pointer; letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(240,165,0,0.5);
+            transition: transform .1s;
+        }
+        #overlay button:hover { transform: scale(1.05); }
+        #overlay .emoji { font-size: 60px; line-height: 1; }
+        /* Ecrã de entrada */
+        #entry-screen {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+            z-index: 200; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 16px; text-align: center; padding: 20px;
+        }
+        #entry-screen h2 { font-size: 28px; color: #F0A500; }
+        #entry-screen p { font-size: 14px; color: rgba(255,255,255,0.6); }
+        #entry-screen .cost { font-size: 20px; color: #F0A500; font-weight: 700; }
+        #entry-screen button {
+            padding: 14px 40px; font-size: 16px; font-weight: 700;
+            background: #F0A500; color: #7B1C2E; border: none; border-radius: 30px;
+            cursor: pointer;
+        }
+        #entry-screen .msg-err { color: #ff4d4d; font-size: 13px; min-height: 18px; }
+    </style>
+</head>
+<body>
+    <!-- Ecrã de entrada -->
+    <div id="entry-screen">
+        <div style="font-size:48px;">⬇️</div>
+        <h2>Chuva de Bolas</h2>
+        <p>Apanha todas as bolas com o cesto!</p>
+        <div class="cost">Custo: 5 🪙</div>
+        <div class="msg-err" id="entry-err"></div>
+        <button onclick="tryStart()">▶ Jogar</button>
+    </div>
+
+    <div class="game-header">
+        <h2 style="margin:0 0 6px;color:#F0A500;font-size:18px;letter-spacing:1px;">CHUVA DE BOLAS</h2>
+        <div class="stats-container">
+            <div>PONTOS: <span id="score">0</span></div>
+            <div>VIDAS: <span id="lives">3</span></div>
+        </div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <p class="instructions">Usa o rato ou o dedo para mover o cesto!</p>
+    <div id="overlay">
+        <div class="emoji">🏀</div>
+        <h2>FIM DE JOGO!</h2>
+        <div class="final-score">Pontuação final<br><span id="finalScore">0</span></div>
+        <div id="coins-earned" style="font-size:16px;color:#F0A500;"></div>
+        <button onclick="tryStart()">JOGAR DE NOVO (5 🪙)</button>
+    </div>
+
+<script>
+function cbvGam(){
+  return window.CBVGam||
+    (window.parent&&window.parent.CBVGam)||
+    (window.parent&&window.parent.parent&&window.parent.parent.CBVGam)||null;
+}
+function reportScore(gameId, score, extra){
+  var entry = {name:'Jogador', score:score};
+  if(extra) Object.assign(entry, extra);
+  // Tentar buscar nome via CBVGam
+  var gam = cbvGam();
+  if(gam){ var st=gam.getState(); if(st&&st.nome) entry.name=st.nome; }
+  // Enviar para jogos.html via postMessage (resolve problema localStorage cross-frame)
+  try{
+    var msg = {type:'cbv_score', gameId:gameId, entry:entry};
+    if(window.parent) window.parent.postMessage(msg,'*');
+    if(window.parent&&window.parent.parent) window.parent.parent.postMessage(msg,'*');
+  }catch(e){}
+}
+
+var CUSTO=5;
+
+function tryStart(){
+    var gam=cbvGam();
+    var err=document.getElementById('entry-err');
+    if(gam){
+        if(!gam.canPay(CUSTO)){
+            var s=gam.getState();
+            if(err) err.textContent='Precisas de '+CUSTO+' 🪙. Tens '+s.moedas+'.';
+            return;
+        }
+        gam.payCoins(CUSTO,function(d){
+            if(d.sucesso){ startGame(); }
+            else { if(err) err.textContent='Erro ao descontar moedas.'; }
+        });
+    } else {
+        startGame();
+    }
+}
+
+    const canvas  = document.getElementById("gameCanvas");
+    const ctx     = canvas.getContext("2d");
+    function resizeCanvas() {
+        const maxW = Math.min(window.innerWidth  - 24, 450);
+        const maxH = Math.min(window.innerHeight - 160, 600);
+        canvas.width  = maxW; canvas.height = maxH;
+        basket.y = canvas.height - 80;
+        basket.x = canvas.width / 2 - basket.w / 2;
+    }
+    const scoreEl = document.getElementById("score");
+    const livesEl = document.getElementById("lives");
+    const overlay = document.getElementById("overlay");
+    const finalScoreEl = document.getElementById("finalScore");
+    let score = 0, lives = 3, gameActive = false;
+    let particles = [], items = [], itemTimeout = null, animId = null;
+    const basket = { w: 90, h: 60, x: 180, y: 470, baseW: 90, powerUpTimer: 0 };
+
+    function scheduleItem() {
+        if (!gameActive) return;
+        itemTimeout = setTimeout(() => { spawnItem(); scheduleItem(); }, Math.max(400, 1000 - score / 5));
+    }
+    function spawnItem() {
+        if (!gameActive) return;
+        const rand = Math.random();
+        const type = rand > 0.92 ? "powerup" : rand < 0.10 ? "bomb" : "normal";
+        items.push({ x: Math.random() * (canvas.width - 30) + 15, y: -30, r: 14,
+            speed: 3 + score / 100, type,
+            color: type === "normal" ? "#ff6600" : type === "powerup" ? "#ffd700" : "#333" });
+    }
+    canvas.addEventListener("mousemove", e => {
+        const rect = canvas.getBoundingClientRect();
+        basket.x = e.clientX - rect.left - basket.w / 2; clampBasket();
+    });
+    canvas.addEventListener("touchmove", e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        basket.x = e.touches[0].clientX - rect.left - basket.w / 2; clampBasket();
+    }, { passive: false });
+    function clampBasket() {
+        if (basket.x < 0) basket.x = 0;
+        if (basket.x > canvas.width - basket.w) basket.x = canvas.width - basket.w;
+    }
+    function update() {
+        if (!gameActive) return;
+        if (basket.powerUpTimer > 0) { basket.powerUpTimer--; basket.w = basket.baseW * 1.5; }
+        else { basket.w = basket.baseW; }
+        for (let i = items.length - 1; i >= 0; i--) {
+            const it = items[i]; it.y += it.speed;
+            const hitRim = it.y + it.r >= basket.y && it.y <= basket.y + 10 &&
+                           it.x > basket.x && it.x < basket.x + basket.w;
+            if (hitRim) { handleCatch(it); items.splice(i, 1); }
+            else if (it.y > canvas.height) {
+                if (it.type === "normal") { lives--; livesEl.innerText = lives; if (lives <= 0) { gameOver(); return; } }
+                items.splice(i, 1);
+            }
+        }
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].y -= 1; particles[i].life--;
+            if (particles[i].life <= 0) particles.splice(i, 1);
+        }
+    }
+    function handleCatch(item) {
+        if (item.type === "normal") { score += 10; addParticle(item.x, item.y, "+10", "#ff6600"); }
+        else if (item.type === "powerup") { score += 50; basket.powerUpTimer = 300; addParticle(item.x, item.y, "GRANDE!", "#ffd700"); }
+        else if (item.type === "bomb") { lives--; addParticle(item.x, item.y, "-VIDA!", "#ff0000"); livesEl.innerText = lives; if (lives <= 0) { gameOver(); return; } }
+        scoreEl.innerText = score;
+    }
+    function addParticle(x, y, text, color) { particles.push({ x, y, text, color, life: 40 }); }
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 4; ctx.strokeStyle = "#F0A500";
+        ctx.strokeRect(basket.x, basket.y, basket.w, 10);
+        ctx.beginPath(); ctx.moveTo(basket.x, basket.y + 10);
+        ctx.lineTo(basket.x + 15, basket.y + basket.h);
+        ctx.lineTo(basket.x + basket.w - 15, basket.y + basket.h);
+        ctx.lineTo(basket.x + basket.w, basket.y + 10);
+        ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.stroke();
+        items.forEach(it => {
+            ctx.shadowBlur = it.type === "powerup" ? 15 : 0; ctx.shadowColor = "gold";
+            ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI * 2);
+            ctx.fillStyle = it.color; ctx.fill();
+            ctx.strokeStyle = "black"; ctx.lineWidth = 1; ctx.stroke();
+        });
+        ctx.shadowBlur = 0;
+        particles.forEach(p => {
+            ctx.fillStyle = p.color; ctx.font = "bold 18px Arial";
+            ctx.fillText(p.text, p.x - 20, p.y);
+        });
+        update();
+        if (gameActive) animId = requestAnimationFrame(draw);
+    }
+    function gameOver() {
+        gameActive = false;
+        if (itemTimeout) clearTimeout(itemTimeout);
+        cancelAnimationFrame(animId);
+        finalScoreEl.textContent = score;
+        // Dar moedas
+        var coins = Math.floor(score / 20);
+        var gam = cbvGam();
+        if(gam && coins > 0){
+            gam.addCoins(coins, function(){});
+            document.getElementById('coins-earned').textContent = 'Ganhaste '+coins+' 🪙!';
+        }
+        overlay.classList.add("visible");
+        reportScore('chuva_bolas', score, {});
+    }
+    function startGame() {
+        document.getElementById('entry-screen').style.display='none';
+        overlay.classList.remove("visible");
+        score = 0; lives = 3; gameActive = true;
+        items = []; particles = [];
+        basket.powerUpTimer = 0; basket.w = basket.baseW;
+        scoreEl.innerText = 0; livesEl.innerText = 3;
+        document.getElementById('coins-earned').textContent='';
+        scheduleItem(); draw();
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+</script>
+</body>
+</html>

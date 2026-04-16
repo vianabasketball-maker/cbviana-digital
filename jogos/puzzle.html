@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Puzzle — CB Viana</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:#0a0410;font-family:system-ui,sans-serif;touch-action:manipulation;}
+
+#wrap{width:100%;height:100vh;display:flex;flex-direction:column;padding:8px 10px;gap:6px;}
+
+/* HEADER */
+#header{text-align:center;flex-shrink:0;}
+#header h1{color:#F0A500;font-size:17px;font-weight:700;}
+#header p{color:#555;font-size:11px;}
+
+/* CONTROLS */
+#controls{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;flex-shrink:0;}
+.lvl-btn{padding:5px 13px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#888;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;}
+.lvl-btn.active{background:#7B1C2E;color:#F0A500;border-color:#F0A500;}
+
+/* HUD */
+#hud{display:flex;gap:6px;justify-content:center;flex-shrink:0;}
+.hcard{background:#1a1a1a;border-radius:8px;padding:4px 10px;text-align:center;border:0.5px solid #2a2a2a;}
+.hlabel{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.5px;}
+.hval{font-size:15px;font-weight:600;color:#F0A500;}
+
+/* AREA PRINCIPAL */
+#main-area{
+  flex:1;min-height:0;
+  display:flex;gap:8px;
+  position:relative;
+}
+
+/* TABULEIRO */
+#board-wrap{
+  flex:1;min-width:0;
+  position:relative;
+  background:#111;
+  border-radius:12px;
+  border:2px solid #7B1C2E;
+  overflow:hidden;
+}
+#board-canvas{display:block;}
+
+/* ÁREA DE PEÇAS SOLTAS */
+#pieces-area{
+  width:110px;flex-shrink:0;
+  background:#0d0618;
+  border-radius:12px;
+  border:1px solid #2a1a3a;
+  overflow-y:auto;
+  overflow-x:hidden;
+  display:flex;flex-direction:column;
+  gap:4px;padding:6px;
+  align-items:center;
+}
+#pieces-area::-webkit-scrollbar{width:3px;}
+#pieces-area::-webkit-scrollbar-track{background:#0d0618;}
+#pieces-area::-webkit-scrollbar-thumb{background:#7B1C2E;border-radius:2px;}
+
+.piece-thumb{
+  cursor:grab;border-radius:6px;overflow:hidden;
+  border:1.5px solid #2a1a3a;
+  flex-shrink:0;
+  transition:border-color .15s,transform .15s;
+  background:#0a0410;
+}
+.piece-thumb:active{cursor:grabbing;border-color:#F0A500;transform:scale(1.05);}
+.piece-thumb canvas{display:block;}
+
+/* MSG */
+#msg{text-align:center;font-size:11px;color:#666;min-height:16px;flex-shrink:0;}
+
+/* BTNS */
+#btns{display:flex;gap:6px;justify-content:center;flex-shrink:0;}
+#btns button{padding:7px 16px;border-radius:8px;background:#7B1C2E;color:#F0A500;font-weight:700;font-size:12px;border:1px solid #F0A500;cursor:pointer;}
+#btns button:hover{background:#F0A500;color:#7B1C2E;}
+
+/* WIN */
+#win-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);
+  flex-direction:column;align-items:center;justify-content:center;z-index:9999;
+  touch-action:auto;pointer-events:none;
+}
+#win-overlay.show{display:flex;pointer-events:auto;}
+.win-icon{font-size:44px;margin-bottom:8px;}
+.win-title{font-size:22px;font-weight:700;color:#F0A500;margin-bottom:4px;}
+.win-sub{font-size:12px;color:#aaa;margin-bottom:16px;text-align:center;}
+.win-btn{padding:9px 24px;border-radius:8px;background:#F0A500;color:#7B1C2E;font-weight:700;font-size:13px;border:none;cursor:pointer;}
+
+/* LOADING */
+#loading{
+  display:none;position:absolute;inset:0;
+  background:rgba(10,4,16,0.9);border-radius:10px;
+  flex-direction:column;align-items:center;justify-content:center;z-index:100;
+  color:#F0A500;font-size:13px;gap:10px;
+}
+#loading.show{display:flex;}
+.spin{width:28px;height:28px;border:3px solid #333;border-top-color:#F0A500;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:480px){
+  #pieces-area{width:80px;}
+  .piece-thumb canvas{width:70px!important;height:auto!important;}
+}
+
+/* ECRÃ DE ENTRADA */
+#entry-screen{
+  position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:5000;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;text-align:center;padding:24px;
+}
+#entry-screen h2{font-size:28px;font-weight:700;color:#F0A500;}
+#entry-screen p{font-size:13px;color:rgba(255,255,255,0.5);}
+.entry-cost{font-size:20px;color:#F0A500;font-weight:700;}
+.entry-levels{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.entry-lvl{
+  padding:10px 20px;border-radius:10px;border:1.5px solid rgba(240,165,0,0.3);
+  background:transparent;color:rgba(240,165,0,0.6);
+  font-size:15px;font-weight:700;cursor:pointer;font-family:system-ui;
+  transition:all .15s;
+}
+.entry-lvl.sel{background:rgba(240,165,0,0.15);border-color:#F0A500;color:#F0A500;}
+.entry-btn{
+  padding:14px 40px;font-size:16px;font-weight:700;
+  background:#F0A500;color:#7B1C2E;border:none;border-radius:30px;
+  cursor:pointer;font-family:system-ui;margin-top:4px;
+}
+.entry-err{color:#ff4d4d;font-size:13px;min-height:18px;}
+</style>
+</head>
+<body>
+<!-- ECRÃ DE ENTRADA -->
+<div id="entry-screen">
+  <div style="font-size:48px;">🧩</div>
+  <h2>Puzzle CB Viana</h2>
+  <p>Monta a foto do jogador!</p>
+  <div class="entry-cost">Custo: 5 🪙</div>
+  <p style="font-size:12px;color:rgba(255,255,255,0.3);">Escolhe o tamanho:</p>
+  <div class="entry-levels">
+    <button class="entry-lvl sel" onclick="selectLevel(3,this)">3×3<br><span style="font-size:10px;opacity:.6">Fácil</span></button>
+    <button class="entry-lvl" onclick="selectLevel(4,this)">4×4<br><span style="font-size:10px;opacity:.6">Médio</span></button>
+    <button class="entry-lvl" onclick="selectLevel(5,this)">5×5<br><span style="font-size:10px;opacity:.6">Difícil</span></button>
+    <button class="entry-lvl" onclick="selectLevel(6,this)">6×6<br><span style="font-size:10px;opacity:.6">Expert</span></button>
+  </div>
+  <div class="entry-err" id="entry-err"></div>
+  <button class="entry-btn" onclick="tryStartPuzzle()">▶ Jogar</button>
+</div>
+
+<div id="wrap">
+  <div id="header">
+    <h1>🧩 Puzzle CB Viana</h1>
+    <p>Arrasta as peças para montar a foto!</p>
+  </div>
+
+  <div id="controls">
+    <button class="lvl-btn active" onclick="setLevel(3,this)" ontouchend="event.stopPropagation();setLevel(3,this)">3×3</button>
+    <button class="lvl-btn" onclick="setLevel(4,this)" ontouchend="event.stopPropagation();setLevel(4,this)">4×4</button>
+    <button class="lvl-btn" onclick="setLevel(5,this)" ontouchend="event.stopPropagation();setLevel(5,this)">5×5</button>
+    <button class="lvl-btn" onclick="setLevel(6,this)" ontouchend="event.stopPropagation();setLevel(6,this)">6×6</button>
+  </div>
+
+  <div id="hud">
+    <div class="hcard"><div class="hlabel">Peças</div><div class="hval" id="h-placed">0</div></div>
+    <div class="hcard"><div class="hlabel">Total</div><div class="hval" id="h-total">9</div></div>
+    <div class="hcard"><div class="hlabel">Tempo</div><div class="hval" id="h-time">0s</div></div>
+  </div>
+
+  <div id="main-area">
+    <!-- Tabuleiro principal -->
+    <div id="board-wrap">
+      <canvas id="board-canvas"></canvas>
+      <div id="win-overlay">
+        <div class="win-icon">🏆</div>
+        <div class="win-title">Parabéns!</div>
+        <div class="win-sub" id="win-sub"></div>
+        <button class="win-btn" onclick="showEntryScreen()" ontouchend="showEntryScreen()">Nova Foto</button>
+      </div>
+      <div id="loading">
+        <div class="spin"></div>
+        A carregar foto...
+      </div>
+    </div>
+    <!-- Peças soltas -->
+    <div id="pieces-area" id="pieces-panel"></div>
+  </div>
+
+  <div id="msg">Arrasta as peças da direita para o tabuleiro!</div>
+  <div id="btns">
+    <button onclick="showEntryScreen()" ontouchend="event.stopPropagation();showEntryScreen()">Nova Foto</button>
+    <button onclick="reshufflePieces()" ontouchend="event.stopPropagation();reshufflePieces()">Baralhar</button>
+  </div>
+</div>
+
+<script>
+// ── ECRÃ DE ENTRADA ─────────────────────────────────
+var selectedLevel = 3;
+var CUSTO_PUZZLE = 5;
+
+function selectLevel(n, btn){
+  selectedLevel = n;
+  document.querySelectorAll('.entry-lvl').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+}
+
+function tryStartPuzzle(){
+  var gam = cbvGam();
+  var err = document.getElementById('entry-err');
+  if(err) err.textContent = '';
+  if(gam){
+    if(!gam.canPay(CUSTO_PUZZLE)){
+      var s = gam.getState();
+      if(err) err.textContent = 'Precisas de '+CUSTO_PUZZLE+' 🪙. Tens '+s.moedas+'.';
+      return;
+    }
+    gam.payCoins(CUSTO_PUZZLE, function(d){
+      if(d.sucesso){ _doStartPuzzle(); }
+      else { if(err) err.textContent = 'Erro ao descontar moedas.'; }
+    });
+  } else {
+    _doStartPuzzle();
+  }
+}
+
+function _doStartPuzzle(){
+  document.getElementById('entry-screen').style.display = 'none';
+  GRID = selectedLevel;
+  document.querySelectorAll('.lvl-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btns = document.querySelectorAll('.lvl-btn');
+  var idx = [3,4,5,6].indexOf(selectedLevel);
+  if(btns[idx]) btns[idx].classList.add('active');
+  resize();
+  loadPhoto();
+}
+
+function showEntryScreen(){
+  document.getElementById('win-overlay').classList.remove('show');
+  document.getElementById('entry-screen').style.display = 'flex';
+}
+
+// ── CLOUDINARY ──────────────────────────────────────
+var CLOUD = 'dmwwjylsw';
+var PHOTO_URLS = []; // carregadas do servidor
+
+var FALLBACK_PHOTOS = [
+  'https://picsum.photos/seed/cbv1/600/600',
+  'https://picsum.photos/seed/cbv2/600/600',
+  'https://picsum.photos/seed/cbv3/600/600',
+  'https://picsum.photos/seed/cbv4/600/600',
+  'https://picsum.photos/seed/cbv5/600/600',
+];
+
+function loadPhotoList(callback){
+  if(PHOTO_URLS.length > 0){ callback(); return; }
+  fetch('/wp-json/cbv/v1/photos', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.photos && d.photos.length > 0){
+        PHOTO_URLS = d.photos.map(function(p){ return p.url; });
+      } else {
+        PHOTO_URLS = FALLBACK_PHOTOS;
+      }
+      callback();
+    })
+    .catch(function(){
+      PHOTO_URLS = FALLBACK_PHOTOS;
+      callback();
+    });
+}
+
+// ── STATE ───────────────────────────────────────────
+var GRID = 3;
+var boardCanvas = document.getElementById('board-canvas');
+var boardCtx = boardCanvas.getContext('2d');
+var img = new Image();
+var pieces = []; // {id, row, col, placed, x, y} — posição no tabuleiro
+var boardX, boardY, boardW, boardH, pieceW, pieceH;
+var TAB = 0.3; // tamanho da lingueta relativo à peça
+var TAB_SIZE; // pixels da lingueta
+var dragPiece = null, dragOffX = 0, dragOffY = 0;
+var moves = 0, placed = 0, seconds = 0, timer = null;
+
+// Matriz de conectores: cada peça tem 4 lados [top, right, bottom, left]
+// 1 = lingueta para fora, -1 = encaixe para dentro, 0 = borda
+var connectors = [];
+
+// ── RESIZE ──────────────────────────────────────────
+function resize(){
+  var wrap = document.getElementById('board-wrap');
+  var W = wrap.clientWidth;
+  var H = wrap.clientHeight;
+  boardCanvas.width = W;
+  boardCanvas.height = H;
+
+  // Área do tabuleiro centrada
+  var maxSide = Math.min(W, H) - 20;
+  boardW = maxSide;
+  boardH = maxSide;
+  boardX = Math.floor((W - boardW) / 2);
+  boardY = Math.floor((H - boardH) / 2);
+  pieceW = boardW / GRID;
+  pieceH = boardH / GRID;
+  TAB_SIZE = Math.min(pieceW, pieceH) * TAB;
+
+  if(img.complete && img.naturalWidth > 0) redraw();
+}
+window.addEventListener('resize', resize);
+
+// ── CONECTORES ──────────────────────────────────────
+function generateConnectors(){
+  // connectors[row][col] = {top, right, bottom, left}
+  connectors = [];
+  for(var r=0; r<GRID; r++){
+    connectors[r] = [];
+    for(var c=0; c<GRID; c++){
+      connectors[r][c] = {
+        top:    r===0 ? 0 : -connectors[r-1][c].bottom,
+        left:   c===0 ? 0 : -connectors[r][c-1].right,
+        bottom: r===GRID-1 ? 0 : (Math.random()>0.5 ? 1 : -1),
+        right:  c===GRID-1 ? 0 : (Math.random()>0.5 ? 1 : -1),
+      };
+    }
+  }
+}
+
+// ── DESENHAR FORMA DE PEÇA ──────────────────────────
+// Desenha o path de uma peça com linguetas/encaixes
+function piecePath(ctx, x, y, w, h, top, right, bottom, left){
+  var t = TAB_SIZE;
+  ctx.beginPath();
+  // Lado de cima
+  ctx.moveTo(x, y);
+  if(top !== 0){
+    ctx.lineTo(x + w*0.35, y);
+    // curva da lingueta/encaixe
+    var ty = top > 0 ? y - t : y + t;
+    ctx.bezierCurveTo(
+      x + w*0.35, ty,
+      x + w*0.65, ty,
+      x + w*0.65, y
+    );
+  }
+  ctx.lineTo(x + w, y);
+  // Lado direito
+  if(right !== 0){
+    ctx.lineTo(x + w, y + h*0.35);
+    var rx = right > 0 ? x + w + t : x + w - t;
+    ctx.bezierCurveTo(
+      rx, y + h*0.35,
+      rx, y + h*0.65,
+      x + w, y + h*0.65
+    );
+  }
+  ctx.lineTo(x + w, y + h);
+  // Lado de baixo (invertido)
+  if(bottom !== 0){
+    ctx.lineTo(x + w*0.65, y + h);
+    var by = bottom > 0 ? y + h + t : y + h - t;
+    ctx.bezierCurveTo(
+      x + w*0.65, by,
+      x + w*0.35, by,
+      x + w*0.35, y + h
+    );
+  }
+  ctx.lineTo(x, y + h);
+  // Lado esquerdo (invertido)
+  if(left !== 0){
+    ctx.lineTo(x, y + h*0.65);
+    var lx = left > 0 ? x - t : x + t;
+    ctx.bezierCurveTo(
+      lx, y + h*0.65,
+      lx, y + h*0.35,
+      x, y + h*0.35
+    );
+  }
+  ctx.closePath();
+}
+
+// ── DESENHAR PEÇA NO CANVAS PRINCIPAL ───────────────
+function drawPiece(ctx, piece, px, py, shadow){
+  if(!img.complete || img.naturalWidth === 0) return;
+  var r = piece.row, c = piece.col;
+  var con = connectors[r][c];
+  var pw = pieceW, ph = pieceH;
+  var t = TAB_SIZE;
+
+  ctx.save();
+
+  if(shadow){
+    ctx.shadowColor = 'rgba(240,165,0,0.6)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 4;
+  }
+
+  // Clip com forma de puzzle
+  piecePath(ctx, px, py, pw, ph, con.top, con.right, con.bottom, con.left);
+  ctx.clip();
+
+  // Área de destino inclui espaço para linguetas salientes
+  var padL = con.left  > 0 ? t : 0;
+  var padR = con.right > 0 ? t : 0;
+  var padT = con.top   > 0 ? t : 0;
+  var padB = con.bottom> 0 ? t : 0;
+
+  // Fonte na imagem: o fragmento desta peça + margem para as linguetas
+  var imgW = img.naturalWidth;
+  var imgH = img.naturalHeight;
+  var cellW = imgW / GRID;
+  var cellH = imgH / GRID;
+
+  var srcX = c * cellW - (padL / pw) * cellW;
+  var srcY = r * cellH - (padT / ph) * cellH;
+  var srcW = cellW * (pw + padL + padR) / pw;
+  var srcH = cellH * (ph + padT + padB) / ph;
+
+  var dstX = px - padL;
+  var dstY = py - padT;
+  var dstW = pw + padL + padR;
+  var dstH = ph + padT + padB;
+
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
+
+  ctx.restore();
+
+  // Borda
+  ctx.save();
+  piecePath(ctx, px, py, pw, ph, con.top, con.right, con.bottom, con.left);
+  ctx.strokeStyle = piece.placed ? 'rgba(240,165,0,0.7)' : 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = piece.placed ? 2 : 1.2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── REDRAW TABULEIRO ────────────────────────────────
+function redraw(){
+  var W = boardCanvas.width, H = boardCanvas.height;
+  boardCtx.clearRect(0, 0, W, H);
+
+  // Fundo do tabuleiro
+  boardCtx.fillStyle = '#1a0828';
+  boardCtx.roundRect(boardX-2, boardY-2, boardW+4, boardH+4, 8);
+  boardCtx.fill();
+
+  // Grid guide
+  boardCtx.strokeStyle = 'rgba(123,28,46,0.3)';
+  boardCtx.lineWidth = 1;
+  for(var r=0; r<=GRID; r++){
+    boardCtx.beginPath();
+    boardCtx.moveTo(boardX, boardY + r*pieceH);
+    boardCtx.lineTo(boardX + boardW, boardY + r*pieceH);
+    boardCtx.stroke();
+  }
+  for(var c=0; c<=GRID; c++){
+    boardCtx.beginPath();
+    boardCtx.moveTo(boardX + c*pieceW, boardY);
+    boardCtx.lineTo(boardX + c*pieceW, boardY + boardH);
+    boardCtx.stroke();
+  }
+
+  // Peças colocadas
+  pieces.forEach(function(p){
+    if(p.placed && p !== dragPiece){
+      var px = boardX + p.col * pieceW;
+      var py = boardY + p.row * pieceH;
+      drawPiece(boardCtx, p, px, py, false);
+    }
+  });
+
+  // Peça a ser arrastada (por cima de tudo)
+  if(dragPiece){
+    drawPiece(boardCtx, dragPiece, dragPiece.dragX, dragPiece.dragY, true);
+  }
+}
+
+// ── THUMBNAILS DAS PEÇAS ────────────────────────────
+function buildThumbs(){
+  var panel = document.getElementById('pieces-area');
+  panel.innerHTML = '';
+
+  var thumbSize = Math.min(90, parseInt(panel.clientWidth) - 12);
+
+  // Peças não colocadas
+  var unplaced = pieces.filter(function(p){ return !p.placed; });
+  // Baralhar
+  unplaced.sort(function(){ return Math.random() - 0.5; });
+
+  unplaced.forEach(function(piece){
+    var wrap = document.createElement('div');
+    wrap.className = 'piece-thumb';
+    wrap.dataset.id = piece.id;
+
+    var c = document.createElement('canvas');
+    c.width = thumbSize;
+    c.height = thumbSize;
+    wrap.appendChild(c);
+
+    var tctx = c.getContext('2d');
+    drawThumb(tctx, piece, thumbSize);
+
+    // Drag events
+    wrap.addEventListener('mousedown', function(e){ startDragFromThumb(e, piece, wrap); });
+    wrap.addEventListener('touchstart', function(e){ e.preventDefault(); startDragFromThumb(e, piece, wrap); }, {passive:false});
+
+    panel.appendChild(wrap);
+  });
+}
+
+function drawThumb(tctx, piece, size){
+  if(!img.complete || img.naturalWidth === 0) return;
+  tctx.clearRect(0,0,size,size);
+
+  var con = connectors[piece.row][piece.col];
+  var t = size * TAB * 0.6; // lingueta proporcional ao thumb
+
+  // Desenhar forma de puzzle no thumb
+  var margin = Math.ceil(t) + 2;
+  var innerSize = size - margin*2;
+
+  tctx.save();
+  // Sombra subtil
+  tctx.shadowColor = 'rgba(0,0,0,0.4)';
+  tctx.shadowBlur = 4;
+
+  // Path da peça em miniatura
+  piecePath(tctx, margin, margin, innerSize, innerSize,
+    con.top, con.right, con.bottom, con.left);
+  tctx.clip();
+
+  var srcX = (piece.col / GRID) * img.naturalWidth;
+  var srcY = (piece.row / GRID) * img.naturalHeight;
+  var srcW = img.naturalWidth / GRID;
+  var srcH = img.naturalHeight / GRID;
+  tctx.drawImage(img, srcX, srcY, srcW, srcH, margin, margin, innerSize, innerSize);
+  tctx.restore();
+
+  // Borda da peça no thumb
+  tctx.save();
+  piecePath(tctx, margin, margin, innerSize, innerSize,
+    con.top, con.right, con.bottom, con.left);
+  tctx.strokeStyle = 'rgba(240,165,0,0.5)';
+  tctx.lineWidth = 1.5;
+  tctx.stroke();
+  tctx.restore();
+}
+
+// ── DRAG FROM THUMB ──────────────────────────────────
+function startDragFromThumb(e, piece, thumbEl){
+  e.preventDefault();
+  var t = e.touches ? e.touches[0] : e;
+
+  // Calcular posição inicial no board canvas
+  var bRect = boardCanvas.getBoundingClientRect();
+  dragPiece = piece;
+  dragPiece.dragX = t.clientX - bRect.left - pieceW/2;
+  dragPiece.dragY = t.clientY - bRect.top - pieceH/2;
+
+  thumbEl.style.opacity = '0.3';
+  dragPiece._thumbEl = thumbEl;
+
+  redraw();
+  document.getElementById('msg').textContent = 'Larga na posição correcta!';
+}
+
+// ── DRAG NO CANVAS ───────────────────────────────────
+boardCanvas.addEventListener('mousedown', function(e){
+  var bRect = boardCanvas.getBoundingClientRect();
+  var mx = e.clientX - bRect.left;
+  var my = e.clientY - bRect.top;
+  startDragOnBoard(mx, my);
+});
+boardCanvas.addEventListener('touchstart', function(e){
+  // Só prevenir default se o toque é directamente no canvas
+  if(e.target === boardCanvas) e.preventDefault();
+  var bRect = boardCanvas.getBoundingClientRect();
+  var mx = e.touches[0].clientX - bRect.left;
+  var my = e.touches[0].clientY - bRect.top;
+  startDragOnBoard(mx, my);
+}, {passive:false});
+
+function startDragOnBoard(mx, my){
+  // Verificar se clicou numa peça já colocada
+  for(var i=pieces.length-1; i>=0; i--){
+    var p = pieces[i];
+    if(!p.placed) continue;
+    var px = boardX + p.col * pieceW;
+    var py = boardY + p.row * pieceH;
+    if(mx >= px && mx <= px+pieceW && my >= py && my <= py+pieceH){
+      dragPiece = p;
+      dragPiece.placed = false;
+      dragPiece.dragX = px;
+      dragPiece.dragY = py;
+      dragOffX = mx - px;
+      dragOffY = my - py;
+      placed--;
+      updateHUD();
+      buildThumbs(); // mostrar de volta no panel
+      redraw();
+      return;
+    }
+  }
+}
+
+// MOVE
+document.addEventListener('mousemove', onMove);
+document.addEventListener('touchmove', function(e){
+  if(dragPiece) e.preventDefault();
+  onMove(e);
+}, {passive:false});
+
+function onMove(e){
+  if(!dragPiece) return;
+  var t = e.touches ? e.touches[0] : e;
+  var bRect = boardCanvas.getBoundingClientRect();
+  dragPiece.dragX = t.clientX - bRect.left - pieceW/2;
+  dragPiece.dragY = t.clientY - bRect.top - pieceH/2;
+  redraw();
+}
+
+// DROP
+document.addEventListener('mouseup', onDrop);
+document.addEventListener('touchend', function(e){
+  if(dragPiece) e.preventDefault();
+  onDrop(e);
+}, {passive:false});
+
+function onDrop(e){
+  if(!dragPiece) return;
+  var t = e.changedTouches ? e.changedTouches[0] : e;
+  var bRect = boardCanvas.getBoundingClientRect();
+  var mx = t.clientX - bRect.left;
+  var my = t.clientY - bRect.top;
+
+  // Verificar se soltou no tabuleiro
+  if(mx >= boardX && mx <= boardX+boardW && my >= boardY && my <= boardY+boardH){
+    // Calcular célula mais próxima
+    var col = Math.round((mx - boardX - pieceW/2) / pieceW);
+    var row = Math.round((my - boardY - pieceH/2) / pieceH);
+    col = Math.max(0, Math.min(GRID-1, col));
+    row = Math.max(0, Math.min(GRID-1, row));
+
+    // Verificar se a célula está livre
+    var occupied = pieces.find(function(p){
+      return p.placed && p.col===col && p.row===row && p!==dragPiece;
+    });
+
+    if(!occupied){
+      // Snap para a célula
+      var snapX = boardX + col * pieceW;
+      var snapY = boardY + row * pieceH;
+      var dist = Math.sqrt(
+        Math.pow(dragPiece.dragX - snapX, 2) +
+        Math.pow(dragPiece.dragY - snapY, 2)
+      );
+
+      // Só encaixa se largares muito perto da posição CORRECTA
+      var correct = (col === dragPiece.col && row === dragPiece.row);
+      var snapThreshold = pieceW * 0.28; // tem de largar a menos de 28% da peça
+
+      // Distância ao centro da célula correcta
+      var correctX = boardX + dragPiece.col * pieceW + pieceW/2;
+      var correctY = boardY + dragPiece.row * pieceH + pieceH/2;
+      var distToCorrect = Math.sqrt(
+        Math.pow(mx - correctX, 2) +
+        Math.pow(my - correctY, 2)
+      );
+
+      if(correct && distToCorrect < snapThreshold){
+        // Encaixe perfeito — posição correcta
+        dragPiece.placed = true;
+        placed++;
+        updateHUD();
+        if(dragPiece._thumbEl) dragPiece._thumbEl.remove();
+        document.getElementById('msg').textContent = '✓ Encaixou!';
+        moves++;
+        checkWin();
+      } else {
+        // Não encaixa — volta ao painel
+        dragPiece.placed = false;
+        if(dragPiece._thumbEl) dragPiece._thumbEl.style.opacity = '1';
+        document.getElementById('msg').textContent = correct ?
+          'Quase! Larga mais perto do encaixe.' :
+          'Posição errada — continua a tentar!';
+      }
+    } else {
+      dragPiece.placed = false;
+      if(dragPiece._thumbEl) dragPiece._thumbEl.style.opacity = '1';
+      document.getElementById('msg').textContent = 'Essa célula já está ocupada!';
+    }
+  } else {
+    // Soltou fora do tabuleiro
+    dragPiece.placed = false;
+    if(dragPiece._thumbEl) dragPiece._thumbEl.style.opacity = '1';
+    document.getElementById('msg').textContent = 'Arrasta para o tabuleiro!';
+  }
+
+  dragPiece = null;
+  redraw();
+}
+
+// ── HUD ─────────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('h-placed').textContent = placed;
+  document.getElementById('h-total').textContent = GRID*GRID;
+}
+
+function startTimer(){
+  clearInterval(timer);
+  seconds = 0;
+  document.getElementById('h-time').textContent = '0s';
+  timer = setInterval(function(){
+    seconds++;
+    document.getElementById('h-time').textContent = seconds+'s';
+  }, 1000);
+}
+
+// ── WIN ──────────────────────────────────────────────
+function checkWin(){
+  var correct = pieces.filter(function(p){ return p.placed; });
+  if(correct.length === GRID*GRID){
+    // Verificar se todas estão na posição correcta
+    // (permitimos colocar em qualquer célula, mas win só se todas correctas)
+    var allCorrect = pieces.every(function(p){
+      // Verificar a posição real no canvas
+      return p.placed;
+    });
+    if(placed === GRID*GRID){
+      clearInterval(timer);
+      var playerName = window.currentPlayerName || '';
+      document.getElementById('win-sub').textContent =
+        (playerName ? '🏀 ' + playerName + '\nCompleto em ' : 'Completo em ') + moves+' jogadas e '+seconds+'s!';
+      if(playerName){
+        document.getElementById('win-sub').innerHTML =
+          '<strong style="color:#F0A500;font-size:15px;">🏀 '+playerName+'</strong><br>Completo em '+moves+' jogadas e '+seconds+'s!';
+      }
+      document.getElementById('win-overlay').classList.add('show');
+      // Integração CBVGam
+      var coins = Math.max(5, Math.floor(200 / seconds * GRID));
+      var gam4=cbvGam();
+      if(gam4) gam4.addCoins(coins,function(){});
+    }
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────
+function setLevel(n, btn){
+  GRID = n;
+  document.querySelectorAll('.lvl-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  buildGame();
+}
+
+function reshufflePieces(){
+  pieces.forEach(function(p){ p.placed = false; });
+  placed = 0;
+  updateHUD();
+  buildThumbs();
+  redraw();
+}
+
+function cbvGam(){
+  return window.CBVGam||(window.parent&&window.parent.CBVGam)||null;
+}
+
+var CUSTO_PUZZLE=5;
+
+function newGame(){
+  document.getElementById('win-overlay').classList.remove('show');
+  var gam=cbvGam();
+  if(gam && !gam.canPay(CUSTO_PUZZLE)){
+    var estado=gam.getState();
+    document.getElementById('msg').textContent='Precisas de '+CUSTO_PUZZLE+' 🪙 para jogar. Tens '+estado.moedas+' moedas.';
+    return;
+  }
+  if(gam){
+    gam.payCoins(CUSTO_PUZZLE,function(d){
+      if(d.sucesso){ loadPhoto(); }
+      else { document.getElementById('msg').textContent='Erro ao descontar moedas.'; }
+    });
+  } else {
+    loadPhoto();
+  };
+}
+
+function loadPhoto(){
+  var loading = document.getElementById('loading');
+  loading.classList.add('show');
+
+  loadPhotoList(function(){
+    var url = PHOTO_URLS[Math.floor(Math.random() * PHOTO_URLS.length)];
+    // Evitar repetir a última foto
+    if(PHOTO_URLS.length > 1 && url === img.src){
+      url = PHOTO_URLS[Math.floor(Math.random() * PHOTO_URLS.length)];
+    }
+
+    // Extrair nome do jogador do URL
+    var parts = url.split('/');
+    var filename = parts[parts.length-1].split('.')[0];
+    var nameParts = filename.split('_');
+    // Remover sufixo cloudinary (id curto no final)
+    if(nameParts.length > 1 && nameParts[nameParts.length-1].length <= 8 && /^[a-z0-9]+$/.test(nameParts[nameParts.length-1])){
+      nameParts.pop();
+    }
+    window.currentPlayerName = nameParts.join(' ');
+
+    img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function(){
+      loading.classList.remove('show');
+      buildGame();
+    };
+    img.onerror = function(){
+      // Fallback para picsum
+      var fallback = FALLBACK_PHOTOS[Math.floor(Math.random() * FALLBACK_PHOTOS.length)];
+      img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function(){ loading.classList.remove('show'); buildGame(); };
+      img.onerror = function(){ loading.classList.remove('show'); };
+      img.src = fallback;
+    };
+    img.src = url;
+  });
+}
+
+function buildGame(){
+  generateConnectors();
+  pieces = [];
+  placed = 0;
+  moves = 0;
+  dragPiece = null;
+
+  for(var r=0; r<GRID; r++){
+    for(var c=0; c<GRID; c++){
+      pieces.push({
+        id: r*GRID+c,
+        row: r, col: c,
+        placed: false,
+        dragX: 0, dragY: 0,
+        _thumbEl: null
+      });
+    }
+  }
+
+  resize();
+  updateHUD();
+  buildThumbs();
+  startTimer();
+  document.getElementById('msg').textContent = 'Arrasta as peças da direita para o tabuleiro!';
+}
+
+// Iniciar
+setTimeout(function(){
+  resize();
+  loadPhoto();
+}, 100);
+</script>
+</body>
+</html>

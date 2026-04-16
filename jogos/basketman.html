@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BasketMan — CB Viana</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+/* FULLSCREEN OVERRIDE — sai do tema WordPress */
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  touch-action:none;
+  background:#1a0a08;
+}
+
+/* Forçar fullscreen sobre o tema */
+#game-root{
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  width:100dvw;height:100dvh;
+  z-index:999999;
+  background:#1a0a08;
+  overflow:hidden;
+  touch-action:none;
+}
+
+#cv{
+  display:block;
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  touch-action:none;
+}
+
+/* HUD */
+#hud{
+  position:absolute;top:0;left:0;right:0;
+  z-index:10;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 16px;
+  background:linear-gradient(180deg,rgba(10,2,2,0.92) 0%,transparent 100%);
+  pointer-events:none;
+}
+.sb{text-align:center;}
+.sl{font-size:9px;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:1.5px;}
+.sv{font-size:24px;font-weight:700;color:#F0A500;line-height:1;font-family:system-ui,sans-serif;}
+#lives{display:flex;gap:5px;align-items:center;}
+
+/* Mensagem */
+#msg{
+  position:absolute;
+  left:0;right:0;
+  z-index:50;
+  text-align:center;
+  font-size:14px;color:rgba(255,255,255,0.55);
+  pointer-events:none;
+  text-shadow:0 1px 6px rgba(0,0,0,0.9);
+  font-family:system-ui,sans-serif;
+  padding:0 20px;
+}
+
+/* Botões */
+#btns{
+  position:absolute;
+  left:50%;transform:translateX(-50%);
+  z-index:50;
+  display:flex;gap:10px;
+}
+#btns button{
+  padding:13px 40px;border-radius:12px;
+  background:#7B1C2E;color:#F0A500;
+  font-weight:700;font-size:16px;
+  border:2px solid #F0A500;cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,0,0,0.6);
+  font-family:system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* Sem zonas tácteis — swipe no canvas */
+
+/* Botão fullscreen */
+#btn-fs{
+  position:absolute;
+  top:8px;right:12px;
+  z-index:30;
+  background:rgba(20,5,5,0.7);
+  border:1px solid rgba(240,165,0,0.3);
+  border-radius:8px;
+  color:rgba(240,165,0,0.7);
+  font-size:18px;
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  backdrop-filter:blur(4px);
+}
+</style>
+</head>
+<body>
+
+<div id="game-root">
+  <canvas id="cv"></canvas>
+
+  <div id="hud">
+    <div style="display:flex;gap:20px;">
+      <div class="sb"><div class="sl">Pontos</div><div class="sv" id="sc">0</div></div>
+      <div class="sb"><div class="sl">Nível</div><div class="sv" id="lv">1</div></div>
+    </div>
+    <div id="lives"></div>
+  </div>
+
+  <button id="btn-fs" onclick="toggleFS()" title="Fullscreen">⛶</button>
+
+  <div id="msg" style="bottom:160px;">Come pontos · Bola mágica = árbitros assustados!</div>
+  <div id="btns" style="bottom:160px;"><button onclick="startGame()">▶ Iniciar</button></div>
+
+
+</div>
+
+<script>
+// ── FULLSCREEN ──────────────────────────────────────
+function toggleFS(){
+  var el=document.getElementById('game-root');
+  if(document.fullscreenElement){
+    document.exitFullscreen&&document.exitFullscreen();
+  } else {
+    (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||function(){}).call(el);
+  }
+}
+// Auto fullscreen em mobile ao tocar iniciar
+function tryFullscreen(){
+  var el=document.getElementById('game-root');
+  if(!document.fullscreenElement){
+    try{(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||function(){}).call(el);}catch(e){}
+  }
+}
+
+// ── CANVAS TOUCH ─────────────────────────────────────
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var sx=null,sy=null;
+cv.addEventListener('touchstart',function(ev){
+  ev.preventDefault();
+  sx=ev.touches[0].clientX;
+  sy=ev.touches[0].clientY;
+},{passive:false});
+cv.addEventListener('touchend',function(ev){
+  if(sx===null) return;
+  ev.preventDefault();
+  var dx=ev.changedTouches[0].clientX-sx;
+  var dy=ev.changedTouches[0].clientY-sy;
+  if(Math.max(Math.abs(dx),Math.abs(dy))>15){
+    if(Math.abs(dx)>Math.abs(dy)) qdir(dx>0?1:-1,0);
+    else qdir(0,dy>0?1:-1);
+  }
+  sx=null;sy=null;
+},{passive:false});
+cv.addEventListener('touchmove',function(ev){
+  if(sx===null) return;
+  ev.preventDefault();
+  var dx=ev.touches[0].clientX-sx;
+  var dy=ev.touches[0].clientY-sy;
+  if(Math.max(Math.abs(dx),Math.abs(dy))>20){
+    if(Math.abs(dx)>Math.abs(dy)) qdir(dx>0?1:-1,0);
+    else qdir(0,dy>0?1:-1);
+    sx=ev.touches[0].clientX;
+    sy=ev.touches[0].clientY;
+  }
+},{passive:false});
+
+// ── JOGO ────────────────────────────────────────────
+var W,H,COLS=19,ROWS=21,CS,state='idle';
+var score=0,lives=3,level=1,raf=null;
+var mouth=0.05,mDir=1,TICK=200;
+var tickAcc=0,ball,ghosts,dots,powered=0,invincible=0,qDx=1,qDy=0,tickCount=0;
+
+var BASE=[
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1],
+  [1,3,1,1,2,1,1,2,1,1,1,2,1,1,2,1,1,3,1],
+  [1,2,1,1,2,1,1,2,1,1,1,2,1,1,2,1,1,2,1],
+  [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+  [1,2,1,1,2,1,2,1,1,1,1,1,2,1,2,1,1,2,1],
+  [1,2,2,2,2,1,2,2,2,0,2,2,2,1,2,2,2,2,1],
+  [1,1,1,1,2,1,1,0,0,0,0,0,1,1,1,2,1,1,1],
+  [1,1,1,1,2,1,0,0,0,0,0,0,0,1,2,1,1,1,1],
+  [1,1,1,1,2,0,0,1,1,0,0,0,1,1,0,0,2,1,1],
+  [0,0,0,0,2,0,0,1,0,0,0,0,0,1,0,0,2,0,0],
+  [1,1,1,1,2,0,0,1,1,1,1,1,1,1,0,0,2,1,1],
+  [1,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,2,1,1],
+  [1,1,1,1,2,1,0,1,1,1,1,1,1,1,0,1,2,1,1],
+  [1,2,2,2,2,2,2,2,2,0,2,2,2,2,2,2,2,2,1],
+  [1,2,1,1,2,1,1,2,1,1,1,2,1,1,2,1,1,2,1],
+  [1,3,2,1,2,2,2,2,2,0,2,2,2,2,2,1,2,3,1],
+  [1,1,2,1,2,1,2,1,1,1,1,1,2,1,2,1,2,1,1],
+  [1,2,2,2,2,1,2,2,2,2,2,2,2,1,2,2,2,2,1],
+  [1,2,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+var MAP;
+
+// ── RESIZE ──────────────────────────────────────────
+function resize(){
+  // Forçar dimensões reais do ecrã — funciona dentro de iframe
+  var root=document.getElementById('game-root');
+  W=window.innerWidth||screen.width;
+  H=window.innerHeight||screen.height;
+  // Forçar o root a ocupar tudo
+  root.style.width=W+'px';
+  root.style.height=H+'px';
+  cv.width=W;cv.height=H;
+
+  var hudH=44;
+  var availW=W-4;
+  var availH=H-hudH-4;
+  var csByW=Math.floor(availW/COLS);
+  var csByH=Math.floor(availH/ROWS);
+  CS=Math.max(1,Math.min(csByW,csByH));
+
+  var gridH=ROWS*CS;
+  var msgBottom=Math.max(16,H-hudH-gridH-8);
+  document.getElementById('msg').style.bottom=msgBottom+'px';
+  document.getElementById('btns').style.bottom=msgBottom+'px';
+
+  if(state==='idle')drawIdle();
+}
+window.addEventListener('resize',resize);
+
+function ok(x,y){
+  if(x<0||x>=COLS||y<0||y>=ROWS)return false;
+  return MAP[y][x]!==1;
+}
+function countDots(){
+  dots=0;
+  for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++)
+    if(MAP[r][c]===2||MAP[r][c]===3)dots++;
+}
+function initGame(){
+  MAP=BASE.map(function(r){return r.slice();});
+  countDots();
+  ball={cx:9,cy:15,dx:1,dy:0,px:9,py:15};
+  ghosts=[
+    {cx:8,cy:10,dx:1,dy:0,px:8,py:10,col:'#cc2222',scared:0},
+    {cx:10,cy:10,dx:-1,dy:0,px:10,py:10,col:'#dd8800',scared:0},
+    {cx:9,cy:9,dx:0,dy:-1,px:9,py:9,col:'#cc44aa',scared:0},
+    {cx:9,cy:12,dx:0,dy:1,px:9,py:12,col:'#2288cc',scared:0}
+  ];
+  powered=0;invincible=0;score=0;lives=3;level=1;
+  qDx=1;qDy=0;tickAcc=0;tickCount=0;
+  updateHUD();
+}
+
+function cbvGam(){
+  return window.CBVGam||
+    (window.parent&&window.parent.CBVGam)||
+    (window.parent&&window.parent.parent&&window.parent.parent.CBVGam)||null;
+}
+function reportScore(gameId, score, extra){
+  var entry = {name:'Jogador', score:score};
+  if(extra) Object.assign(entry, extra);
+  // Tentar buscar nome via CBVGam
+  var gam = cbvGam();
+  if(gam){ var st=gam.getState(); if(st&&st.nome) entry.name=st.nome; }
+  // Enviar para jogos.html via postMessage (resolve problema localStorage cross-frame)
+  try{
+    var msg = {type:'cbv_score', gameId:gameId, entry:entry};
+    if(window.parent) window.parent.postMessage(msg,'*');
+    if(window.parent&&window.parent.parent) window.parent.parent.postMessage(msg,'*');
+  }catch(e){}
+}
+
+var CUSTO_BASKETMAN=5;
+
+function startGame(){
+  tryFullscreen();
+  var gam=cbvGam();
+  if(gam && !gam.canPay(CUSTO_BASKETMAN)){
+    var estado=gam.getState();
+    showMsg('Precisas de '+CUSTO_BASKETMAN+' 🪙 para jogar. Tens '+estado.moedas+' moedas.');
+    return;
+  }
+  if(gam){
+    gam.payCoins(CUSTO_BASKETMAN,function(d){
+      if(d.sucesso){ _startGame(); }
+      else { showMsg('Erro ao descontar moedas.'); }
+    });
+  } else {
+    _startGame();
+  }
+}
+
+function _startGame(){
+  initGame();state='playing';
+  document.getElementById('msg').style.display='none';
+  document.getElementById('btns').style.display='none';
+  if(raf)cancelAnimationFrame(raf);
+  var last=performance.now();
+  function loop(ts){
+    if(state!=='playing')return;
+    raf=requestAnimationFrame(loop);
+    var dt=Math.min(ts-last,50);last=ts;
+    tickAcc+=dt;
+    var spd=Math.max(80,TICK-level*15);
+    while(tickAcc>=spd){tickAcc-=spd;tick();if(state!=='playing')return;}
+    var frac=Math.min(1,tickAcc/spd);
+    mouth+=0.13*mDir*(dt/16);
+    if(mouth>0.4)mDir=-1;if(mouth<0.02)mDir=1;
+    if(invincible>0)invincible-=dt/16;
+    if(powered>0)powered-=dt/16;
+    draw(frac);
+  }
+  requestAnimationFrame(loop);
+}
+
+function qdir(dx,dy){qDx=dx;qDy=dy;}
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowLeft')qdir(-1,0);
+  else if(e.key==='ArrowRight')qdir(1,0);
+  else if(e.key==='ArrowUp')qdir(0,-1);
+  else if(e.key==='ArrowDown')qdir(0,1);
+  else return;
+  e.preventDefault();
+});
+
+function tick(){
+  tickCount++;
+  if(qDx!==ball.dx||qDy!==ball.dy){
+    var qnx=ball.cx+qDx,qny=ball.cy+qDy;
+    if(ok(qnx,qny)){ball.dx=qDx;ball.dy=qDy;}
+  }
+  ball.px=ball.cx;ball.py=ball.cy;
+  var nx=ball.cx+ball.dx,ny=ball.cy+ball.dy;
+  if(ok(nx,ny)){ball.cx=nx;ball.cy=ny;}
+  var v=MAP[ball.cy][ball.cx];
+  if(v===2){MAP[ball.cy][ball.cx]=0;score+=10;dots--;updateHUD();}
+  if(v===3){
+    MAP[ball.cy][ball.cx]=0;score+=50;dots--;
+    powered=350;ghosts.forEach(function(g){g.scared=350;});
+    updateHUD();
+  }
+  if(dots<=0){nextLevel();return;}
+  ghosts.forEach(function(g,gi){
+    if(g.scared>0)g.scared--;
+    var dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    var noRev=dirs.filter(function(d){return !(d[0]===-g.dx&&d[1]===-g.dy)&&ok(g.cx+d[0],g.cy+d[1]);});
+    var choices=noRev.length>0?noRev:dirs.filter(function(d){return ok(g.cx+d[0],g.cy+d[1]);});
+    if(!choices.length)return;
+    var best=choices[0],bestV=g.scared>0?-9999:9999;
+    var tx=ball.cx,ty=ball.cy;
+    choices.forEach(function(d){
+      var dist=Math.abs(g.cx+d[0]-tx)+Math.abs(g.cy+d[1]-ty);
+      if(g.scared>0){if(dist>bestV){bestV=dist;best=d;}}
+      else{if(dist<bestV){bestV=dist;best=d;}}
+    });
+    if(Math.random()<0.25&&choices.length>1)best=choices[Math.floor(Math.random()*choices.length)];
+    g.px=g.cx;g.py=g.cy;
+    g.cx+=best[0];g.cy+=best[1];
+    g.dx=best[0];g.dy=best[1];
+    if(invincible<=0&&g.cx===ball.cx&&g.cy===ball.cy){
+      if(g.scared>0){
+        score+=200;updateHUD();
+        g.cx=[8,10,9,9][gi];g.cy=[10,10,9,12][gi];
+        g.px=g.cx;g.py=g.cy;g.scared=0;
+        showMsg('+200! Árbitro comido!');
+      }else loseLife();
+    }
+  });
+}
+
+function loseLife(){
+  lives--;updateHUD();invincible=80;
+  if(lives<=0){
+    state='over';
+    reportScore('basketman', score, {level:level});
+    showMsg('Game Over! Pontuação: '+score);
+    document.getElementById('btns').style.display='flex';
+    document.getElementById('btns').innerHTML='<button onclick="startGame()">▶ De novo</button>';
+    // Integração CBVGam
+    if(window.CBVGam||window.parent&&window.parent.CBVGam){
+      var gam=window.CBVGam||window.parent.CBVGam;
+      var coins=Math.floor(score/50);
+      if(coins>0) gam.addCoins(coins,function(){});
+    }
+  }else{
+    ball={cx:9,cy:15,dx:1,dy:0,px:9,py:15};
+    showMsg('Cuidado! '+lives+' vida'+(lives!==1?'s':'')+' restante'+(lives!==1?'s':''));
+  }
+}
+
+function nextLevel(){
+  level++;MAP=BASE.map(function(r){return r.slice();});countDots();
+  ball={cx:9,cy:15,dx:1,dy:0,px:9,py:15};
+  ghosts.forEach(function(g,i){
+    g.cx=[8,10,9,9][i];g.cy=[10,10,9,12][i];g.px=g.cx;g.py=g.cy;
+    g.scared=0;g.dx=[1,-1,0,0][i];g.dy=[0,0,-1,1][i];
+  });
+  powered=0;invincible=60;updateHUD();
+  showMsg('Nível '+level+'! Os árbitros ficaram furiosos!');
+}
+
+function showMsg(t){
+  var el=document.getElementById('msg');
+  el.style.display='block';el.textContent=t;
+}
+
+function updateHUD(){
+  document.getElementById('sc').textContent=score;
+  document.getElementById('lv').textContent=level;
+  var el=document.getElementById('lives');el.innerHTML='';
+  for(var i=0;i<lives;i++){
+    var s=document.createElement('span');
+    s.style.cssText='display:inline-block;width:14px;height:14px;background:#F0A500;border-radius:50%;';
+    el.appendChild(s);
+  }
+}
+
+// ── DRAW ────────────────────────────────────────────
+function lerp(a,b,t){return a+(b-a)*t;}
+function ox(){return Math.floor((W-COLS*CS)/2);}
+function oy(){return 44;}
+
+function drawCourt(){
+  var ox_=ox(),oy_=oy(),gW=COLS*CS,gH=ROWS*CS;
+  ctx.fillStyle='#0d0308';ctx.fillRect(0,0,W,H);
+  var fl=ctx.createLinearGradient(ox_,oy_,ox_,oy_+gH);
+  fl.addColorStop(0,'#b06830');fl.addColorStop(.5,'#8a4810');fl.addColorStop(1,'#5a2c08');
+  ctx.fillStyle=fl;ctx.fillRect(ox_,oy_,gW,gH);
+  ctx.strokeStyle='rgba(0,0,0,.1)';ctx.lineWidth=1;
+  for(var i=0;i<22;i++){ctx.beginPath();ctx.moveTo(ox_,oy_+i*gH/22);ctx.lineTo(ox_+gW,oy_+i*gH/22);ctx.stroke();}
+  ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=2;
+  ctx.strokeRect(ox_+CS*.5,oy_+CS*.5,gW-CS,gH-CS);
+  ctx.beginPath();ctx.moveTo(ox_+CS*.5,oy_+gH/2);ctx.lineTo(ox_+gW-CS*.5,oy_+gH/2);ctx.stroke();
+  ctx.beginPath();ctx.arc(ox_+gW/2,oy_+gH/2,CS*2.4,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1.5;
+  ctx.strokeRect(ox_+gW/2-CS*2.4,oy_+CS*.5,CS*4.8,CS*4);
+  ctx.strokeRect(ox_+gW/2-CS*2.4,oy_+gH-CS*4.5,CS*4.8,CS*4);
+  ctx.strokeStyle='#F0A500';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(ox_+gW/2,oy_+CS*1.1,CS*.42,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(ox_+gW/2,oy_+gH-CS*1.1,CS*.42,0,Math.PI*2);ctx.stroke();
+}
+
+function draw(frac){
+  var ox_=ox(),oy_=oy();
+  ctx.clearRect(0,0,W,H);
+  drawCourt();
+  for(var row=0;row<ROWS;row++){
+    for(var col=0;col<COLS;col++){
+      var v=MAP[row][col];
+      var px=ox_+col*CS,py=oy_+row*CS;
+      if(v===1){
+        ctx.fillStyle='rgba(8,2,14,.93)';ctx.fillRect(px,py,CS,CS);
+        ctx.strokeStyle='rgba(123,28,46,.7)';ctx.lineWidth=1.5;
+        ctx.strokeRect(px+1.5,py+1.5,CS-3,CS-3);
+      }else if(v===2){
+        ctx.beginPath();ctx.arc(px+CS/2,py+CS/2,CS*.1,0,Math.PI*2);
+        ctx.fillStyle='rgba(240,165,0,.9)';ctx.fill();
+      }else if(v===3){
+        var pr=CS*.27,bx2=px+CS/2,by2=py+CS/2;
+        var pulse=1+Math.sin(Date.now()/160)*.14;
+        ctx.save();ctx.translate(bx2,by2);ctx.scale(pulse,pulse);ctx.translate(-bx2,-by2);
+        var bg=ctx.createRadialGradient(bx2-pr*.3,by2-pr*.3,1,bx2,by2,pr);
+        bg.addColorStop(0,'#ffc060');bg.addColorStop(.6,'#e07020');bg.addColorStop(1,'#7a2800');
+        ctx.beginPath();ctx.arc(bx2,by2,pr,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
+        ctx.strokeStyle='rgba(40,8,0,.5)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(bx2-pr,by2);ctx.lineTo(bx2+pr,by2);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(bx2,by2-pr);ctx.lineTo(bx2,by2+pr);ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+  ghosts.forEach(function(g){drawRef(g,frac);});
+  if(invincible<=0||Math.floor(invincible/5)%2===0){
+    var bx=ox_+lerp(ball.px,ball.cx,frac)*CS+CS/2;
+    var by=oy_+lerp(ball.py,ball.cy,frac)*CS+CS/2;
+    var br=CS*.4,ang=Math.atan2(ball.dy,ball.dx);
+    ctx.save();ctx.translate(bx,by);ctx.rotate(ang);
+    var bg3=ctx.createRadialGradient(-br*.3,-br*.3,1,0,0,br*1.2);
+    bg3.addColorStop(0,'#ffb860');bg3.addColorStop(.35,'#e07020');bg3.addColorStop(1,'#6a2000');
+    ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,br,mouth,Math.PI*2-mouth);ctx.closePath();
+    ctx.fillStyle=bg3;ctx.fill();
+    ctx.strokeStyle='rgba(40,8,0,.4)';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.ellipse(0,0,br,br*.25,0,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(0,0,br*.25,br,Math.PI/2,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  }
+  if(powered>0){
+    var pw=Math.max(0,powered/350);
+    var ox2=ox_,gH2=ROWS*CS,oy2=oy_+gH2-8;
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(ox2+4,oy2,COLS*CS-8,5);
+    ctx.fillStyle='#4488ff';ctx.fillRect(ox2+4,oy2,(COLS*CS-8)*pw,5);
+  }
+}
+
+function drawRef(g,frac){
+  var ox_=ox(),oy_=oy();
+  var gx=ox_+lerp(g.px,g.cx,frac)*CS+CS/2;
+  var gy=oy_+lerp(g.py,g.cy,frac)*CS+CS/2;
+  var R=CS*.4;
+  if(g.scared>0){
+    var blink=g.scared<80&&Math.floor(g.scared/6)%2===0;
+    var hc=blink?'#fff':'#4488ff';
+    ctx.fillStyle=hc;ctx.fillRect(gx-R*.9,gy-R*1.3,R*1.8,R*.2);
+    ctx.strokeStyle=hc;ctx.lineWidth=Math.max(2,R*.25);
+    ctx.beginPath();ctx.ellipse(gx,gy-R*.55,R*.55,R*.14,0,0,Math.PI*2);ctx.stroke();
+    return;
+  }
+  ctx.save();
+  ctx.beginPath();ctx.ellipse(gx,gy+R*.15,R*.75,R*.9,0,0,Math.PI*2);ctx.clip();
+  ctx.fillStyle='#f5f5f5';ctx.fillRect(gx-R,gy-R,R*2,R*2);
+  ctx.fillStyle='#111';
+  for(var s=0;s<5;s++)ctx.fillRect(gx-R*.9+s*R*.38,gy-R*.4,R*.17,R*1.4);
+  ctx.restore();
+  ctx.fillStyle='#222';
+  ctx.beginPath();ctx.ellipse(gx,gy+R*.85,R*.65,R*.35,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f0b890';
+  ctx.beginPath();ctx.arc(gx,gy-R*.72,R*.36,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#222';
+  ctx.beginPath();ctx.arc(gx,gy-R*.8,R*.34,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(gx-R*.38,gy-R*.8,R*.76,R*.1);
+  ctx.fillStyle='#222';
+  ctx.beginPath();ctx.arc(gx-R*.13,gy-R*.72,R*.055,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(gx+R*.13,gy-R*.72,R*.055,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=g.col;
+  ctx.beginPath();ctx.arc(gx,gy+R*.1,R*.16,0,Math.PI*2);ctx.fill();
+}
+
+function drawIdle(){
+  var ox_=ox(),oy_=oy(),gW=COLS*CS,gH=ROWS*CS;
+  drawCourt();
+  for(var row=0;row<ROWS;row++)for(var col=0;col<COLS;col++){
+    if(BASE[row][col]===1){
+      var px=ox_+col*CS,py=oy_+row*CS;
+      ctx.fillStyle='rgba(8,2,14,.93)';ctx.fillRect(px,py,CS,CS);
+      ctx.strokeStyle='rgba(123,28,46,.7)';ctx.lineWidth=1.5;
+      ctx.strokeRect(px+1.5,py+1.5,CS-3,CS-3);
+    }
+  }
+  ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(ox_,oy_,gW,gH);
+  ctx.fillStyle='#F0A500';
+  ctx.font='bold '+Math.round(CS*1.1)+'px system-ui';
+  ctx.textAlign='center';
+  ctx.fillText('CB VIANA',ox_+gW/2,oy_+gH/2-CS*.6);
+  ctx.fillStyle='#fff';
+  ctx.font='bold '+Math.round(CS*.7)+'px system-ui';
+  ctx.fillText('BasketMan',ox_+gW/2,oy_+gH/2+CS*.5);
+}
+
+setTimeout(function(){resize();updateHUD();drawIdle();},80);
+</script>
+</div>
+</body>
+</html>
