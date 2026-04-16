@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Caderneta CB Viana 2025/26</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Dancing+Script:wght@600;700&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#080302;font-family:'Crimson Text',serif;}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+    @keyframes card-enter{0%{transform:translateY(55px) scale(0.6);opacity:0;}60%{transform:translateY(-8px) scale(1.04);}100%{transform:translateY(0) scale(1);opacity:1;}}
+    @keyframes glow-pulse{0%,100%{opacity:0.65}50%{opacity:1}}
+    @keyframes confetti-fall{0%{transform:translateY(-12px) translateX(0) rotate(0deg);opacity:1;}100%{transform:translateY(105vh) translateX(var(--drift)) rotate(var(--rot));opacity:0;}}
+    @keyframes notifIn{0%{opacity:0;transform:translateX(-50%) translateY(-12px);}15%{opacity:1;transform:translateX(-50%) translateY(0);}85%{opacity:1;}100%{opacity:0;}}
+    @keyframes packRip{0%{transform:translateY(0) scaleY(1);opacity:1;}40%{transform:translateY(-30px) scaleY(0.7) rotate(-3deg);opacity:0.8;}100%{transform:translateY(-120px) scaleY(0.1) rotate(-8deg);opacity:0;}}
+    @keyframes packOpen{0%{transform:scaleY(1);}50%{transform:scaleY(1.05);}100%{transform:scaleY(1);}}
+    ::-webkit-scrollbar{height:4px;width:4px;}
+    ::-webkit-scrollbar-thumb{background:#7B1C2E;border-radius:4px;}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var CLOUD='dmwwjylsw';
+function imgUrl(pid){return'https://res.cloudinary.com/'+CLOUD+'/image/upload/c_fill,w_300,h_420,g_face/'+pid+'.jpg';}
+function nomeFmt(pid){var p=pid.split('_');p.pop();return p.join(' ');}
+function nomeCurto(pid){var n=nomeFmt(pid).split(' ');return n.length>2?n[0]+' '+n[n.length-1]:n.join(' ');}
+
+var ESCALOES=[
+  {key:'Senior_Masc',titulo:'Sénior Masculino',raridade:'lendaria',jogadores:['Afonso_Fernandes_de_Oliveira_kvqy9u','Afonso_Lima_da_Silva_gl7z5x','Daniel_Azevedo_Goncalves_ad5fpc','DeAndre_Jaden_Anderson_uy9qkx','Hamed_Adelino_Pedro_Gakou_hwh0ho','Eduardo_da_Silva_Carvalho_pxlspz','Joao_Alexandre_Trindade_Almeida_dhuxac','Joao_Miguel_Amaral_Tinoco_tfarl9','Jose_Miguel_Sousa_Pequeno_hzvw2b','Julio_Jeronimo_Cambudi_mag23c','Latera_Abdeta_kxpvaq','Luis_Filipe_Amaral_Tinoco_mifdts','Leonardo_Jose_Sena_Viana_uzfozm','Manuel_Jose_Domingues_Ferreira_Maia_avf1hs','Marcio_da_Silva_Malheiro_fcqoii','Martim_Batista_Rios_da_Fonseca_mu1axb','Mateus_Nascimento_da_silva_nqmbr1','Miguel_Costa_Goncalves_bseioo','Ricardo_Filipe_Felgueiras_da_Silva_nxqvys','Rodrigo_Martins_Barbosa_Pereira_eiknoh','Rodrigo_Pires_Dinis_yeetsv','Rodrigo_Martins_Minas_ipkkzl','Tiago_do_Rosario_Eiras_Fernandes_grghhf','Simao_Freitas_Monteiro_x9yxkx','Tomas_Franco_Amorim_hbr4pk','Vladyslav_Kormych_mnwgyi']},
+  {key:'Senior_Femi',titulo:'Sénior Feminino',raridade:'lendaria',jogadores:['Andreia_Teixeira_Viana_sxj7ju','Dina_Maria_Moreira_Freitas_b7yl0b','Ines_Martins_Borlido_Rocha_ecnsfv','Margarida_da_Cruz_Costa_tnlb15','Marcia_Pereira_Peres_inz640','Maria_do_Vale_Gomes_yxf5jd','Matilde_Fernandes_de_Sa_e_Silva_iv7ccq','Sonia_Isabel_Saragoca_Franco_suadc1']},
+  {key:'Sub_18_Masc',titulo:'Sub-18 Masculino',raridade:'rara',jogadores:['Afonso_Ramos_Soares_Carvalho_tju43s','Andre_Miguel_Mesquita_Franca_d5qddb','Antonio_Carvalho_Dantas_de_Brito_Costa_bh0g3o','Bruno_Pereira_Ramos_de_Moreira_Dias_jnv0kd','Eduardo_Taveira_da_Mota_Mendes_Pereira_lu6jyo','Eliton_Junior_Dos_Santos_de_Paula_hebii7','Goncalo_Pinto_Ribeiro_qki6qd','Isaque_Jose_Souza_e_Silva_ftnuie','Ivo_Barciela_da_Silva_Branco_ubcpwn','Joao_Guilherme_Marques_Mendanha_hbxf70','Joshua_Dave_Lima_e_Moura_j0kxs0','Lucas_Alexandre_Rodrigues_de_Sousa_yqyfyv','Manuel_Simao_Lages_tkc6lc','Marcio_Antonio_Bachi_Da_Silva_Junior_drmo3e','Martim_Felix_Rodrigues_Gigante_xagjzj','Nuno_Miguel_Pinto_Lopes_ad3sso','Pedro_Alexandre_Soares_da_Costa_Monteiro_Ferreira_abd3gj','Pedro_Jorge_Cavaco_da_Costa_Sequeira_axotsl','Rodrigo_Fonte_Coruche_Malhado_kdguzh','Santiago_Lima_Valenca_g2thu0','Tomas_Cavaleiro_Ramos_de_Matos_Rodrigues_i4eedn']},
+  {key:'Sub_18_Femi',titulo:'Sub-18 Feminino',raridade:'rara',jogadores:['Beatriz_Calvet_Magalhaes_Pereira_npaokz','Beatriz_Franco_Pinto_gtbqxf','Gabriela_Goncalves_Vieira_Alves_qdgulz','Lara_Susana_Ferreira_Ribeiro_ijrfxb','Liana_Goncalves_Parente_y42jlr','Maria_Rita_Carvalho_Pinto_da_Silva_qk4nz1','Sara_Goncalves_Pinto_da_Silva_kjcfh8']},
+  {key:'Sub_16_Masc',titulo:'Sub-16 Masculino',raridade:'rara',jogadores:['Afonso_Palma_Fernandes_plzrlc','Daniel_Marcio_Ferreira_Dantas_fphzmg','Antonio_Pedro_Barros_Pires_aq7j16','Dinis_Miranda_Caridade_mnausl','Duarte_Freitas_Amado_zg4tek','Francisco_Leitao_Delgado_b0g8sq','Gabriel_da_Silva_Meixedo_zbonku','Guilherme_Guia_Ferreira_owxsxk','Joaquim_Vidal_Guedes_Tavares_dos_Santos_vqf34r','Joao_Pedro_Pereira_Caneja_f5s1og','Jorge_Gabriel_Miranda_Ferreira_glgt4k','Jose_Borlido_Viana_r8dlpc','Rodrigo_Ferreira_do_Espirito_Santo_fdpzaf','Leonardo_Alves_Mendanha_Amaral_Prata_gtjirn','Martim_Brito_Quesado_ixzxnv','Martim_Vieira_Belo_unevx2','Martim_Vieira_Escaleira_viqbnz','Pedro_Nuno_Falcao_Dantas_Santos_Quelhas_wulgmo','Raul_Sa_Arrais_jjuojl','Rodrigo_Guilherme_Nogueira_Teixeira_jib2ed','Rodrigo_Martins_Carvalho_yxd2gb','Tiago_Afonso_Severino_en8n7s','Tomas_Soro_Marques_aral3j','Tiago_Fernandes_Ferreira_da_Silva_agphhy']},
+  {key:'Sub_16_Femi',titulo:'Sub-16 Feminino',raridade:'rara',jogadores:['Alice_Carrao_da_Cunha_v1omor','Benedita_Abreu_Amorim_inzity','Catarina_Ferreira_Morais_vzalns','Catarina_Galvao_Laranjeira_Martins_Silva_zpumt6','Iris_Filipa_Lino_Passos_e09jul','Joana_Maria_Pinto_Lopes_jymzhd','Leonor_Eugenia_Melo_Correia_dos_Reis_dz3toi','Leonor_Maria_Videira_Vale_obektl','Mafalda_Rodrigues_Vilarinho_trkexi','Matilde_Pacheco_Goncalves_e3goan','Natalia_Pereira_Triunfante_Martins_ytplzp']},
+  {key:'Sub_14_Masc',titulo:'Sub-14 Masculino',raridade:'comum',jogadores:['Bernardo_David_Rodrigues_de_Sousa_oeiekz','Antonio_Amaro_Rodriguez_kcymm9','Afonso_Miranda_Pereira_Capelao_qx24ej','Diogo_Jose_Ferreira_Preza_aqkwu8','Bernardo_Jorge_Rocha_Rodrigues_jtgvai','Duarte_da_Silva_Ribeiro_han65c','Elijah_Rodrigues_Chamblee_lxtut5','Goncalo_da_Costa_Ribeiro_nrzsxy','Francisco_Manuel_Pinto_Lopes_zluiwe','Goncalo_Barros_Elias_vqdnr0','Joao_Arrais_de_Castro_Gonay_eeo7qd','Jonas_Welter_Zimmermann_umgynu','Kleber_Edivaldo_Jose_Joaquim_jvj2du','Lourenco_Magalhaes_Janeiro_jmucsm','Luis_Verissimo_Rocha_sssv5p','Rafael_Valente_Duarte_htl5c0','Mikael_Navarro_Almeida_zgjges','Raimundo_Afonso_Vieira_Delgado_gziggx','Rodrigo_Marques_Morais_eikviq','Simao_de_Sousa_Bamba_woyrm3','Vicente_Rodrigues_Pereira_snfl2q']},
+  {key:'Sub_14_Femi',titulo:'Sub-14 Feminino',raridade:'comum',jogadores:['Ana_Catarina_Cambao_Roque_Vieira_dkji5l','Beatriz_Theana_Belchior_Dantas_da_Costa_ulsfe4','Marta_Pires_Ribeiro_zqiqbf','Martina_Soares_Liquito_adlhit','Paz_de_Barros_Mota_psrqzq','Sofia_Rodrigues_Loureiro_fe8gd2']},
+  {key:'Mini_12_Masc',titulo:'Mini-12 Masculino',raridade:'comum',jogadores:['Afonso_Abreu_Amorim_ayuwo5','Afonso_Pereira_Mendes_cngeoc','Antonio_Brito_Ramos_de_Araujo_Bibe_fznlnd','Dinis_Carrao_da_Cunha_p0adbs','Dinis_Martins_Pinto_uwgwu2','Diogo_Jose_Osorio_Raposo_dwuivw','Diogo_Luis_Alves_Vasconcelos_Presa_Martins_ftugyb','Duarte_Monteiro_Mendes_nipegc','Duarte_Nuno_Castro_Vieira_nuskiq','Dylan_Rossatti_Ferreira_Neves_p8bqsp','Francisco_Miguel_Amaro_Faria_rqco7k','Francisco_Videira_Alves_gal8xs','Manuel_Maria_Novo_Martins_frnycm','Gabriel_Rodrigues_we1ooa','Sancho_Castelar_Lemos_vpprt2','Marco_Sendao_Rodrigues_c3djxr','Martim_Pereira_Fernandes_hoqwbj','Nelson_Lopez_de_Sa_c6jxqn','Pedro_Henrique_de_Sa_Matos_mjhjva','Rui_Michael_Dias_pjxii6','Tiago_Vieira_Escaleira_nocaiv','Vicente_Arrigada_Goncalves_Castanheira_Costa_qblzjq']},
+  {key:'Mini_12_Femi',titulo:'Mini-12 Feminino',raridade:'comum',jogadores:['Giullia_Bacelos_Miracapillo_gfztqv','Lara_Luis_Ferreira_de_Sousa_Lopes_kgkn11','Manuela_Sena_Canabrava_Argolo_de_Paula_dn9dcx','Maria_Rita_Pais_dos_Santos_Ferreira_is3gj2','Mariana_Conceicao_Peres_Reis_llg9p9','Rita_Marques_Ferreira_yzrz6t','Salome_Marques_Teixeira_Casimiro_dos_Santos_yv8v7a','Yasmin_Pimenta_Araujo_cyhetb']},
+  {key:'Mini_10_Masc',titulo:'Mini-10 Masculino',raridade:'comum',jogadores:['Alfredo_Mano_Baptista_emvchb','Gabriel_de_Castro_Couto_mrgbbc','Guilherme_Velez_Regado_ay0nj2','Joao_David_Barros_Pires_agxzmb','Lourenco_Maria_Pinto_Soro_Leao_jzc68d','Lourenco_Ferreira_do_Espirito_Santo_ejpk5p','Miguel_Duarte_Castela_Rolo_owyn8p','Nikolas_Andre_Varelo_Santos_f4fgia']},
+  {key:'Mini_10_Femi',titulo:'Mini-10 Feminino',raridade:'comum',jogadores:['Rita_Dias_de_Sa_cwvxjl']},
+  {key:'Mini_8_Masc',titulo:'Mini-8 Masculino',raridade:'comum',jogadores:['Eduardo_Mano_Baptista_qbopdu','Miguel_Pedrulho_Brandao_zhieur','Pedro_Afonso_Osorio_Raposo_dmkznz','Tiago_Miguel_Marinho_de_Azevedo_wj77fm']},
+  {key:'Mini_8_Femi',titulo:'Mini-8 Feminino',raridade:'comum',jogadores:['Francisca_Maria_Pinto_Soro_Leao_izqibd']},
+  {key:'Baby_Basket_Masc',titulo:'Baby Basket',raridade:'comum',jogadores:['Dominic_Jose_Faria_Toro_zavsy9']},
+  {key:'Treinadores',titulo:'Equipa Técnica',raridade:'lendaria',jogadores:['Rui_Barbedo_z2emps','Jorge_Dantas_luackf','Jorge_Resende_gihahh','Adelino_Rodrigues_u1fdk0','Jose_Pequeno_xeivx3','Jose_Oliveira_ze0abx','Joao_Machado_r2n8cm','Barbara_Barreto_qmfqfp','Leonardo_Viana_nod8w0','Miguel_Menezes_xorwra','Cidalia_Cerqueira_hc6lis','Pedro_Lopes_ffppin','Marcia_Peres_fy4iqc','Eduardo_Carvalho_uoyfen','Afonso_Silva_kchqcp','Ana_Pimenta_xej0io']}
+];
+
+// Numeração PROGRESSIVA GLOBAL — cada cromo tem número único no álbum inteiro
+var TODOS=[];
+var globalNum=1;
+ESCALOES.forEach(function(e){
+  e.jogadores.forEach(function(pid){
+    TODOS.push({pid:pid,escalao:e.key,titulo:e.titulo,raridade:e.raridade,num:globalNum});
+    globalNum++;
+  });
+});
+
+// Map pid -> num para acesso rápido
+var PID_NUM={};
+TODOS.forEach(function(j){PID_NUM[j.pid]=j.num;});
+
+var R={comum:{label:'Comum',cor:'#aaa',glow:'rgba(180,180,180,0.3)'},rara:{label:'Rara',cor:'#F0A500',glow:'rgba(240,165,0,0.5)'},lendaria:{label:'Lendária',cor:'#e879f9',glow:'rgba(232,121,249,0.55)'}};
+
+// Páginas do álbum: 9 slots por página, agrupadas por escalão
+var PAGINAS=[];
+ESCALOES.forEach(function(e){
+  var slots=e.jogadores.map(function(pid){return{pid:pid,titulo:e.titulo,num:PID_NUM[pid]};});
+  for(var i=0;i<slots.length;i+=9) PAGINAS.push({titulo:e.titulo,slots:slots.slice(i,i+9)});
+});
+
+// Spreads: capa + pares de páginas + contracapa
+var SPREADS=[];
+SPREADS.push({esq:'capa',dir:PAGINAS[0]});
+for(var pi=1;pi<PAGINAS.length;pi+=2) SPREADS.push({esq:PAGINAS[pi],dir:PAGINAS[pi+1]||'contracapa'});
+if(PAGINAS.length%2===0) SPREADS.push({esq:PAGINAS[PAGINAS.length-1],dir:'contracapa'});
+
+// Estado
+// ganhos: {pid: count} — quantas cópias foram ganhas
+// colados: Set — pids já colados na caderneta (1 por cromo)
+var S={
+  ecra:'pack',pacotes:15,
+  ganhos:{},   // {pid: nCopias}
+  colados:new Set(),
+  cartas:[],reveladas:[],todosRev:false,
+  pagina:0,
+  dragPid:null,dragPos:null,slotOver:null,
+  mobileSel:null,
+  notif:null,confetti:false,
+  videoPath:'https://cbviana.com/Caderneta/openpack.mp4',
+  videoDisponivel:null
+};
+// Helpers ganhos
+function ganhoCount(pid){return S.ganhos[pid]||0;}
+function ganhoAdd(pid){S.ganhos[pid]=(S.ganhos[pid]||0)+1;}
+function ganhoHas(pid){return (S.ganhos[pid]||0)>0;}
+// disponível para colar = ganhos mas não colados (tem pelo menos 1 cópia livre)
+function ganhoDisponivel(pid){return (S.ganhos[pid]||0)>0 && !S.colados.has(pid);}
+// duplicado = colado E tem cópias extra
+function ganhoDup(pid){return S.colados.has(pid)&&(S.ganhos[pid]||0)>1;}
+// total de pids únicos ganhos
+function ganhosTotalUnicos(){return Object.keys(S.ganhos).length;}
+
+function mk(tag,cls){var d=document.createElement(tag);if(cls)d.className=cls;return d;}
+
+// Testa se o vídeo local está acessível
+function testarVideo(cb){
+  if(S.videoDisponivel!==null){cb(S.videoDisponivel);return;}
+  var v=document.createElement('video');
+  v.style.display='none';
+  v.onerror=function(){S.videoDisponivel=false;cb(false);};
+  v.oncanplay=function(){S.videoDisponivel=true;cb(true);};
+  v.src=S.videoPath;
+  document.body.appendChild(v);
+  setTimeout(function(){if(S.videoDisponivel===null){S.videoDisponivel=false;cb(false);}},1500);
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER PRINCIPAL
+// ════════════════════════════════════════════════════
+function render(){
+  var app=document.getElementById('app');
+  app.innerHTML='';
+  app.style.cssText='min-height:100vh;background:radial-gradient(ellipse at 50% 20%,#2e1508 0%,#160a04 60%,#080302 100%);position:relative;user-select:none;-webkit-user-select:none;';
+
+  var st=mk('style');st.textContent=CSS;app.appendChild(st);
+
+  if(S.confetti){app.appendChild(mkConfetti());}
+  if(S.notif){var nf=mk('div','notif');nf.textContent=S.notif;app.appendChild(nf);}
+
+  if(S.ecra==='pack') app.appendChild(mkPack());
+  if(S.ecra==='reveal') app.appendChild(mkReveal());
+  if(S.ecra==='album') app.appendChild(mkAlbum());
+}
+
+// ════════════════════════════════════════════════════
+//  PACK — com vídeo se disponível
+// ════════════════════════════════════════════════════
+function mkPack(){
+  var div=mk('div');
+  div.appendChild(mkHdr());
+  var w=mk('div','pack-wrap');
+
+  // Tentar vídeo
+  var videoEl=document.createElement('video');
+  videoEl.className='pack-video';
+  videoEl.src=S.videoPath;
+  videoEl.autoplay=false;
+  videoEl.loop=false;
+  videoEl.muted=false;
+  videoEl.controls=false;
+  videoEl.style.cssText='display:none;width:280px;height:400px;object-fit:cover;border-radius:14px;box-shadow:0 28px 70px rgba(0,0,0,0.85);cursor:pointer;';
+  videoEl.onerror=function(){videoEl.style.display='none';envEl.style.display='flex';};
+  videoEl.oncanplay=function(){videoEl.style.display='block';envEl.style.display='none';S.videoDisponivel=true;};
+  videoEl.onclick=function(){
+    videoEl.play();
+    setTimeout(function(){executarAbertura();},videoEl.duration?videoEl.duration*1000-200:2000);
+  };
+
+  // Envelope animado (fallback)
+  var envEl=mk('div','pack-env');
+  envEl.innerHTML='<div class="pack-pat"></div><div class="pack-band"></div><div class="pack-cnt"><div class="pt1">SELEÇÃO DISTRITAL DE</div><div class="pt2">VIANA</div><div class="pt3">Caderneta Oficial</div><div class="pt4">ÉPOCA 2025/26</div></div><div class="pack-hint2">✂ CLICA PARA ABRIR</div>';
+  envEl.onclick=function(){
+    envEl.style.animation='packRip 0.6s ease forwards';
+    setTimeout(executarAbertura,550);
+  };
+
+  // Testar vídeo e mostrar o correcto
+  videoEl.load();
+  setTimeout(function(){
+    if(!videoEl.error && videoEl.readyState>0){
+      videoEl.style.display='block';
+      envEl.style.display='none';
+    }
+  },800);
+
+  w.appendChild(videoEl);
+  w.appendChild(envEl);
+
+  var h=mk('div','pack-hint');
+  h.innerHTML='<span style="animation:float 2s ease-in-out infinite;display:inline-block">'+S.pacotes+' pacote'+(S.pacotes!==1?'s':'')+' disponíve'+(S.pacotes!==1?'is':'l')+'</span>';
+  w.appendChild(h);
+
+  // Callout animado
+  var callout=mk('div','pack-callout');
+  callout.innerHTML='<span class="pack-callout-arrow">👆</span> Clica no pacote para abrir os teus cromos';
+  w.appendChild(callout);
+
+  div.appendChild(w);
+  return div;
+}
+
+// ════════════════════════════════════════════════════
+//  REVEAL
+// ════════════════════════════════════════════════════
+function mkReveal(){
+  var div=mk('div');div.style.minHeight='100vh';
+  div.appendChild(mkHdr());
+  var w=mk('div','reveal-wrap');
+  var hint=mk('div','reveal-hint');hint.textContent=S.todosRev?'TODOS REVELADOS!':'CLICA PARA REVELAR';w.appendChild(hint);
+  var cards=mk('div','reveal-cards');
+  S.cartas.forEach(function(jog,i){
+    var rev=S.reveladas.indexOf(i)!==-1;
+    var ri=R[jog.raridade];
+    var cw=mk('div','carta-wrap');
+    cw.style.cssText='animation:card-enter .55s ease '+(i*110)+'ms both;';
+    if(rev&&jog.raridade!=='comum'){
+      var glow=mk('div','carta-glow');
+      glow.style.cssText='position:absolute;inset:-8px;border-radius:18px;box-shadow:0 0 28px '+ri.glow+',0 0 56px '+ri.glow+';animation:glow-pulse 1.6s ease-in-out infinite;pointer-events:none;';cw.appendChild(glow);
+      var badge=mk('div','carta-badge');
+      badge.style.cssText='position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:Oswald,sans-serif;font-size:8px;font-weight:700;color:'+ri.cor+';letter-spacing:2px;white-space:nowrap;text-shadow:0 0 10px '+ri.glow+';animation:float 1.6s ease-in-out infinite;';
+      badge.textContent=jog.raridade==='lendaria'?'★ LENDÁRIA ★':'◆ RARA ◆';cw.appendChild(badge);
+    }
+    var carta=mkCartaFlip(jog,rev,148,207);
+    if(!rev){carta.style.cursor='pointer';carta.onclick=(function(idx){return function(){revelarCarta(idx);};})(i);}
+    cw.appendChild(carta);cards.appendChild(cw);
+  });
+  w.appendChild(cards);
+  var btns=mk('div','reveal-btns');
+  if(!S.todosRev){var b=mk('button','btn');b.textContent='REVELAR TODOS';b.onclick=revelarTodos;btns.appendChild(b);}
+  if(S.todosRev){
+    if(S.pacotes>0){var bp=mk('button','btn btn-p');bp.textContent='🎁 PRÓXIMO PACOTE';bp.onclick=proximoPacote;btns.appendChild(bp);}
+    var ba=mk('button','btn btn-p');ba.textContent='📖 VER CADERNETA →';ba.onclick=irAlbum;btns.appendChild(ba);
+  }
+  w.appendChild(btns);div.appendChild(w);
+  return div;
+}
+
+// ════════════════════════════════════════════════════
+//  ÁLBUM — maior, com background
+// ════════════════════════════════════════════════════
+function isPortrait(){return window.innerHeight>window.innerWidth;}
+
+// No mobile usamos PAGINAS directamente (1 pág de cada vez)
+// No desktop usamos SPREADS (2 págs lado a lado)
+function totalUnidades(){return isPortrait()?PAGINAS.length+1:SPREADS.length;} // +1 para capa
+
+function mkAlbum(){
+  var div=mk('div');div.style.minHeight='100vh';
+  div.appendChild(mkHdr());
+
+  var aw=mk('div','album-wrap');
+
+  // Progresso
+  var pct=Math.round(S.colados.size/TODOS.length*100);
+  var pw=mk('div','');pw.style.cssText='width:100%;max-width:1100px;padding:8px 10px 0;';
+  var pb=mk('div','album-pb');var pf=mk('div','album-pf');pf.style.width=pct+'%';pb.appendChild(pf);pw.appendChild(pb);
+  var pl=mk('div','album-pl');pl.textContent=S.colados.size+'/'+TODOS.length+' colados · '+pct+'%';pw.appendChild(pl);
+  aw.appendChild(pw);
+
+  var main=mk('div','album-main');
+  var sw=mk('div','album-sw');
+  var spread=mk('div','album-spread');
+
+  var portrait=isPortrait();
+
+  if(portrait){
+    // ── PORTRAIT: 1 página, estilos inline para garantir override ──
+    var vw=window.innerWidth;
+    var spreadW=vw-12;
+    var spreadH=Math.round(spreadW*1.42);
+    spread.style.cssText='position:relative;width:'+spreadW+'px;height:'+spreadH+'px;';
+    main.style.cssText='display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:0 6px;';
+    sw.style.cssText='display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;';
+
+    var book=mk('div','album-book');
+    book.style.cssText='display:flex;width:100%;height:100%;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,0.85);overflow:hidden;';
+
+    var pagMobile=S.pagina;
+    var pagConteudo=pagMobile===0?'capa':(pagMobile<=PAGINAS.length?PAGINAS[pagMobile-1]:'contracapa');
+    var pe=mk('div','album-pag');
+    pe.style.cssText='flex:1;height:100%;position:relative;overflow:hidden;border-radius:12px;';
+    pe.appendChild(mkPaginaAlbum(pagConteudo,'esq'));
+    book.appendChild(pe);
+    spread.appendChild(book);
+
+    // Sombra
+    var shad=mk('div','');shad.style.cssText='position:absolute;bottom:-10px;left:5%;right:5%;height:12px;background:radial-gradient(ellipse,rgba(0,0,0,0.5) 0%,transparent 70%);filter:blur(4px);pointer-events:none;';spread.appendChild(shad);
+
+    // Swipe
+    var _swipeX=null;
+    spread.addEventListener('touchstart',function(e){_swipeX=e.touches[0].clientX;},{passive:true});
+    spread.addEventListener('touchend',function(e){
+      if(_swipeX===null)return;
+      var dx=e.changedTouches[0].clientX-_swipeX;_swipeX=null;
+      if(Math.abs(dx)<30)return;
+      var maxPag=PAGINAS.length+1;
+      var nova=S.pagina+(dx<0?1:-1);
+      if(nova>=0&&nova<=maxPag){S.pagina=nova;render();}
+    });
+
+    sw.appendChild(spread);
+
+    // Dots
+    var dots=mk('div','album-dots');
+    var total=PAGINAS.length+2;
+    var dstart=Math.max(0,S.pagina-4);var dend=Math.min(total-1,dstart+7);
+    for(var di=dstart;di<=dend;di++){var dd=mk('div','adot'+(di===S.pagina?' cur':''));dots.appendChild(dd);}
+    sw.appendChild(dots);
+
+    // Nav
+    var nav=mk('div','album-nav');
+    var maxPag2=PAGINAS.length+1;
+    ['◀','▶'].forEach(function(t,i){
+      var b=mk('button','btn');b.textContent=t;var isPrev=i===0;
+      b.disabled=isPrev?S.pagina===0:S.pagina>=maxPag2;
+      b.style.cssText='opacity:'+(b.disabled?'0.3':'1')+';font-size:18px;padding:10px 28px;border:1px solid rgba(240,165,0,0.25);background:rgba(240,165,0,0.07);color:#F0A500;font-family:Oswald,sans-serif;border-radius:8px;cursor:pointer;';
+      b.onclick=function(){if(!b.disabled){S.pagina+=isPrev?-1:1;render();}};
+      nav.appendChild(b);
+    });
+    var pgInd=mk('div','');pgInd.style.cssText='font-family:Oswald,sans-serif;font-size:11px;color:rgba(240,165,0,0.45);letter-spacing:1px;align-self:center;';
+    pgInd.textContent=(S.pagina+1)+'/'+(maxPag2+1);
+    nav.insertBefore(pgInd,nav.children[1]);
+    sw.appendChild(nav);
+
+  } else {
+    // ── LANDSCAPE / DESKTOP: spread duplo normal ──
+    var book2=mk('div','album-book');
+    var sp=SPREADS[S.pagina]||SPREADS[0];
+    var pe2=mk('div','album-pag');pe2.appendChild(mkPaginaAlbum(sp.esq,'esq'));book2.appendChild(pe2);
+    var spine=mk('div','album-spine');book2.appendChild(spine);
+    var pd=mk('div','album-pag');pd.appendChild(mkPaginaAlbum(sp.dir,'dir'));book2.appendChild(pd);
+    spread.appendChild(book2);
+
+    var shad2=mk('div','');shad2.style.cssText='position:absolute;bottom:-14px;left:7%;right:7%;height:16px;background:radial-gradient(ellipse,rgba(0,0,0,0.6) 0%,transparent 70%);filter:blur(5px);pointer-events:none;';spread.appendChild(shad2);
+
+    if(S.pagina>0){var zL=mk('div','flip-zone flip-zone-l');zL.onclick=function(e){e.stopPropagation();flipPagina(-1,spread);};spread.appendChild(zL);}
+    if(S.pagina<SPREADS.length-1){var zR=mk('div','flip-zone flip-zone-r');zR.onclick=function(e){e.stopPropagation();flipPagina(1,spread);};spread.appendChild(zR);}
+
+    var _swipeX2=null;
+    spread.addEventListener('touchstart',function(e){_swipeX2=e.touches[0].clientX;},{passive:true});
+    spread.addEventListener('touchend',function(e){
+      if(_swipeX2===null)return;
+      var dx=e.changedTouches[0].clientX-_swipeX2;_swipeX2=null;
+      if(Math.abs(dx)<40)return;
+      flipPagina(dx<0?1:-1,spread);
+    });
+
+    sw.appendChild(spread);
+
+    var dots2=mk('div','album-dots');
+    SPREADS.forEach(function(_,i){var dd=mk('div','adot'+(i===S.pagina?' cur':''));dots2.appendChild(dd);});
+    sw.appendChild(dots2);
+
+    var nav2=mk('div','album-nav');
+    ['◀ ANTERIOR','SEGUINTE ▶'].forEach(function(t,i){
+      var b=mk('button','btn');b.textContent=t;var isPrev=i===0;
+      b.disabled=isPrev?S.pagina===0:S.pagina>=SPREADS.length-1;
+      b.style.opacity=b.disabled?'0.3':'1';
+      b.onclick=function(){if(!b.disabled){S.pagina+=isPrev?-1:1;render();}};
+      nav2.appendChild(b);
+    });
+    sw.appendChild(nav2);
+  }
+
+  main.appendChild(sw);
+  var inv=mkInventario();
+  if(isPortrait()){
+    inv.style.cssText='width:100%;max-width:unset;min-width:unset;max-height:230px;border-radius:8px;background:rgba(6,3,1,0.92);border:1px solid rgba(240,165,0,0.12);padding:10px 8px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;';
+  }
+  main.appendChild(inv);
+  aw.appendChild(main);div.appendChild(aw);
+
+  setupDragListeners();
+  setupMobileTap();
+  return div;
+}
+
+function mkPaginaAlbum(pg,lado){
+  var d=mk('div');
+  var br=lado==='esq'?'12px 0 0 12px':'0 12px 12px 0';
+
+  // ── CAPA: imagem real capa_album.png ──
+  if(pg==='capa'){
+    d.style.cssText='width:100%;height:100%;border-radius:'+br+';overflow:hidden;position:relative;background:#6B1525;';
+    d.innerHTML='<img src="capa_album.png" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;" onerror="this.style.display=\'none\'">';
+    return d;
+  }
+
+  // ── CONTRACAPA ──
+  if(pg==='contracapa'){
+    d.style.cssText='width:100%;height:100%;border-radius:'+br+';overflow:hidden;position:relative;background:linear-gradient(160deg,#3a0810,#6B1525);display:flex;align-items:center;justify-content:center;';
+    d.innerHTML='<div style="text-align:center"><div style="font-family:Oswald,sans-serif;font-size:16px;color:rgba(240,165,0,0.12);letter-spacing:4px;font-weight:700">CB VIANA</div><div style="font-family:Dancing Script,cursive;font-size:11px;color:rgba(240,165,0,0.07);margin-top:4px">Coleciona &middot; Troca &middot; Recorda</div></div>';
+    return d;
+  }
+
+  // ── PÁGINA NORMAL: fundo court amarelo/dourado estilo PDF ──
+  d.className='pag-papel '+(lado==='esq'?'p-esq':'p-dir');
+
+  // SVG de fundo: court dourado + faixa bordô + arco + logo
+  // O lobo real é inserido como <img> por cima da faixa
+  // Fundo claro papel com watermark
+  var bgSvg='<div style="position:absolute;inset:0;pointer-events:none;z-index:0;">'
+    // fundo papel creme
+    +'<div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f0e8 0%,#ede5d5 50%,#e8dfc8 100%);"></div>'
+    // faixa fina bordô à esquerda
+    +'<div style="position:absolute;top:0;left:0;width:10px;height:100%;background:linear-gradient(180deg,#7B1C2E,#9B2840,#5a0e20);"></div>'
+    // franja dourada na faixa
+    +'<div style="position:absolute;top:35%;left:10px;width:5px;height:30%;background:#F0A500;opacity:0.8;"></div>'
+    // watermark diagonal "CB VIANA 2025/26"
+    +'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-family:Oswald,sans-serif;font-size:38px;font-weight:700;color:rgba(123,28,46,0.07);letter-spacing:4px;white-space:nowrap;line-height:1.3;text-align:center;">CB VIANA<br>2025/26</div>'
+    +'</div>';
+
+  d.insertAdjacentHTML('afterbegin', bgSvg);
+
+  // Header título do escalão
+  var hdr=mk('div','pag-hdr');
+  hdr.innerHTML='<span class="pag-titulo">'+pg.titulo.toUpperCase()+'</span>';
+  d.appendChild(hdr);
+
+  var grid=mk('div','pag-slots');
+  // Só os slots que têm jogador — sem buracos
+  pg.slots.forEach(function(slot){
+    if(!slot) return;
+    var isColado=S.colados.has(slot.pid);
+    var isOver=S.slotOver==='slot-'+slot.pid;
+    var slotEl=mk('div','slot '+(isColado?'slot-cheio':'slot-vazio')+(isOver?' slot-over':''));
+    slotEl.dataset.slot='slot-'+slot.pid;
+    slotEl.dataset.pid=slot.pid;
+    if(isColado){
+      var img=document.createElement('img');
+      img.className='slot-img-full';
+      img.src=imgUrl(slot.pid);img.alt=nomeFmt(slot.pid);
+      img.onerror=function(){this.style.display='none';};
+      slotEl.appendChild(img);
+      var overlay=mk('div','slot-overlay');
+      overlay.innerHTML='<div class="slot-nome">'+nomeCurto(slot.pid)+'</div>';
+      slotEl.appendChild(overlay);
+    }
+    var snum=mk('div','slot-num');snum.textContent=slot.num;slotEl.appendChild(snum);
+    grid.appendChild(slotEl);
+  });
+  d.appendChild(grid);
+  return d;
+}
+
+// ════════════════════════════════════════════════════
+//  INVENTÁRIO — cromos colados somem (só duplicados ficam)
+// ════════════════════════════════════════════════════
+function mkInventario(){
+  var inv=mk('div','inventario');
+  var tit=mk('div','inv-tit');
+
+  // disponíveis = ganhos mas não colados
+  var disponiveis=TODOS.filter(function(j){return ganhoDisponivel(j.pid);});
+  // duplicados = colados MAS com mais de 1 cópia (ganhou de novo depois de colar)
+  var duplicados=TODOS.filter(function(j){return ganhoDup(j.pid);});
+
+  tit.innerHTML='<span>CROMOS DISPONÍVEIS</span><span style="font-size:8px;color:#5a3a1a">'+disponiveis.length+' | '+duplicados.length+' dup</span>';
+  inv.appendChild(tit);
+
+  if(!disponiveis.length&&!duplicados.length){
+    var h=mk('div','inv-hint');h.textContent='Abre pacotes para ganhar cromos';inv.appendChild(h);
+  } else {
+    if(disponiveis.length){
+      var h2=mk('div','inv-hint');
+      h2.textContent=isPortrait()?'Toca num cromo e depois no slot':'Arrasta para colar na caderneta';
+      inv.appendChild(h2);
+      // Hint mobile selecção activa
+      var mhint=mk('div','mobile-tap-hint');
+      mhint.textContent='👇 Agora toca no slot correcto da caderneta';
+      mhint.style.cssText='font-family:Oswald,sans-serif;font-size:8px;color:#F0A500;text-align:center;letter-spacing:1px;opacity:0;transition:opacity .3s;margin-top:2px;';
+      inv.appendChild(mhint);
+      var grid=mk('div','inv-grid');
+      disponiveis.forEach(function(jog){
+        var c=mkCartaSimples(jog.pid,75,105);
+        c.className+=' inv-carta';
+        c.dataset.pid=jog.pid; // para o tap mobile
+        // Highlight se este cromo está seleccionado
+        if(S.mobileSel===jog.pid){
+          c.style.outline='2.5px solid #F0A500';
+          c.style.transform='scale(1.12) rotate(-3deg)';
+          c.style.boxShadow='0 0 16px rgba(240,165,0,0.6)';
+          mhint.style.opacity='1';
+        }
+        c.onmousedown=(function(pid){return function(e){iniciarDrag(e,pid);};})(jog.pid);
+        c.ontouchstart=(function(pid){return function(e){iniciarDragTouch(e,pid);};})(jog.pid);
+        grid.appendChild(c);
+      });
+      inv.appendChild(grid);
+    }
+    if(duplicados.length){
+      var sep2=mk('div','inv-sep');sep2.textContent='DUPLICADOS ('+duplicados.length+')';inv.appendChild(sep2);
+      var grid2=mk('div','inv-grid');
+      duplicados.forEach(function(jog){
+        var c=mkCartaSimples(jog.pid,75,105);
+        c.className+=' inv-carta inv-dup';
+        grid2.appendChild(c);
+      });
+      inv.appendChild(grid2);
+    }
+  }
+  if(S.pacotes>0){
+    var sep=mk('div','');sep.style.cssText='border-top:1px solid rgba(240,165,0,0.07);padding-top:6px;margin-top:4px;';
+    var b=mk('button','btn btn-p');b.style.width='100%';b.textContent='🎁 ABRIR PACOTE ('+S.pacotes+')';
+    b.onclick=function(){S.ecra='pack';render();};sep.appendChild(b);inv.appendChild(sep);
+  }
+  return inv;
+}
+
+// ════════════════════════════════════════════════════
+//  COMPONENTES CARTA
+// ════════════════════════════════════════════════════
+function mkCartaFlip(jog,revelado,w,h){
+  var outer=mk('div','');outer.style.cssText='width:'+w+'px;height:'+h+'px;perspective:900px;position:relative;';
+  var inner=mk('div','flip-inner'+(revelado?' flipped':''));
+  inner.style.cssText='width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.4,0,.2,1);'+(revelado?'transform:rotateY(180deg);':'');
+
+  var verso=mk('div','');verso.style.cssText='position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;overflow:hidden;';
+  verso.innerHTML='<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a0508,#7B1C2E,#9B2840);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;"><div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(240,165,0,0.04) 0,rgba(240,165,0,0.04) 1px,transparent 1px,transparent 14px);"></div><div style="position:absolute;left:-10%;top:43%;width:120%;height:20px;background:linear-gradient(90deg,#a06800,#F0A500,#FFD060,#F0A500,#a06800);transform:rotate(-10deg);opacity:.85;"></div><div style="position:relative;z-index:2;text-align:center"><div style="font-family:Oswald,sans-serif;font-size:12px;font-weight:700;color:#F0A500;letter-spacing:2px;">CB VIANA</div><div style="font-size:18px;margin:3px 0;">🏀</div><div style="font-family:Oswald,sans-serif;font-size:6px;color:rgba(240,165,0,0.3);letter-spacing:1px;">CLICA PARA REVELAR</div></div></div>';
+  inner.appendChild(verso);
+
+  var frente=mk('div','');frente.style.cssText='position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);border-radius:10px;overflow:hidden;';
+  frente.appendChild(mkCartaConteudo(jog,w,h));
+  inner.appendChild(frente);
+  outer.appendChild(inner);
+  return outer;
+}
+
+function mkCartaSimples(pid,w,h){
+  var jog=TODOS.find(function(j){return j.pid===pid;})||{pid:pid,raridade:'comum',titulo:'',num:0};
+  var d=mk('div','');d.style.cssText='width:'+w+'px;height:'+h+'px;border-radius:8px;overflow:hidden;position:relative;flex-shrink:0;';
+  d.appendChild(mkCartaConteudo(jog,w,h));
+  return d;
+}
+
+function mkCartaConteudo(jog,w,h){
+  var pid=jog.pid;var ri=R[jog.raridade||'comum'];
+  var nc=nomeCurto(pid);
+  var nomeSize=nc.length>14?(w>120?11:8):(w>120?14:10);
+  var numSize=w>120?20:13;
+
+  var c=mk('div','');
+  c.style.cssText='position:relative;width:100%;height:100%;background:linear-gradient(160deg,#111,#1c1c1c);border:1.5px solid '+ri.cor+';border-radius:8px;overflow:hidden;box-shadow:0 0 8px '+ri.glow+';';
+
+  var img=document.createElement('img');
+  img.style.cssText='width:100%;height:78%;object-fit:cover;object-position:top center;display:block;';
+  img.src=imgUrl(pid);img.alt=nomeFmt(pid);img.loading='lazy';
+  img.onerror=function(){this.style.display='none';};
+  c.appendChild(img);
+
+  var band=mk('div','');band.style.cssText='position:absolute;left:-20%;top:42%;width:140%;height:'+(w>120?20:13)+'px;background:linear-gradient(90deg,#a06800,#F0A500,#FFD060,#F0A500,#a06800);transform:rotate(-12deg);opacity:.88;pointer-events:none;';c.appendChild(band);
+  var grad=mk('div','');grad.style.cssText='position:absolute;bottom:0;left:0;right:0;height:42%;background:linear-gradient(to top,rgba(0,0,0,0.97) 0%,rgba(0,0,0,0.5) 65%,transparent 100%);';c.appendChild(grad);
+  var topo=mk('div','');topo.style.cssText='position:absolute;top:0;left:0;right:0;padding:'+(w>120?'4px 6px':'3px 4px')+';display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent);';
+  topo.innerHTML='<span style="font-family:Oswald,sans-serif;font-size:'+numSize+'px;font-weight:700;color:#F0A500;opacity:.8;line-height:1;">#'+jog.num+'</span><span style="font-family:Oswald,sans-serif;font-size:5px;color:#fff;background:rgba(123,28,46,0.85);padding:2px 3px;border-radius:3px;">'+jog.titulo.toUpperCase()+'</span>';
+  c.appendChild(topo);
+  var info=mk('div','');info.style.cssText='position:absolute;bottom:0;left:0;right:0;padding:0 '+(w>120?'6px':'4px')+' '+(w>120?'5px':'4px')+';';
+  info.innerHTML='<div style="font-family:\'Dancing Script\',cursive;font-size:'+nomeSize+'px;font-weight:700;color:#FFD060;line-height:1.1;text-shadow:0 1px 6px rgba(0,0,0,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+nc+'</div><div style="font-family:Oswald,sans-serif;font-size:5px;color:rgba(240,165,0,0.25);letter-spacing:1px;border-top:1px solid rgba(240,165,0,0.1);padding-top:1px;margin-top:1px;">CB VIANA · 2025/26</div>';
+  c.appendChild(info);
+  if(jog.raridade!=='comum'){
+    var holo=mk('div','');holo.style.cssText='position:absolute;inset:0;border-radius:8px;pointer-events:none;mix-blend-mode:screen;background:'+(jog.raridade==='lendaria'?'radial-gradient(circle at 40% 40%,rgba(232,121,249,0.15) 0%,transparent 55%)':'radial-gradient(circle at 40% 40%,rgba(240,165,0,0.18) 0%,transparent 55%)')+';';
+    c.appendChild(holo);
+  }
+  return c;
+}
+
+// ════════════════════════════════════════════════════
+//  HEADER
+// ════════════════════════════════════════════════════
+function mkHdr(){
+  var h=mk('div','hdr');
+  h.innerHTML='<div><div class="hdr-logo">CB VIANA</div><div class="hdr-sub">Caderneta 2025/26</div></div>';
+  var btns=mk('div','hdr-btns');
+  var pill=mk('div','hdr-pill');pill.textContent=S.pacotes+' pacote'+(S.pacotes!==1?'s':'');btns.appendChild(pill);
+  if(S.ecra!=='album'){var b=mk('button','btn');b.textContent='📖 CADERNETA';b.onclick=irAlbum;btns.appendChild(b);}
+  if(S.ecra==='album'&&S.pacotes>0){var b2=mk('button','btn btn-p');b2.textContent='🎁 ABRIR PACOTE';b2.onclick=function(){S.ecra='pack';render();};btns.appendChild(b2);}
+  h.appendChild(btns);
+  return h;
+}
+
+// ════════════════════════════════════════════════════
+//  CONFETTI
+// ════════════════════════════════════════════════════
+function mkConfetti(){
+  var w=mk('div','');w.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden;';
+  var cores=['#F0A500','#FFD060','#e879f9','#fff','#7B1C2E'];
+  for(var i=0;i<50;i++){
+    var p=mk('div','');var sz=4+Math.random()*7;
+    p.style.cssText='position:fixed;left:'+(10+Math.random()*80)+'%;top:-12px;width:'+sz+'px;height:'+sz*.6+'px;background:'+cores[i%5]+';border-radius:1px;animation:confetti-fall '+(0.9+Math.random()*.7)+'s ease-in '+(Math.random()*.6)+'s both;--drift:'+(-60+Math.random()*120)+'px;--rot:'+(-360+Math.random()*720)+'deg;';
+    w.appendChild(p);
+  }
+  return w;
+}
+
+// ════════════════════════════════════════════════════
+//  LÓGICA
+// ════════════════════════════════════════════════════
+function executarAbertura(){
+  if(S.pacotes<=0)return;
+  S.pacotes--;
+  var pool=[];
+  TODOS.forEach(function(j){var wt=j.raridade==='lendaria'?1:j.raridade==='rara'?2:3;for(var i=0;i<wt;i++)pool.push(j);});
+  var escolhidos=[],usados=new Set(),t=0;
+  while(escolhidos.length<4&&t<300){t++;var p=pool[Math.floor(Math.random()*pool.length)];if(!usados.has(p.pid)){escolhidos.push(p);usados.add(p.pid);}}
+  var temE=escolhidos.some(function(j){return j.raridade!=='comum';});
+  if(!temE){var raras=TODOS.filter(function(j){return j.raridade!=='comum';});if(raras.length)escolhidos[3]=raras[Math.floor(Math.random()*raras.length)];}
+  S.cartas=escolhidos;S.reveladas=[];S.todosRev=false;S.ecra='reveal';render();
+}
+
+function abrirPacote(){executarAbertura();}
+
+function revelarCarta(idx){
+  if(S.reveladas.indexOf(idx)!==-1)return;
+  S.reveladas.push(idx);
+  var jog=S.cartas[idx];
+  ganhoAdd(jog.pid);
+  if(jog.raridade==='lendaria'){S.confetti=true;setTimeout(function(){S.confetti=false;render();},2500);}
+  S.todosRev=S.reveladas.length===S.cartas.length;
+  render();
+}
+
+function revelarTodos(){
+  S.cartas.forEach(function(jog,i){if(S.reveladas.indexOf(i)===-1){S.reveladas.push(i);ganhoAdd(jog.pid);}});
+  if(S.cartas.some(function(j){return j.raridade==='lendaria';})){S.confetti=true;setTimeout(function(){S.confetti=false;render();},2500);}
+  S.todosRev=true;render();
+}
+
+function proximoPacote(){S.ecra='pack';render();}
+function irAlbum(){S.ecra='album';render();}
+function notif(txt){S.notif=txt;setTimeout(function(){S.notif=null;render();},2400);}
+
+// ════════════════════════════════════════════════════
+//  PAGE FLIP — animação real de página a virar
+// ════════════════════════════════════════════════════
+function flipPagina(dir, spreadEl){
+  var novaPag=S.pagina+dir;
+  if(novaPag<0||novaPag>=SPREADS.length) return;
+
+  var book=spreadEl.querySelector('.album-book');
+  if(!book){S.pagina=novaPag;render();return;}
+
+  // Criar overlay da página a virar por cima do livro
+  var flipEl=document.createElement('div');
+  var bookRect=book.getBoundingClientRect();
+  var spreadRect=spreadEl.getBoundingClientRect();
+  var pageW=(bookRect.width-14)/2; // menos a lombada
+  var pageH=bookRect.height;
+
+  // O flip vai da página que sai (dir>0: página direita vira para esquerda)
+  flipEl.style.cssText=[
+    'position:absolute',
+    'top:0',
+    dir>0 ? 'left:'+(pageW+14)+'px' : 'left:0',
+    'width:'+pageW+'px',
+    'height:'+pageH+'px',
+    'background:linear-gradient(to right, #f8edd8, #fef6e8)',
+    'border-radius:'+(dir>0?'0 12px 12px 0':'12px 0 0 12px'),
+    'transform-origin:'+(dir>0?'left center':'right center'),
+    'transform:rotateY(0deg)',
+    'transform-style:preserve-3d',
+    'backface-visibility:hidden',
+    'z-index:20',
+    'pointer-events:none',
+    'will-change:transform',
+    'box-shadow:'+(dir>0?'-4px 0 12px rgba(0,0,0,0.18)':'4px 0 12px rgba(0,0,0,0.18)'),
+    'overflow:hidden',
+  ].join(';');
+
+  // Sombra dinâmica que cresce durante o flip
+  var shadow=document.createElement('div');
+  shadow.style.cssText='position:absolute;inset:0;background:'+(dir>0?'linear-gradient(to right,rgba(0,0,0,0.18),transparent)':'linear-gradient(to left,rgba(0,0,0,0.18),transparent)')+';opacity:0;transition:opacity 0.22s;';
+  flipEl.appendChild(shadow);
+
+  // Gradiente de curvatura no meio da página (efeito 3D)
+  var curl=document.createElement('div');
+  curl.style.cssText='position:absolute;top:0;bottom:0;width:30px;'+(dir>0?'left:0':'right:0')+';background:'+(dir>0?'linear-gradient(to right,rgba(0,0,0,0.12),transparent)':'linear-gradient(to left,rgba(0,0,0,0.12),transparent)')+';opacity:0;';
+  flipEl.appendChild(curl);
+
+  spreadEl.style.perspective='1400px';
+  spreadEl.style.perspectiveOrigin='center center';
+  spreadEl.appendChild(flipEl);
+
+  var duration=480;
+  var startAngle=0;
+  var endAngle=dir>0?-180:180;
+  var start=null;
+
+  function ease(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+  function step(ts){
+    if(!start) start=ts;
+    var p=Math.min((ts-start)/duration,1);
+    var ep=ease(p);
+    var angle=startAngle+(endAngle-startAngle)*ep;
+    flipEl.style.transform='rotateY('+angle+'deg)';
+    // Sombra máxima a meio do flip
+    var shadowOp=Math.sin(p*Math.PI)*0.55;
+    shadow.style.opacity=shadowOp;
+    curl.style.opacity=Math.sin(p*Math.PI)*0.7;
+
+    if(p<1){
+      requestAnimationFrame(step);
+    } else {
+      // Fim da animação — mudar página e remover overlay
+      if(spreadEl.contains(flipEl)) spreadEl.removeChild(flipEl);
+      spreadEl.style.perspective='';
+      S.pagina=novaPag;
+      render();
+    }
+  }
+
+  // Mudar página a meio do flip para parecer que tem conteúdo nos dois lados
+  setTimeout(function(){
+    // Pintar o flip com cor da nova página a partir de metade
+    if(dir>0){
+      flipEl.style.background='linear-gradient(to left, #fef6e8, #f0e4c8)';
+    } else {
+      flipEl.style.background='linear-gradient(to right, #fef6e8, #f0e4c8)';
+    }
+  }, duration*0.45);
+
+  requestAnimationFrame(step);
+}
+
+// ════════════════════════════════════════════════════
+//  CSS
+// ════════════════════════════════════════════════════
+var CSS=`
+  .hdr{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:rgba(8,3,2,0.92);border-bottom:1px solid rgba(240,165,0,0.08);backdrop-filter:blur(8px);}
+  .hdr-logo{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;color:#F0A500;letter-spacing:2px;}
+  .hdr-sub{font-family:'Dancing Script',cursive;font-size:11px;color:#7a5a3a;}
+  .hdr-btns{display:flex;gap:8px;align-items:center;}
+  .hdr-pill{background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.2);border-radius:20px;padding:4px 12px;font-family:'Oswald',sans-serif;font-size:11px;color:#F0A500;font-weight:700;}
+  .btn{padding:6px 14px;border-radius:8px;border:1px solid rgba(240,165,0,0.25);background:rgba(240,165,0,0.07);color:#F0A500;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1.5px;cursor:pointer;transition:all .15s;}
+  .btn:hover{background:rgba(240,165,0,0.15);}
+  .btn-p{background:linear-gradient(90deg,#3a0a14,#7B1C2E);border-color:rgba(240,165,0,0.3);}
+  .btn-p:hover{background:linear-gradient(90deg,#7B1C2E,#9B2840);}
+
+  /* PACK */
+  .pack-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 60px);gap:20px;padding:20px;}
+  .pack-env{width:240px;height:340px;border-radius:12px;position:relative;cursor:pointer;box-shadow:0 28px 70px rgba(0,0,0,0.85),0 0 0 1px rgba(240,165,0,0.15);overflow:hidden;background:linear-gradient(135deg,#1a0508,#7B1C2E,#9B2840);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .pack-pat{position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(240,165,0,0.04) 0,rgba(240,165,0,0.04) 1px,transparent 1px,transparent 18px);}
+  .pack-band{position:absolute;left:-10%;top:40%;width:120%;height:28px;background:linear-gradient(90deg,#c87800,#F0A500,#FFD060,#F0A500,#c87800);transform:rotate(-10deg);opacity:.9;}
+  .pack-cnt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;gap:6px;}
+  .pt1{font-family:'Oswald',sans-serif;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:3px;}
+  .pt2{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;color:#F0A500;letter-spacing:5px;text-shadow:0 0 22px rgba(240,165,0,0.4);}
+  .pt3{font-family:'Dancing Script',cursive;font-size:18px;color:#FFD060;}
+  .pt4{font-family:'Oswald',sans-serif;font-size:8px;color:rgba(255,255,255,0.2);letter-spacing:2px;}
+  .pack-hint{font-family:'Oswald',sans-serif;font-size:12px;color:rgba(240,165,0,0.4);letter-spacing:1px;}
+  .pack-hint2{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:'Oswald',sans-serif;font-size:8px;color:rgba(240,165,0,0.3);letter-spacing:1px;}
+
+  /* REVEAL */
+  .reveal-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding:72px 16px 20px;min-height:100vh;}
+  .reveal-hint{font-family:'Oswald',sans-serif;font-size:9px;color:rgba(240,165,0,0.35);letter-spacing:2px;}
+  .reveal-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .reveal-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+  .carta-wrap{position:relative;flex-shrink:0;}
+
+  /* ÁLBUM — maior */
+  .album-wrap{display:flex;flex-direction:column;align-items:center;padding:0 0 32px;}
+  .album-pb{width:100%;height:2px;background:#1a0a04;}
+  .album-pf{height:100%;background:linear-gradient(90deg,#7B1C2E,#F0A500);transition:width .6s;}
+  .album-pl{font-family:'Oswald',sans-serif;font-size:9px;color:rgba(240,165,0,0.28);letter-spacing:1px;text-align:center;margin:3px 0 6px;}
+  .album-main{display:flex;gap:16px;align-items:flex-start;width:100%;max-width:1100px;padding:0 10px;flex-wrap:wrap;justify-content:center;}
+  .album-sw{display:flex;flex-direction:column;align-items:center;gap:8px;}
+
+  /* SPREAD MAIOR */
+  .album-spread{position:relative;width:700px;height:490px;}
+  .album-book{display:flex;width:100%;height:100%;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,0.85);overflow:hidden;}
+  .album-spine{width:14px;flex-shrink:0;background:linear-gradient(180deg,#100408,#5a0e20,#3a0812,#100408);box-shadow:inset 3px 0 8px rgba(0,0,0,0.7),inset -3px 0 8px rgba(0,0,0,0.7);}
+  .album-pag{flex:1;height:100%;position:relative;overflow:hidden;}
+  .album-nav{display:flex;gap:8px;}
+  .album-dots{display:flex;gap:5px;justify-content:center;}
+  .adot{width:5px;height:5px;border-radius:3px;background:#2a1008;transition:all .3s;}
+  .adot.cur{width:14px;background:#F0A500;}
+
+  /* ZONAS DE VIRAR PÁGINAS */
+  .flip-zone{position:absolute;top:0;bottom:0;width:54px;z-index:10;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
+  .flip-zone:hover{opacity:1;}
+  .flip-zone::after{content:'';width:32px;height:32px;border-radius:50%;background:rgba(240,165,0,0.18);border:1.5px solid rgba(240,165,0,0.4);display:flex;align-items:center;justify-content:center;}
+  .flip-zone-l{left:0;border-radius:14px 0 0 14px;background:linear-gradient(to right,rgba(0,0,0,0.25),transparent);}
+  .flip-zone-l::before{content:'◀';position:absolute;color:#F0A500;font-size:16px;opacity:0.85;}
+  .flip-zone-r{right:0;border-radius:0 14px 14px 0;background:linear-gradient(to left,rgba(0,0,0,0.25),transparent);}
+  .flip-zone-r::before{content:'▶';position:absolute;color:#F0A500;font-size:16px;opacity:0.85;}
+
+  /* PÁGINAS PAPEL — fundo claro tipo papel */
+  .pag-papel{width:100%;height:100%;position:relative;display:flex;flex-direction:column;gap:4px;padding:8px 8px 6px 18px;}
+  .p-esq{border-radius:12px 0 0 12px;}
+  .p-dir{border-radius:0 12px 12px 0;}
+  .pag-hdr{display:flex;align-items:center;border-bottom:2px solid #7B1C2E;padding-bottom:3px;flex-shrink:0;position:relative;z-index:2;margin-bottom:3px;}
+  .pag-titulo{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;color:#7B1C2E;letter-spacing:2.5px;}
+  .pag-slots{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:4px;flex:1;position:relative;z-index:2;min-height:0;}
+  .pag-capa{width:100%;height:100%;}
+  .pag-contra{width:100%;height:100%;}
+
+  /* SLOTS — preenchem as células da grid */
+  .slot{border-radius:6px;position:relative;overflow:hidden;transition:transform .12s,box-shadow .12s;width:100%;height:100%;min-height:0;background:rgba(255,252,245,0.9);border:1.5px dashed rgba(123,28,46,0.25);}
+  .slot-vazio{background:rgba(255,248,230,0.75);border:1.5px dashed rgba(140,80,20,0.25);}
+  .slot-over{border-color:#F0A500 !important;background:rgba(240,165,0,0.15) !important;transform:scale(1.06);box-shadow:0 0 14px rgba(240,165,0,0.5);}
+  .slot-cheio{background:transparent;border:1.5px solid rgba(180,120,40,0.3);padding:0;}
+  .slot-img-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;display:block;border-radius:5px;}
+  .slot-overlay{position:absolute;bottom:0;left:0;right:0;padding:2px 3px 3px;background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 100%);z-index:2;}
+  .slot-nome{font-family:'Dancing Script',cursive;font-size:8px;color:#FFD060;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .slot-num{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;line-height:1;z-index:3;color:#1a0608;opacity:0.55;}
+  .slot-cheio .slot-num{color:#FFD060;opacity:0.8;text-shadow:0 1px 3px rgba(0,0,0,0.9);}
+
+  /* INVENTÁRIO */
+  .inventario{flex:1;min-width:170px;max-width:220px;background:rgba(6,3,1,0.92);border:1px solid rgba(240,165,0,0.12);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;gap:6px;max-height:520px;}
+  .inv-tit{font-family:'Oswald',sans-serif;font-size:9px;color:#F0A500;letter-spacing:2px;border-bottom:1px solid rgba(240,165,0,0.1);padding-bottom:4px;display:flex;justify-content:space-between;}
+  .inv-hint{font-family:'Dancing Script',cursive;font-size:10px;color:rgba(240,165,0,0.28);text-align:center;line-height:1.4;}
+  .inv-sep{font-family:'Oswald',sans-serif;font-size:7px;color:rgba(240,165,0,0.25);letter-spacing:2px;text-align:center;border-top:1px solid rgba(240,165,0,0.07);padding-top:5px;margin-top:2px;}
+  .inv-grid{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;overflow-y:auto;max-height:220px;padding:2px;}
+  .inv-carta{cursor:grab;transition:transform .18s;touch-action:none;}
+  .inv-carta:hover{transform:translateY(-5px) rotate(-2deg);}
+  .inv-dup{opacity:0.45;cursor:default;filter:grayscale(0.4);}
+
+  /* NOTIF */
+  .notif{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9998;background:linear-gradient(90deg,#3a0a14,#7B1C2E);border:1.5px solid #F0A500;color:#FFD060;padding:8px 22px;border-radius:20px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;box-shadow:0 4px 24px rgba(0,0,0,0.6);white-space:nowrap;animation:notifIn 2.4s ease forwards;}
+
+  /* PACK CALLOUT */
+  @keyframes calloutPulse{0%,100%{opacity:0.55;transform:translateY(0);}50%{opacity:1;transform:translateY(-4px);}}
+  @keyframes calloutArrow{0%,100%{transform:translateY(0) rotate(0deg);}40%{transform:translateY(-6px) rotate(-5deg);}60%{transform:translateY(-6px) rotate(5deg);}}
+  .pack-callout{font-family:'Oswald',sans-serif;font-size:13px;color:rgba(240,165,0,0.7);letter-spacing:1.5px;text-align:center;animation:calloutPulse 2.2s ease-in-out infinite;margin-top:4px;}
+  .pack-callout-arrow{display:inline-block;animation:calloutArrow 1.8s ease-in-out infinite;margin-right:6px;}
+
+  /* ══ MOBILE ══════════════════════════════════════════ */
+  /* Layout portrait/landscape gerido pelo JS directamente */
+`;
+
+// ════════════════════════════════════════════════════
+//  DRAG
+// ════════════════════════════════════════════════════
+var ghostEl=null;
+
+function setupDragListeners(){
+  if(window._cbvDragInit) return;
+  window._cbvDragInit=true;
+
+  ghostEl=document.createElement('div');
+  ghostEl.id='cbv-ghost';
+  ghostEl.style.cssText='position:fixed;z-index:9999;pointer-events:none;display:none;transform:rotate(-4deg) scale(1.08);filter:drop-shadow(0 8px 24px rgba(240,165,0,0.5));transition:none;';
+  document.body.appendChild(ghostEl);
+
+  window.addEventListener('mousemove',function(e){
+    if(!S.dragPid) return;
+    S.dragPos={x:e.clientX,y:e.clientY};
+    moveGhost(e.clientX,e.clientY);
+    updateSlotHighlight(e.clientX,e.clientY);
+  });
+
+  window.addEventListener('mouseup',function(e){
+    if(!S.dragPid) return;
+    var pid=S.dragPid;
+    S.dragPid=null;S.dragPos=null;S.slotOver=null;
+    hideGhost();clearSlotHighlight();
+    var el2=document.elementFromPoint(e.clientX,e.clientY);
+    var slotEl=el2&&el2.closest?el2.closest('[data-slot]'):null;
+    if(slotEl){
+      var targetPid=slotEl.getAttribute('data-pid');
+      if(targetPid&&targetPid.trim()===pid.trim()&&!S.colados.has(pid)){
+        S.colados.add(pid);
+        notif('📌 '+nomeCurto(pid)+' colado!');
+      } else if(S.colados.has(pid)){
+        notif('✅ Já colado!');
+      } else {
+        notif('❌ Lugar errado!');
+      }
+    }
+    render();
+  });
+
+  window.addEventListener('touchmove',function(e){
+    if(!S.dragPid) return;
+    e.preventDefault();
+    var t=e.touches[0];
+    S.dragPos={x:t.clientX,y:t.clientY};
+    moveGhost(t.clientX,t.clientY);
+    updateSlotHighlight(t.clientX,t.clientY);
+  },{passive:false});
+
+  window.addEventListener('touchend',function(e){
+    if(!S.dragPid) return;
+    var pid=S.dragPid;
+    S.dragPid=null;S.dragPos=null;S.slotOver=null;
+    hideGhost();clearSlotHighlight();
+    var t=e.changedTouches[0];
+    var el2=document.elementFromPoint(t.clientX,t.clientY);
+    var slotEl=el2&&el2.closest?el2.closest('[data-slot]'):null;
+    if(slotEl&&slotEl.dataset.pid===pid&&!S.colados.has(pid)){
+      S.colados.add(pid);notif('📌 '+nomeCurto(pid)+' colado!');
+    }
+    render();
+  });
+}
+
+function moveGhost(x,y){if(!ghostEl)return;ghostEl.style.left=(x-50)+'px';ghostEl.style.top=(y-70)+'px';ghostEl.style.display='block';}
+function hideGhost(){if(ghostEl)ghostEl.style.display='none';}
+function updateSlotHighlight(x,y){
+  var el2=document.elementFromPoint(x,y);
+  var slot=el2&&el2.closest?el2.closest('[data-slot]'):null;
+  var newSlot=slot?slot.dataset.slot:null;
+  if(newSlot!==S.slotOver){clearSlotHighlight();S.slotOver=newSlot;if(newSlot){var slotEl=document.querySelector('[data-slot="'+newSlot+'"]');if(slotEl)slotEl.classList.add('slot-over');}}
+}
+function clearSlotHighlight(){document.querySelectorAll('.slot-over').forEach(function(s){s.classList.remove('slot-over');});}
+
+function iniciarDrag(e,pid){
+  e.preventDefault();
+  S.dragPid=pid;S.dragPos={x:e.clientX,y:e.clientY};
+  if(ghostEl){ghostEl.innerHTML='';var c=mkCartaSimples(pid,100,140);ghostEl.appendChild(c);moveGhost(e.clientX,e.clientY);}
+}
+function iniciarDragTouch(e,pid){
+  var t=e.touches[0];S.dragPid=pid;S.dragPos={x:t.clientX,y:t.clientY};
+  if(ghostEl){ghostEl.innerHTML='';var c=mkCartaSimples(pid,100,140);ghostEl.appendChild(c);moveGhost(t.clientX,t.clientY);}
+}
+
+// Aplicar background image às páginas de papel ao renderizar
+function aplicarBackground(){
+  var imgs=document.querySelectorAll('.pag-papel');
+  imgs.forEach(function(el){
+    el.style.backgroundImage='url(background.png)';
+    // Overlay suave para manter legibilidade
+    el.style.backgroundColor='rgba(254,246,232,0.82)';
+    el.style.backgroundBlendMode='multiply';
+  });
+}
+
+setupDragListeners();
+render();
+
+// ════════════════════════════════════════════════════
+//  MOBILE TAP-TO-PLACE
+//  Toca cromo no inventário → fica seleccionado (brilha)
+//  Toca no slot correcto → cola
+// ════════════════════════════════════════════════════
+function setupMobileTap(){
+  if(!isPortrait()) return;
+
+  // Seleccionar cromo do inventário por tap
+  document.querySelectorAll('.inv-carta').forEach(function(el){
+    el.addEventListener('click',function(e){
+      e.stopPropagation();
+      var pid=el.dataset.pid||el.querySelector('[data-pid]')&&el.querySelector('[data-pid]').dataset.pid;
+      // Encontrar o pid — está guardado no dataset do elemento pai ou no filho
+      // Vamos usar uma abordagem simples: guardar nos elementos ao criar
+      if(!pid) return;
+      if(S.mobileSel===pid){
+        S.mobileSel=null; // deseleccionar
+      } else {
+        S.mobileSel=pid;
+      }
+      // Actualizar visual sem re-render completo
+      document.querySelectorAll('.inv-carta').forEach(function(c){
+        c.style.outline=c===el&&S.mobileSel?'2.5px solid #F0A500':'none';
+        c.style.transform=c===el&&S.mobileSel?'scale(1.12) rotate(-3deg)':'';
+        c.style.boxShadow=c===el&&S.mobileSel?'0 0 16px rgba(240,165,0,0.6)':'';
+      });
+      // Mostrar hint
+      var hint=document.querySelector('.mobile-tap-hint');
+      if(hint) hint.style.opacity=S.mobileSel?'1':'0';
+    });
+  });
+
+  // Tap num slot para colar o cromo seleccionado
+  document.querySelectorAll('[data-slot]').forEach(function(slotEl){
+    slotEl.addEventListener('click',function(e){
+      if(!S.mobileSel) return;
+      e.stopPropagation();
+      var targetPid=slotEl.getAttribute('data-pid');
+      if(targetPid===S.mobileSel&&!S.colados.has(S.mobileSel)){
+        S.colados.add(S.mobileSel);
+        var nome=nomeCurto(S.mobileSel);
+        S.mobileSel=null;
+        notif('📌 '+nome+' colado!');
+      } else if(S.colados.has(S.mobileSel)){
+        notif('✅ Já colado!');
+        S.mobileSel=null;
+      } else {
+        notif('❌ Lugar errado!');
+      }
+      render();
+    });
+  });
+}
+
+setupDragListeners();
+render();
+
+// Re-render ao rodar o dispositivo
+window.addEventListener('orientationchange',function(){setTimeout(render,150);});
+window.addEventListener('resize',function(){
+  // só re-render se mudou entre portrait/landscape
+  var p=isPortrait();
+  if(p!==window._lastPortrait){window._lastPortrait=p;render();}
+});
+window._lastPortrait=isPortrait();
+
+render();
+</script>
+</body>
+</html>
