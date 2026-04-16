@@ -1,0 +1,105 @@
+<p><!-- INSTALAÇÕES CB VIANA v3 — colar num bloco HTML personalizado no Gutenberg --></p>
+<p><style>
+.cbv-inst-wrap{max-width:960px;margin:0 auto;padding:1.5rem 0;font-family:inherit;}</p>
+<p>/* ROW 1: 1 grande + 1 grande = 2 colunas iguais */<br />
+.cbv-row-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}</p>
+<p>/* ROW 2: 3 colunas iguais */<br />
+.cbv-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}</p>
+<p>/* ROW 3: 1 grande + 1 pequena */<br />
+.cbv-row-2b{display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1rem;}</p>
+<p>/* CARD */<br />
+.cbv-inst-card{position:relative;border-radius:10px;overflow:hidden;display:block;text-decoration:none;cursor:pointer;height:240px;}<br />
+.cbv-row-3 .cbv-inst-card{height:200px;}</p>
+<p>/* Imagem */<br />
+.cbv-inst-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s ease;}<br />
+.cbv-inst-card:hover img{transform:scale(1.05);}</p>
+<p>/* Overlay */<br />
+.cbv-inst-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(20,5,8,0.85) 0%,rgba(20,5,8,0.1) 50%,transparent 100%);transition:background 0.3s;}<br />
+.cbv-inst-card:hover .cbv-inst-overlay{background:linear-gradient(to top,rgba(123,28,46,0.90) 0%,rgba(123,28,46,0.25) 55%,transparent 100%);}</p>
+<p>/* Texto */<br />
+.cbv-inst-info{position:absolute;bottom:0;left:0;right:0;padding:0.9rem 1rem;}<br />
+.cbv-inst-name{font-size:13px;font-weight:700;color:#fff;margin:0 0 5px 0 !important;line-height:1.3;}<br />
+.cbv-inst-tags{display:flex;flex-wrap:wrap;gap:4px;}<br />
+.cbv-inst-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:rgba(240,165,0,0.22);color:#F0A500;border:1px solid rgba(240,165,0,0.3);}</p>
+<p>/* Badge sede */<br />
+.cbv-inst-sede{position:absolute;top:10px;left:10px;background:#F0A500;color:#3a1a00;font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.06em;z-index:2;}</p>
+<p>/* Botão maps hover */<br />
+.cbv-inst-mapbtn{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.15);backdrop-filter:blur(6px);color:#fff;font-size:10px;font-weight:600;padding:5px 10px;border-radius:20px;opacity:0;transition:opacity 0.2s;border:1px solid rgba(255,255,255,0.25);z-index:2;}<br />
+.cbv-inst-card:hover .cbv-inst-mapbtn{opacity:1;}</p>
+<p>/* NOTA */<br />
+.cbv-inst-note{background:#fffbf0;border-left:3px solid #F0A500;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:#666;margin-top:0.5rem;}<br />
+.cbv-inst-note strong{color:#7B1C2E;}<br />
+.cbv-inst-note a{color:#7B1C2E;font-weight:600;}</p>
+<p>@media(max-width:640px){<br />
+  .cbv-row-2,.cbv-row-3,.cbv-row-2b{grid-template-columns:1fr;}<br />
+  .cbv-inst-card,.cbv-row-3 .cbv-inst-card{height:220px;}<br />
+}<br />
+</style></p>
+<div class="cbv-inst-wrap">
+<p><!-- ROW 1: Santa Maria Maior + Atlântico exterior --></p>
+<div class="cbv-row-2">
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/bxaVZcMpRzjMf6MZ8" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-santa-maria-maior-interior.webp" alt="Pavilhão Municipal de Santa Maria Maior" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-sede">Sede do Clube</span><br /><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">Pavilhão Municipal de Santa Maria Maior</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Sub 8/10</span><br /><span class="cbv-inst-tag">Sub 12</span></div>
+</div>
+<p> </p>
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/Qw9CBKGturNQLuJ17" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-atlantico-exterior.webp" alt="Pavilhão do Atlântico" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">Pavilhão do Atlântico</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Sub 14 F</span><br /><span class="cbv-inst-tag">Sub 16/18 F</span><br /><span class="cbv-inst-tag">Sub 23 M</span><br /><span class="cbv-inst-tag">Seniores M</span><br /><span class="cbv-inst-tag">Seniores F</span></div>
+</div>
+<p> </p>
+</div>
+<p><!-- ROW 2: Atlântico interior + Monserrate exterior + Monserrate interior --></p>
+<div class="cbv-row-3">
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/Qw9CBKGturNQLuJ17" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-atlantico-interior.webp" alt="Pavilhão do Atlântico interior" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">Atlântico — Interior</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Jogos em casa</span></div>
+</div>
+<p> </p>
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/T5oYoTTw1FZ3uqZh6" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-monserrate-exterior.webp" alt="Pavilhão Municipal de Monserrate" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">Pavilhão de Monserrate</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Sub 14 F</span><br /><span class="cbv-inst-tag">Sub 18 M</span><br /><span class="cbv-inst-tag">Seniores F</span></div>
+</div>
+<p> </p>
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/T5oYoTTw1FZ3uqZh6" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-monserrate-interior.webp" alt="Pavilhão de Monserrate interior" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">Monserrate — Interior</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Treinos</span></div>
+</div>
+<p> </p>
+</div>
+<p><!-- ROW 3: Frei Bartolomeu (grande) + Seminário --></p>
+<div class="cbv-row-2b">
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/22kMC4mBHMxT3NMG8" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-frei-bartolomeu-exterior.webp" alt="EB 2,3 Frei Bartolomeu dos Mártires" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">EB 2,3 Frei Bartolomeu dos Mártires</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Sub 12</span><br /><span class="cbv-inst-tag">Sub 14 M</span><br /><span class="cbv-inst-tag">Sub 16 M</span><br /><span class="cbv-inst-tag">Sub 18 M</span><br /><span class="cbv-inst-tag">Veteranos</span></div>
+</div>
+<p> </p>
+<p><a class="cbv-inst-card" href="https://maps.app.goo.gl/HQ88xpud3CytwFgL9" target="_blank" rel="noopener"><br /><img src="https://cbviana.com/wp-content/uploads/2026/04/cbv-pavilhao-seminario-exterior.webp" alt="Seminário Diocesano de Viana do Castelo" /></a></p>
+<div class="cbv-inst-overlay"> </div>
+<p><span class="cbv-inst-mapbtn">📍 Ver no Maps</span></p>
+<div class="cbv-inst-info">
+<p class="cbv-inst-name">Seminário Diocesano</p>
+<div class="cbv-inst-tags"><span class="cbv-inst-tag">Sub 16/18 F</span><br /><span class="cbv-inst-tag">Veteranas</span></div>
+</div>
+<p> </p>
+</div>
+<div class="cbv-inst-note"><strong>Nota:</strong> Os espaços e horários de utilização estão sujeitos a alterações. Consulta o <a href="https://cbviana.com/horarios/">Mapa de Treinos</a> para informação atualizada.</div>
+</div>
