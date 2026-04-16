@@ -1,0 +1,104 @@
+// Permitir autenticação via cookie na REST API
+add_filter('rest_authentication_errors', function($result){
+  if(!empty($result)) return $result;
+  if(!is_user_logged_in()) return $result;
+  return true;
+});
+
+add_action('init', function(){
+  if(defined('REST_REQUEST') && REST_REQUEST){
+    wp_set_auth_cookie(get_current_user_id());
+  }
+});
+// // CBV Gamification System
+add_action('rest_api_init', function(){
+
+  // GET — ler dados do utilizador
+  register_rest_route('cbv/v1', '/gamification', [
+    'methods' => 'GET',
+    'callback' => function($req){
+      if(!is_user_logged_in()) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      $uid = get_current_user_id();
+      if(!$uid) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      return rest_ensure_response([
+        'acessos'  => (int)get_user_meta($uid,'cbv_acessos',true),
+        'moedas'   => (int)get_user_meta($uid,'cbv_moedas',true),
+        'nivel'    => (int)get_user_meta($uid,'cbv_nivel',true),
+        'ultimo_acesso' => get_user_meta($uid,'cbv_ultimo_acesso',true),
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+  // POST — registar acesso, adicionar ou pagar moedas
+  register_rest_route('cbv/v1', '/gamification', [
+    'methods' => 'POST',
+    'callback' => function($req){
+      if(!is_user_logged_in()) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      $uid = get_current_user_id();
+      if(!$uid) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      $action = sanitize_text_field($req->get_param('action'));
+      $value  = (int)$req->get_param('value');
+      $acessos = (int)get_user_meta($uid,'cbv_acessos',true);
+      $moedas  = (int)get_user_meta($uid,'cbv_moedas',true);
+      $nivel   = (int)get_user_meta($uid,'cbv_nivel',true);
+      $hoje    = date('Y-m-d');
+      if($action === 'acesso'){
+        $acessos_hoje = (int)get_user_meta($uid,'cbv_acessos_hoje',true);
+        $data_hoje    = get_user_meta($uid,'cbv_data_hoje',true);
+        if($data_hoje !== $hoje){
+          $acessos_hoje = 0;
+          update_user_meta($uid,'cbv_data_hoje',$hoje);
+        }
+        if($acessos_hoje < 20){
+          $acessos++;
+          $acessos_hoje++;
+          update_user_meta($uid,'cbv_acessos',$acessos);
+          update_user_meta($uid,'cbv_acessos_hoje',$acessos_hoje);
+          update_user_meta($uid,'cbv_ultimo_acesso',$hoje);
+        }
+      }
+      if($action === 'moedas'){
+        $moedas += $value;
+        update_user_meta($uid,'cbv_moedas',$moedas);
+      }
+      if($action === 'pagar'){
+        $custo = abs($value);
+        if($moedas < $custo){
+          return rest_ensure_response([
+            'erro'   => 'insufficient',
+            'moedas' => $moedas,
+            'faltam' => $custo - $moedas,
+          ]);
+        }
+        $moedas -= $custo;
+        update_user_meta($uid,'cbv_moedas',$moedas);
+        return rest_ensure_response([
+          'sucesso' => true,
+          'moedas'  => $moedas,
+          'nivel'   => $nivel,
+        ]);
+      }
+      // Calcular nível
+      $niveis = [0=>1,10=>2,30=>3,75=>4,150=>5,300=>6,500=>7];
+      $novo_nivel = 1;
+      foreach($niveis as $min => $n){
+        if($acessos >= $min) $novo_nivel = $n;
+      }
+      if($novo_nivel > $nivel){
+        $bonus = [1=>0,2=>5,3=>15,4=>40,5=>100,6=>250,7=>500];
+        $moedas += $bonus[$novo_nivel] ?? 0;
+        update_user_meta($uid,'cbv_nivel',$novo_nivel);
+        update_user_meta($uid,'cbv_moedas',$moedas);
+      }
+      return rest_ensure_response([
+        'acessos' => $acessos,
+        'moedas'  => $moedas,
+        'nivel'   => $novo_nivel,
+        'subiu'   => $novo_nivel > $nivel,
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+});
