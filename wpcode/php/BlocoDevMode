@@ -1,0 +1,95 @@
+/**
+ * CB Viana — Bloquear DevTools + Toast notification
+ * Code Snippets → PHP
+ */
+add_action('wp_footer', function(){
+?>
+<style>
+#cbv-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 999999;
+  background: #5a1220;
+  border: 1px solid #F0A500;
+  border-radius: 10px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  white-space: nowrap;
+  font-family: sans-serif;
+}
+#cbv-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+#cbv-toast .t-icon { font-size: 18px; }
+#cbv-toast .t-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.5px;
+}
+#cbv-toast .t-text strong { color: #F0A500; }
+</style>
+
+<div id="cbv-toast">
+  <span class="t-icon">🔒</span>
+  <span class="t-text">
+    <strong>Conteúdo protegido</strong> — propriedade do Clube de Basquete de Viana
+  </span>
+</div>
+
+<script>
+(function(){
+  <?php if(current_user_can('administrator')){ echo 'return;'; } ?>
+
+  var toast = document.getElementById('cbv-toast');
+  var timer = null;
+
+  function showToast(){
+    toast.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(function(){ toast.classList.remove('show'); }, 3000);
+  }
+
+  // Clique direito em toda a página
+  document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+    showToast();
+    return false;
+  });
+
+  // Atalhos DevTools
+  document.addEventListener('keydown', function(e){
+    var blocked = false;
+    if(e.key==='F12' || e.keyCode===123) blocked = true;
+    if((e.ctrlKey||e.metaKey) && e.shiftKey && 'ijcIJC'.includes(e.key)) blocked = true;
+    if((e.ctrlKey||e.metaKey) && (e.key==='u'||e.key==='U')) blocked = true;
+    if(blocked){ e.preventDefault(); showToast(); return false; }
+  });
+
+  // Detetar DevTools aberto por tamanho
+  var devOpen = false;
+  setInterval(function(){
+    var aberto = (window.outerWidth - window.innerWidth > 160)
+              || (window.outerHeight - window.innerHeight > 160);
+    if(aberto && !devOpen){ devOpen = true; showToast(); }
+    if(!aberto) devOpen = false;
+  }, 1500);
+
+  // Bloquear arrastar imagens
+  document.addEventListener('dragstart', function(e){
+    if(e.target.tagName==='IMG'){ e.preventDefault(); return false; }
+  });
+
+})();
+</script>
+<?php
+});
