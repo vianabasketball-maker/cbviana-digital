@@ -1,0 +1,266 @@
+/**
+ * CB Viana — Menu Custom
+ * WPCode → PHP Snippet → Run Everywhere
+ */
+
+// ── CSS ──
+add_action('wp_head', function(){ ?>
+<style id="cbv-nav-styles">
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@600;700&display=swap');
+:root{--bordo:#7B1C2E;--bordo-dk:#5a1220;--gold:#F0A500;--font:'Teko','Barlow Condensed',sans-serif;}
+
+/* Esconder menu original do tema */
+.is-head-menu,.wp-block-navigation.is-head-menu,nav.wp-block-navigation{display:none!important;}
+
+/* Topbar */
+#cbv-top{position:fixed;top:0;left:0;right:0;z-index:9999;height:32px;background:var(--bordo-dk);border-bottom:1px solid rgba(240,165,0,0.15);display:flex;align-items:center;}
+#cbv-top-inner{max-width:1400px;margin:0 auto;width:100%;padding:0 20px;display:flex;align-items:center;justify-content:space-between;}
+.cbv-top-contacts{display:flex;align-items:center;gap:16px;}
+.cbv-top-a{display:flex;align-items:center;gap:4px;font-family:var(--font);font-size:11px;letter-spacing:.5px;color:rgba(255,255,255,0.45);text-decoration:none;}
+.cbv-top-a:hover{color:var(--gold);}
+.cbv-top-social{display:flex;align-items:center;gap:12px;}
+.cbv-top-social a{color:rgba(255,255,255,0.4);display:flex;align-items:center;transition:color .2s;}
+.cbv-top-social a:hover{color:var(--gold);}
+
+/* Menu principal */
+#cbv-nav{position:fixed;top:32px;left:0;right:0;z-index:9998;height:60px;background:var(--bordo);border-bottom:2px solid var(--gold);box-shadow:0 2px 20px rgba(0,0,0,0.4);}
+body{padding-top:92px!important;}
+body.admin-bar #cbv-top{top:32px;}
+body.admin-bar #cbv-nav{top:64px;}
+body.admin-bar{padding-top:124px!important;}
+@media(max-width:782px){body.admin-bar #cbv-top{top:46px;}body.admin-bar #cbv-nav{top:78px;}body.admin-bar{padding-top:138px!important;}}
+
+#cbv-nav-inner{max-width:1400px;margin:0 auto;height:60px;display:flex;align-items:center;padding:0 20px;gap:8px;}
+
+/* Logo */
+.cbv-logo{flex-shrink:0;display:flex;align-items:center;text-decoration:none;margin-right:16px;}
+.cbv-logo img{height:44px;width:auto;}
+.cbv-logo-txt{font-family:var(--font);font-size:22px;font-weight:700;letter-spacing:3px;color:var(--gold);}
+.cbv-logo-txt span{color:#fff;}
+
+/* Itens menu */
+.cbv-menu{list-style:none;margin:0;padding:0;display:flex;align-items:center;flex:1;justify-content:center;}
+.cbv-menu li{position:relative;}
+.cbv-menu-a{font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.75);text-decoration:none;padding:0 10px;height:60px;display:flex;align-items:center;white-space:nowrap;position:relative;transition:color .2s;}
+.cbv-menu-a::after{content:'';position:absolute;bottom:0;left:10px;right:10px;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .2s;border-radius:2px 2px 0 0;}
+.cbv-menu li:hover>.cbv-menu-a,.cbv-menu li.cur>.cbv-menu-a{color:var(--gold);}
+.cbv-menu li:hover>.cbv-menu-a::after,.cbv-menu li.cur>.cbv-menu-a::after{transform:scaleX(1);}
+.cbv-menu li.special>.cbv-menu-a{background:var(--gold);color:var(--bordo-dk);border-radius:6px;height:36px;padding:0 14px;margin:0 4px;font-weight:700;}
+.cbv-menu li.special>.cbv-menu-a::after{display:none;}
+.cbv-menu li.special>.cbv-menu-a:hover{background:#ffbe20;}
+
+/* Utilizador */
+.cbv-user{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px;}
+.cbv-user img{border-radius:50%;border:1.5px solid var(--gold);width:28px;height:28px;}
+.cbv-user-info{display:flex;flex-direction:column;}
+.cbv-user-name{font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:1px;color:rgba(255,255,255,0.8);text-decoration:none;line-height:1.3;}
+.cbv-user-name:hover{color:var(--gold);}
+.cbv-user-out{font-family:var(--font);font-size:10px;letter-spacing:1px;color:rgba(240,165,0,0.5);text-decoration:none;line-height:1.3;}
+.cbv-user-out:hover{color:var(--gold);}
+.cbv-login{font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.6);text-decoration:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px 12px;transition:all .2s;}
+.cbv-login:hover{color:var(--gold);border-color:var(--gold);}
+
+/* Hamburger */
+.cbv-ham{display:none;flex-direction:column;gap:5px;background:none;border:1px solid rgba(240,165,0,0.3);border-radius:8px;padding:9px;cursor:pointer;width:40px;height:40px;align-items:center;justify-content:center;}
+.cbv-ham span{display:block;width:18px;height:2px;background:var(--gold);border-radius:2px;transition:all .3s;}
+.cbv-ham.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.cbv-ham.open span:nth-child(2){opacity:0;}
+.cbv-ham.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* Mobile */
+@media(max-width:900px){
+  .cbv-menu{display:none;}
+  .cbv-ham{display:flex;}
+  .cbv-user-info{display:none;}
+  #cbv-nav-inner{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:8px;}
+  .cbv-ham{grid-column:1;}
+  .cbv-logo{grid-column:2;justify-content:center;margin-right:0;}
+  .cbv-user{grid-column:3;}
+  #cbv-top{display:none;}
+  body{padding-top:60px!important;}
+  body.admin-bar{padding-top:106px!important;}
+}
+
+/* Drawer */
+.cbv-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:10000;}
+.cbv-overlay.on{display:block;}
+.cbv-drawer{position:fixed;top:0;left:0;bottom:0;width:280px;background:var(--bordo-dk);border-right:2px solid var(--gold);z-index:10001;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 32px rgba(0,0,0,0.6);overflow-y:auto;}
+.cbv-drawer.open{transform:translateX(0);}
+.cbv-drawer-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(240,165,0,0.15);}
+.cbv-drawer-logo{font-family:var(--font);font-size:20px;letter-spacing:3px;color:rgba(255,255,255,0.6);}
+.cbv-drawer-logo strong{color:var(--gold);}
+.cbv-drawer-close{background:none;border:1px solid rgba(240,165,0,0.3);border-radius:6px;color:var(--gold);width:32px;height:32px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cbv-drawer-list{list-style:none;margin:0;padding:8px 0;}
+.cbv-drawer-a{display:block;font-family:var(--font);font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.75);text-decoration:none;padding:13px 20px;border-left:3px solid transparent;transition:all .15s;}
+.cbv-drawer-a:hover,.cbv-drawer-a.cur{color:var(--gold);border-left-color:var(--gold);background:rgba(240,165,0,0.08);}
+.cbv-drawer-item.special .cbv-drawer-a{color:var(--gold);}
+
+/* Loader */
+#cbv-loader{position:fixed;inset:0;z-index:999999;background:rgba(90,18,32,0.85);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;animation:cbvHide .5s ease 1.5s forwards;pointer-events:none;}
+@keyframes cbvHide{to{opacity:0;visibility:hidden;}}
+.cbv-ldr-logo{font-family:var(--font);font-size:48px;font-weight:700;letter-spacing:8px;color:#fff;text-align:center;}
+.cbv-ldr-logo span{color:var(--gold);}
+.cbv-ldr-sub{font-family:var(--font);font-size:10px;letter-spacing:5px;text-transform:uppercase;color:rgba(240,165,0,0.5);text-align:center;margin-top:-20px;}
+.cbv-ldr-circle{position:relative;width:72px;height:72px;display:flex;align-items:center;justify-content:center;}
+.cbv-ldr-circle svg{position:absolute;inset:0;transform:rotate(-90deg);}
+.cbv-ldr-bg{fill:none;stroke:rgba(255,255,255,0.1);stroke-width:3;}
+.cbv-ldr-fill{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:188.5;stroke-dashoffset:188.5;animation:cbvCircle 1.5s cubic-bezier(.1,.4,.8,1) forwards;}
+@keyframes cbvCircle{0%{stroke-dashoffset:188.5;}50%{stroke-dashoffset:90;}80%{stroke-dashoffset:35;}100%{stroke-dashoffset:0;}}
+.cbv-ldr-pct{position:relative;z-index:1;font-family:var(--font);font-size:16px;font-weight:700;color:#fff;}
+</style>
+<?php }, 1);
+
+// ── HTML ──
+add_action('wp_footer', function(){
+  $home = home_url('/');
+  $cur  = (is_ssl()?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+  $nav  = [
+    ['Home',             $home,                    false],
+    ['Clube',            $home.'clube/',            false],
+    ['Direcção',         $home.'direccao/',         false],
+    ['Treinadores',      $home.'staff/',             false],
+    ['Equipas',          $home.'equipas/',          false],
+    ['Pais & Clube',     $home.'pais-clube/',       false],
+    ['Horários de Treino',$home.'horarios/',false],
+    ['Instalações',      $home.'instalacoes/',      false],
+    ['Blog',             $home.'blog/',             false],
+    ['Junta-te a Nós',   $home.'junta-te-a-nos/',   false],
+    ['Galeria',          $home.'galeria/',          false],
+    ['Contacto',         $home.'contacto/',         false],
+    ['Competições',      $home.'desafios/',         false],
+    ['TIMEOUT',          $home.'test/',             true],
+  ];
+  // Logo
+  $logo_id  = attachment_url_to_postid($home.'logo.png');
+  if(!$logo_id){ $logo_id = get_posts(['post_type'=>'attachment','name'=>'LogoSite','numberposts'=>1]); $logo_id = !empty($logo_id)?$logo_id[0]->ID:0; }
+  $logo_url = $logo_id ? wp_get_attachment_image_url($logo_id,'full') : '';
+  ?>
+
+<!-- TOPBAR -->
+<div id="cbv-top">
+  <div id="cbv-top-inner">
+    <div class="cbv-top-contacts">
+      <a href="tel:+351917815629" class="cbv-top-a">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.08 6.08l.99-.99a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.73 2.02z"/></svg>
+        +351 917 815 629
+      </a>
+      <a href="mailto:cbasqueteviana@gmail.com" class="cbv-top-a">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6" stroke="#5a1220" stroke-width="2" fill="none"/></svg>
+        cbasqueteviana@gmail.com
+      </a>
+    </div>
+    <div class="cbv-top-social">
+      <a href="https://www.facebook.com/Clube.Basquete.Viana/" target="_blank" aria-label="Facebook"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+      <a href="https://www.instagram.com/cbviana_official/" target="_blank" aria-label="Instagram"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+      <a href="https://www.youtube.com/@CBVianaDigital" target="_blank" aria-label="YouTube"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58a2.78 2.78 0 0 0 1.95 1.95C5.12 20 12 20 12 20s6.88 0 8.59-.47a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#5a1220"/></svg></a>
+    </div>
+  </div>
+</div>
+
+<!-- MENU -->
+<nav id="cbv-nav">
+  <div id="cbv-nav-inner">
+    <button class="cbv-ham" id="cbv-ham" aria-label="Menu"><span></span><span></span><span></span></button>
+    <a href="<?php echo esc_url($home); ?>" class="cbv-logo">
+      <?php if($logo_url): ?>
+        <img src="<?php echo esc_url($logo_url); ?>" alt="CB Viana">
+      <?php else: ?>
+        <span class="cbv-logo-txt">CB<span>VIANA</span></span>
+      <?php endif; ?>
+    </a>
+    <ul class="cbv-menu">
+      <?php foreach($nav as $item):
+        $is_cur = trailingslashit($cur) === trailingslashit($item[1]);
+        $cls = ($item[2]?'special ':'').($is_cur?'cur':'');
+      ?>
+        <li class="<?php echo trim($cls); ?>">
+          <a href="<?php echo esc_url($item[1]); ?>" class="cbv-menu-a"><?php echo esc_html($item[0]); ?></a>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+    <div class="cbv-user">
+      <?php if(is_user_logged_in()):
+        $uid  = get_current_user_id();
+        $name = wp_get_current_user()->display_name;
+        $out  = wp_logout_url($home);
+      ?>
+        <?php echo get_avatar($uid,28,'','',['class'=>'']); ?>
+        <div class="cbv-user-info">
+          <a href="/account/" class="cbv-user-name"><?php echo esc_html($name); ?></a>
+          <a href="<?php echo esc_url($out); ?>" class="cbv-user-out">Sair</a>
+        </div>
+      <?php else: ?>
+        <a href="/login/" class="cbv-login">Login</a>
+      <?php endif; ?>
+    </div>
+  </div>
+</nav>
+
+<!-- DRAWER MOBILE -->
+<div class="cbv-overlay" id="cbv-overlay"></div>
+<div class="cbv-drawer" id="cbv-drawer">
+  <div class="cbv-drawer-hdr">
+    <span class="cbv-drawer-logo">CB <strong>VIANA</strong></span>
+    <button class="cbv-drawer-close" id="cbv-close">✕</button>
+  </div>
+  <ul class="cbv-drawer-list">
+    <?php foreach($nav as $item):
+      $is_cur = trailingslashit($cur) === trailingslashit($item[1]);
+    ?>
+      <li class="cbv-drawer-item<?php echo $item[2]?' special':''; ?>">
+        <a href="<?php echo esc_url($item[1]); ?>" class="cbv-drawer-a<?php echo $is_cur?' cur':''; ?>"><?php echo esc_html($item[0]); ?></a>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+</div>
+
+<!-- LOADER -->
+<div id="cbv-loader">
+  <div class="cbv-ldr-logo">CB <span>VIANA</span></div>
+  <div class="cbv-ldr-sub">Clube de Basquetebol</div>
+  <div class="cbv-ldr-circle">
+    <svg viewBox="0 0 64 64" width="72" height="72">
+      <circle class="cbv-ldr-bg" cx="32" cy="32" r="30"/>
+      <circle class="cbv-ldr-fill" cx="32" cy="32" r="30"/>
+    </svg>
+    <span class="cbv-ldr-pct" id="cbv-pct">0%</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Mover topbar e nav para o topo do body
+  var top = document.getElementById('cbv-top');
+  var nav = document.getElementById('cbv-nav');
+  var ov  = document.getElementById('cbv-overlay');
+  var dr  = document.getElementById('cbv-drawer');
+  var ldr = document.getElementById('cbv-loader');
+  var b   = document.body;
+  if(top) b.insertBefore(top, b.firstChild);
+  if(nav) b.insertBefore(nav, top ? top.nextSibling : b.firstChild);
+
+  // Hamburger
+  var ham = document.getElementById('cbv-ham');
+  var cls = document.getElementById('cbv-close');
+  function open(){ dr.classList.add('open');ov.classList.add('on');ham.classList.add('open');b.style.overflow='hidden'; }
+  function close(){ dr.classList.remove('open');ov.classList.remove('on');ham.classList.remove('open');b.style.overflow=''; }
+  if(ham) ham.addEventListener('click', open);
+  if(cls) cls.addEventListener('click', close);
+  if(ov)  ov.addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+
+  // Loader percentagem
+  var pct = document.getElementById('cbv-pct');
+  if(pct){
+    var s = Date.now();
+    (function tick(){
+      var p = Math.min((Date.now()-s)/1500, 1);
+      var e = p<.5 ? 2*p*p : -1+(4-2*p)*p;
+      pct.textContent = Math.floor(e*100)+'%';
+      if(p<1) requestAnimationFrame(tick);
+    })();
+  }
+})();
+</script>
+<?php
+});
