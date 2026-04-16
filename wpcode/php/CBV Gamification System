@@ -1,3 +1,11 @@
+// CBV Gamification System
+// v1.1 · 2026-04-16
+// ALTERAÇÕES v1.1:
+// - Adicionado endpoint GET /cbv/v1/scores — devolve top 3 por jogo (público)
+// - Adicionado endpoint POST /cbv/v1/scores — guarda score de utilizador autenticado
+// - Scores guardados em options do WordPress (cbv_scores_{gameId})
+// - Cada jogo guarda top 10, frontend mostra top 3
+
 // Permitir autenticação via cookie na REST API
 add_filter('rest_authentication_errors', function($result){
   if(!empty($result)) return $result;
@@ -10,7 +18,7 @@ add_action('init', function(){
     wp_set_auth_cookie(get_current_user_id());
   }
 });
-// // CBV Gamification System
+
 add_action('rest_api_init', function(){
 
   // GET — ler dados do utilizador
@@ -21,10 +29,12 @@ add_action('rest_api_init', function(){
       $uid = get_current_user_id();
       if(!$uid) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
       return rest_ensure_response([
-        'acessos'  => (int)get_user_meta($uid,'cbv_acessos',true),
-        'moedas'   => (int)get_user_meta($uid,'cbv_moedas',true),
-        'nivel'    => (int)get_user_meta($uid,'cbv_nivel',true),
+        'acessos'       => (int)get_user_meta($uid,'cbv_acessos',true),
+        'moedas'        => (int)get_user_meta($uid,'cbv_moedas',true),
+        'nivel'         => (int)get_user_meta($uid,'cbv_nivel',true),
         'ultimo_acesso' => get_user_meta($uid,'cbv_ultimo_acesso',true),
+        'username'      => wp_get_current_user()->user_login,
+        'display_name'  => wp_get_current_user()->display_name,
       ]);
     },
     'permission_callback' => '__return_true',
@@ -96,6 +106,86 @@ add_action('rest_api_init', function(){
         'moedas'  => $moedas,
         'nivel'   => $novo_nivel,
         'subiu'   => $novo_nivel > $nivel,
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+  // ── HIGHSCORES ──────────────────────────────────────────────────────
+
+  // GET /cbv/v1/scores — devolve top 3 de todos os jogos (público, sem login)
+  register_rest_route('cbv/v1', '/scores', [
+    'methods' => 'GET',
+    'callback' => function($req){
+      $jogos = ['lancamentos','basketman','chuva_bolas','puzzle','memory'];
+      $result = [];
+      foreach($jogos as $jogo){
+        $scores = get_option('cbv_scores_'.$jogo, []);
+        // Ordena por score descendente e devolve top 3
+        usort($scores, function($a,$b){ return $b['score'] - $a['score']; });
+        $result[$jogo] = array_slice($scores, 0, 3);
+      }
+      return rest_ensure_response($result);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+  // POST /cbv/v1/scores — guarda score do utilizador autenticado
+  register_rest_route('cbv/v1', '/scores', [
+    'methods' => 'POST',
+    'callback' => function($req){
+      // Aceita scores de utilizadores não autenticados também (como "Visitante")
+      $uid      = get_current_user_id();
+      $username = $uid ? wp_get_current_user()->display_name : 'Visitante';
+      $login    = $uid ? wp_get_current_user()->user_login : 'visitante';
+
+      $game_id = sanitize_key($req->get_param('game_id'));
+      $score   = (int)$req->get_param('score');
+      $extra   = $req->get_param('extra') ?? [];
+
+      // Jogos válidos
+      $jogos_validos = ['lancamentos','basketman','chuva_bolas','puzzle','memory'];
+      if(!in_array($game_id, $jogos_validos)){
+        return new WP_Error('invalid_game','Jogo inválido',['status'=>400]);
+      }
+
+      // Validação básica anti-cheat
+      if($score < 0 || $score > 999999){
+        return new WP_Error('invalid_score','Score inválido',['status'=>400]);
+      }
+
+      // Ler scores actuais
+      $scores = get_option('cbv_scores_'.$game_id, []);
+
+      // Adicionar novo score
+      $novo = [
+        'username' => $username,
+        'login'    => $login,
+        'score'    => $score,
+        'date'     => date('Y-m-d'),
+        'uid'      => $uid,
+      ];
+      // Adicionar extras (nível, tentativas, etc.)
+      if(!empty($extra['level']))  $novo['level']  = (int)$extra['level'];
+      if(!empty($extra['tries']))  $novo['tries']  = (int)$extra['tries'];
+
+	  // Remover score anterior do mesmo utilizador
+	  $scores = array_filter($scores, function($s) use ($uid) {
+		return $s['uid'] !== $uid;
+	  });
+	  $scores = array_values($scores);
+	  // Adicionar novo score
+	  $scores[] = $novo;
+      // Ordenar e guardar apenas top 10
+      usort($scores, function($a,$b){ return $b['score'] - $a['score']; });
+      $scores = array_slice($scores, 0, 10);
+
+      update_option('cbv_scores_'.$game_id, $scores, false);
+
+      return rest_ensure_response([
+        'sucesso'  => true,
+        'posicao'  => array_search($novo, $scores) + 1,
+        'top3'     => array_slice($scores, 0, 3),
       ]);
     },
     'permission_callback' => '__return_true',
