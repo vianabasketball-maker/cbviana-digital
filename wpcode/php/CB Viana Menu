@@ -49,6 +49,25 @@ body.admin-bar{padding-top:124px!important;}
 .cbv-menu li.special>.cbv-menu-a::after{display:none;}
 .cbv-menu li.special>.cbv-menu-a:hover{background:#ffbe20;}
 
+/* Item Caderneta — estilo dourado especial */
+.cbv-menu li.caderneta>.cbv-menu-a{
+  color:var(--bordo-dk);
+  background:var(--gold);
+  border-radius:6px;
+  height:36px;
+  padding:0 14px;
+  margin:0 4px;
+  font-weight:700;
+  animation:cadPulse 2s ease-in-out infinite;
+}
+@keyframes cadPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(240,165,0,0.5);}
+  50%{box-shadow:0 0 12px 4px rgba(240,165,0,0.35);}
+}
+.cbv-menu li.caderneta>.cbv-menu-a::after{display:none;}
+.cbv-menu li.caderneta>.cbv-menu-a:hover{background:#ffbe20;}
+.cbv-drawer-item.caderneta .cbv-drawer-a{color:var(--gold);font-weight:700;}
+	
 /* Utilizador */
 .cbv-user{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px;}
 .cbv-user img{border-radius:50%;border:1.5px solid var(--gold);width:28px;height:28px;}
@@ -107,29 +126,85 @@ body.admin-bar{padding-top:124px!important;}
 .cbv-ldr-fill{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:188.5;stroke-dashoffset:188.5;animation:cbvCircle 1.5s cubic-bezier(.1,.4,.8,1) forwards;}
 @keyframes cbvCircle{0%{stroke-dashoffset:188.5;}50%{stroke-dashoffset:90;}80%{stroke-dashoffset:35;}100%{stroke-dashoffset:0;}}
 .cbv-ldr-pct{position:relative;z-index:1;font-family:var(--font);font-size:16px;font-weight:700;color:#fff;}
+
+/* ── OVERLAY CADERNETA ── */
+#cbv-cad-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:rgba(6,1,9,0.93);
+  backdrop-filter:blur(8px);
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:24px;
+}
+#cbv-cad-overlay.on{display:flex;}
+#cbv-cad-overlay img{
+  width:min(320px,80vw);
+  border-radius:12px;
+  box-shadow:0 0 60px rgba(240,165,0,0.3);
+  animation:cadFloat 3s ease-in-out infinite;
+}
+@keyframes cadFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+#cbv-cad-overlay h2{
+  font-family:var(--font);
+  font-size:clamp(28px,5vw,42px);
+  font-weight:700;
+  letter-spacing:4px;
+  color:#fff;
+  text-align:center;
+}
+#cbv-cad-overlay h2 span{color:var(--gold);}
+#cbv-cad-overlay p{
+  font-family:var(--font);
+  font-size:16px;
+  letter-spacing:2px;
+  color:rgba(255,255,255,0.4);
+  text-align:center;
+}
+#cbv-cad-close{
+  position:absolute;
+  top:20px;
+  right:20px;
+  background:none;
+  border:1px solid rgba(240,165,0,0.3);
+  border-radius:8px;
+  color:var(--gold);
+  width:40px;height:40px;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+#cbv-cad-close:hover{background:rgba(240,165,0,0.1);}
 </style>
 <?php }, 1);
 
 // ── HTML ──
 add_action('wp_footer', function(){
-  $home = home_url('/');
-  $cur  = (is_ssl()?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-  $nav  = [
-    ['Home',             $home,                    false],
-    ['Clube',            $home.'clube/',            false],
-    ['Direcção',         $home.'direccao/',         false],
-    ['Treinadores',      $home.'staff/',             false],
-    ['Equipas',          $home.'equipas/',          false],
-    ['Pais & Clube',     $home.'pais-clube/',       false],
-    ['Horários de Treino',$home.'horarios/',false],
-    ['Instalações',      $home.'instalacoes/',      false],
-    ['Blog',             $home.'blog/',             false],
-    ['Junta-te a Nós',   $home.'junta-te-a-nos/',   false],
-    ['Galeria',          $home.'galeria/',          false],
-    ['Contacto',         $home.'contacto/',         false],
-    ['Competições',      $home.'desafios/',         false],
-    ['TIMEOUT',          $home.'test/',             true],
+  $home    = home_url('/');
+  $cur     = (is_ssl()?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+  $is_admin = current_user_can('administrator');
+
+  $nav = [
+    ['Home',              $home,                    false, false],
+    ['Clube',             $home.'clube/',            false, false],
+    ['Direcção',          $home.'direccao/',         false, false],
+    ['Treinadores',       $home.'staff/',            false, false],
+    ['Equipas',           $home.'equipas/',          false, false],
+    ['Pais & Clube',      $home.'pais-clube/',       false, false],
+    ['Horários de Treino',$home.'horarios/',         false, false],
+    ['Instalações',       $home.'instalacoes/',      false, false],
+    ['Blog',              $home.'blog/',             false, false],
+    ['Junta-te a Nós',    $home.'junta-te-a-nos/',  false, false],
+    ['Galeria',           $home.'galeria/',          false, false],
+    ['Contacto',          $home.'contacto/',         false, false],
+    ['Competições',       $home.'desafios/',         false, false],
+    ['Caderneta 25/26',   $home.'caderneta/',        false, true],  // true = item caderneta
+    ['TIMEOUT',           $home.'test/',             true,  false],
   ];
+
   // Logo
   $logo_id  = attachment_url_to_postid($home.'logo.png');
   if(!$logo_id){ $logo_id = get_posts(['post_type'=>'attachment','name'=>'LogoSite','numberposts'=>1]); $logo_id = !empty($logo_id)?$logo_id[0]->ID:0; }
@@ -170,11 +245,20 @@ add_action('wp_footer', function(){
     </a>
     <ul class="cbv-menu">
       <?php foreach($nav as $item):
-        $is_cur = trailingslashit($cur) === trailingslashit($item[1]);
-        $cls = ($item[2]?'special ':'').($is_cur?'cur':'');
+        $is_cur   = trailingslashit($cur) === trailingslashit($item[1]);
+        $is_cad   = $item[3];
+        $cls = ($item[2]?'special ':'').($is_cad?'caderneta ':'').($is_cur?'cur':'');
       ?>
         <li class="<?php echo trim($cls); ?>">
-          <a href="<?php echo esc_url($item[1]); ?>" class="cbv-menu-a"><?php echo esc_html($item[0]); ?></a>
+          <?php if($is_cad): ?>
+            <a href="<?php echo $is_admin ? esc_url($item[1]) : '#'; ?>"
+               class="cbv-menu-a"
+               <?php echo !$is_admin ? 'onclick="cbvAbrirCaderneta(event)"' : ''; ?>>
+              <?php echo esc_html($item[0]); ?>
+            </a>
+          <?php else: ?>
+            <a href="<?php echo esc_url($item[1]); ?>" class="cbv-menu-a"><?php echo esc_html($item[0]); ?></a>
+          <?php endif; ?>
         </li>
       <?php endforeach; ?>
     </ul>
@@ -206,13 +290,32 @@ add_action('wp_footer', function(){
   <ul class="cbv-drawer-list">
     <?php foreach($nav as $item):
       $is_cur = trailingslashit($cur) === trailingslashit($item[1]);
+      $is_cad = $item[3];
     ?>
-      <li class="cbv-drawer-item<?php echo $item[2]?' special':''; ?>">
-        <a href="<?php echo esc_url($item[1]); ?>" class="cbv-drawer-a<?php echo $is_cur?' cur':''; ?>"><?php echo esc_html($item[0]); ?></a>
+      <li class="cbv-drawer-item<?php echo $item[2]?' special':''; ?><?php echo $is_cad?' caderneta':''; ?>">
+        <?php if($is_cad): ?>
+          <a href="<?php echo $is_admin ? esc_url($item[1]) : '#'; ?>"
+             class="cbv-drawer-a<?php echo $is_cur?' cur':''; ?>"
+             <?php echo !$is_admin ? 'onclick="cbvAbrirCaderneta(event)"' : ''; ?>>
+            <?php echo esc_html($item[0]); ?>
+          </a>
+        <?php else: ?>
+          <a href="<?php echo esc_url($item[1]); ?>" class="cbv-drawer-a<?php echo $is_cur?' cur':''; ?>"><?php echo esc_html($item[0]); ?></a>
+        <?php endif; ?>
       </li>
     <?php endforeach; ?>
   </ul>
 </div>
+
+<!-- OVERLAY CADERNETA "EM BREVE" (só para não-admins) -->
+<?php if(!$is_admin): ?>
+<div id="cbv-cad-overlay">
+  <button id="cbv-cad-close" onclick="cbvFecharCaderneta()">✕</button>
+  <img src="<?php echo esc_url(home_url('/Caderneta/capa_album.png')); ?>" alt="Caderneta CB Viana 2025/26">
+  <h2>Caderneta <span>25/26</span></h2>
+  <p>EM BREVE</p>
+</div>
+<?php endif; ?>
 
 <!-- LOADER -->
 <div id="cbv-loader">
@@ -247,7 +350,7 @@ add_action('wp_footer', function(){
   if(ham) ham.addEventListener('click', open);
   if(cls) cls.addEventListener('click', close);
   if(ov)  ov.addEventListener('click', close);
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ close(); cbvFecharCaderneta(); } });
 
   // Loader percentagem
   var pct = document.getElementById('cbv-pct');
@@ -261,6 +364,70 @@ add_action('wp_footer', function(){
     })();
   }
 })();
+
+// Overlay caderneta
+function cbvAbrirCaderneta(e){
+  if(e) e.preventDefault();
+  var ov = document.getElementById('cbv-cad-overlay');
+  if(ov){ ov.classList.add('on'); document.body.style.overflow='hidden'; }
+  // Fechar drawer mobile se estiver aberto
+  var dr = document.getElementById('cbv-drawer');
+  var nav_ov = document.getElementById('cbv-overlay');
+  var ham = document.getElementById('cbv-ham');
+  if(dr){ dr.classList.remove('open'); }
+  if(nav_ov){ nav_ov.classList.remove('on'); }
+  if(ham){ ham.classList.remove('open'); }
+}
+function cbvFecharCaderneta(){
+  var ov = document.getElementById('cbv-cad-overlay');
+  if(ov){ ov.classList.remove('on'); document.body.style.overflow=''; }
+}
+// Fechar ao clicar fora da imagem
+document.addEventListener('click', function(e){
+  var ov = document.getElementById('cbv-cad-overlay');
+  if(ov && ov.classList.contains('on') && e.target === ov){ cbvFecharCaderneta(); }
+});
 </script>
+
+<?php
+  // ── PÁGINA CADERNETA — iframe para admins ──
+  // Injectar o iframe só na página /caderneta/
+  if(is_page('caderneta') && $is_admin):
+?>
+<style>
+  /* Página caderneta — iframe fullwidth abaixo do menu */
+  .entry-content, .wp-block-group, .site-content, main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+  #cbv-caderneta-wrap {
+    width: 100%;
+    height: calc(100vh - 92px);
+    overflow: hidden;
+  }
+  body.admin-bar #cbv-caderneta-wrap {
+    height: calc(100vh - 124px);
+  }
+  #cbv-caderneta-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Encontrar o main/article da página e injectar o iframe
+  var target = document.querySelector('.entry-content') ||
+               document.querySelector('main') ||
+               document.querySelector('article');
+  if(target){
+    target.innerHTML = '<div id="cbv-caderneta-wrap"><iframe src="<?php echo esc_url(home_url("/Caderneta/CadernetaViana.html")); ?>" allowfullscreen></iframe></div>';
+  }
+});
+</script>
+<?php endif; ?>
+
 <?php
 });
