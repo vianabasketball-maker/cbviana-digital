@@ -1,0 +1,153 @@
+/*
+  CBV RASPADINHA V4 — Com raspadinhas acumuladas
+  ================================================
+  WPCode → PHP Snippet → Run Everywhere
+  Substitui o snippet cbv-raspadinha-v3
+*/
+
+// ── ACUMULAR RASPADINHA DIÁRIA ──────────────────────────
+// Corre uma vez por dia para cada utilizador logged in
+add_action('init', function(){
+  if(!is_user_logged_in()) return;
+  $uid  = get_current_user_id();
+  $hoje = date('Y-m-d');
+  $ultima_acumulacao = get_user_meta($uid,'cbv_rasp_ultima_acum',true);
+  if($ultima_acumulacao === $hoje) return;
+
+  // Quantos dias passaram desde a última acumulação
+  $pendentes = (int)get_user_meta($uid,'cbv_rasp_pendentes',true);
+  if($ultima_acumulacao){
+    $diff = (strtotime($hoje) - strtotime($ultima_acumulacao)) / 86400;
+    $novas = min((int)$diff, 7 - $pendentes); // máximo 7 acumuladas
+    if($novas > 0) $pendentes = min(7, $pendentes + $novas);
+  } else {
+    // Primeiro acesso — dar 1 raspadinha
+    $pendentes = max(1, $pendentes);
+  }
+  update_user_meta($uid,'cbv_rasp_pendentes',$pendentes);
+  update_user_meta($uid,'cbv_rasp_ultima_acum',$hoje);
+});
+
+// ── REST ENDPOINTS ──────────────────────────────────────
+add_action('rest_api_init', function(){
+
+  register_rest_route('cbv/v1','/raspadinha',[
+    'methods'  => 'GET',
+    'callback' => function($req){
+      if(!is_user_logged_in()) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      $uid       = get_current_user_id();
+      $pendentes = (int)get_user_meta($uid,'cbv_rasp_pendentes',true);
+
+      if($pendentes <= 0){
+        return rest_ensure_response([
+          'played'    => true,
+          'pendentes' => 0,
+          'moedas'    => (int)get_user_meta($uid,'cbv_moedas',true),
+        ]);
+      }
+
+      return rest_ensure_response([
+        'played'    => false,
+        'pendentes' => $pendentes,
+        'carta'     => cbv_gerar_carta($uid),
+        'moedas'    => (int)get_user_meta($uid,'cbv_moedas',true),
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+  register_rest_route('cbv/v1','/raspadinha',[
+    'methods'  => 'POST',
+    'callback' => function($req){
+      if(!is_user_logged_in()) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      $uid       = get_current_user_id();
+      $pendentes = (int)get_user_meta($uid,'cbv_rasp_pendentes',true);
+      if($pendentes <= 0) return new WP_Error('no_pending','Sem raspadinhas',['status'=>400]);
+
+      $moedas_ganhas = (int)$req->get_param('moedas');
+      $nome          = sanitize_text_field($req->get_param('nome'));
+      $url           = esc_url_raw($req->get_param('url'));
+      $categoria     = sanitize_text_field($req->get_param('categoria'));
+
+      if($moedas_ganhas < 5 || $moedas_ganhas > 100)
+        return new WP_Error('invalid','Valor inválido',['status'=>400]);
+
+      // Debitar uma raspadinha
+      update_user_meta($uid,'cbv_rasp_pendentes',$pendentes - 1);
+
+      // Creditar moedas
+      $moedas = (int)get_user_meta($uid,'cbv_moedas',true) + $moedas_ganhas;
+      update_user_meta($uid,'cbv_moedas',$moedas);
+
+      // Guardar na colecção
+      $hoje    = date('Y-m-d');
+      $colecao = json_decode(get_user_meta($uid,'cbv_colecao',true) ?: '[]',true);
+      array_unshift($colecao,['data'=>$hoje,'nome'=>$nome,'url'=>$url,'moedas'=>$moedas_ganhas,'categoria'=>$categoria]);
+      update_user_meta($uid,'cbv_colecao',json_encode(array_slice($colecao,0,365)));
+
+      return rest_ensure_response([
+        'success'       => true,
+        'moedas_ganhas' => $moedas_ganhas,
+        'moedas_total'  => $moedas,
+        'pendentes'     => $pendentes - 1,
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+  register_rest_route('cbv/v1','/colecao',[
+    'methods'  => 'GET',
+    'callback' => function($req){
+      if(!is_user_logged_in()) return new WP_Error('not_logged_in','Não autenticado',['status'=>401]);
+      $uid     = get_current_user_id();
+      $colecao = json_decode(get_user_meta($uid,'cbv_colecao',true) ?: '[]',true);
+      $pendentes = (int)get_user_meta($uid,'cbv_rasp_pendentes',true);
+      return rest_ensure_response(['colecao'=>$colecao,'total'=>count($colecao),'pendentes'=>$pendentes]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+
+});
+
+function cbv_gerar_carta($uid){
+  $cloud      = 'dmwwjylsw';
+  $api_key    = '298553872981673';
+  $api_secret = '5bFH5b1qx1B-I2X6EqOvHoJEW0Q';
+  $auth       = base64_encode($api_key.':'. $api_secret);
+
+  $all = []; $cursor = null; $pages = 0;
+  do {
+    $params = ['type'=>'upload','max_results'=>500];
+    if($cursor) $params['next_cursor'] = $cursor;
+    $url      = 'https://api.cloudinary.com/v1_1/'.$cloud.'/resources/image?'.http_build_query($params);
+    $response = wp_remote_get($url,['headers'=>['Authorization'=>'Basic '.$auth],'timeout'=>15]);
+    if(is_wp_error($response)) break;
+    $body = json_decode(wp_remote_retrieve_body($response),true);
+    if(!empty($body['resources'])){
+      foreach($body['resources'] as $r){
+        if(isset($r['asset_folder']) && strpos($r['asset_folder'],'fotos/') === 0) $all[] = $r;
+      }
+    }
+    $cursor = $body['next_cursor'] ?? null; $pages++;
+  } while($cursor && $pages < 10);
+
+  if(empty($all)) return ['nome'=>'Jogador CB Viana','url'=>'','categoria'=>'','moedas'=>mt_rand(10,50)];
+
+  $nivel = (int)get_user_meta($uid,'cbv_nivel',true);
+  $pesos = ['fotos/Treinadores'=>15,'fotos/Senior_Femi'=>12,'fotos/Senior_Masc'=>12,'fotos/Sub_18_Femi'=>10,'fotos/Sub_18_Masc'=>10,'fotos/Sub_16_Femi'=>8,'fotos/Sub_16_Masc'=>8,'fotos/Sub_14_Femi'=>7,'fotos/Sub_14_Masc'=>7,'fotos/Mini_12_Femi'=>5,'fotos/Mini_12_Masc'=>5,'fotos/Mini_10_Femi'=>4,'fotos/Mini_10_Masc'=>4,'fotos/Mini_8_Femi'=>3,'fotos/Mini_8_Masc'=>3,'fotos/Baby_Basket_Masc'=> $nivel >= 5 ? 3 : 1];
+  $ranges = ['fotos/Treinadores'=>[10,25],'fotos/Senior_Femi'=>[15,35],'fotos/Senior_Masc'=>[15,35],'fotos/Sub_18_Femi'=>[20,50],'fotos/Sub_18_Masc'=>[20,50],'fotos/Sub_16_Femi'=>[25,55],'fotos/Sub_16_Masc'=>[25,55],'fotos/Sub_14_Femi'=>[30,65],'fotos/Sub_14_Masc'=>[30,65],'fotos/Mini_12_Femi'=>[40,80],'fotos/Mini_12_Masc'=>[40,80],'fotos/Mini_10_Femi'=>[50,90],'fotos/Mini_10_Masc'=>[50,90],'fotos/Mini_8_Femi'=>[60,100],'fotos/Mini_8_Masc'=>[60,100],'fotos/Baby_Basket_Masc'=>[70,100]];
+
+  $total = array_sum($pesos); $rand = mt_rand(1,$total); $acum = 0; $cat = 'fotos/Senior_Masc';
+  foreach($pesos as $c => $p){ $acum += $p; if($rand <= $acum){ $cat = $c; break; } }
+
+  $disponiveis = array_values(array_filter($all,function($r) use($cat){ return $r['asset_folder'] === $cat; }));
+  if(empty($disponiveis)) $disponiveis = $all;
+  $foto = $disponiveis[array_rand($disponiveis)];
+
+  $parts = explode('/',$foto['public_id']); $filename = end($parts);
+  $name_parts = explode('_',$filename);
+  if(count($name_parts) > 1 && strlen(end($name_parts)) <= 8) array_pop($name_parts);
+  $range = $ranges[$cat] ?? [10,50];
+
+  return ['nome'=>implode(' ',$name_parts),'url'=>'https://res.cloudinary.com/'.$cloud.'/image/upload/c_fill,w_400,h_500,g_face/'.$foto['public_id'],'categoria'=>$cat,'moedas'=>mt_rand($range[0],$range[1])];
+}
