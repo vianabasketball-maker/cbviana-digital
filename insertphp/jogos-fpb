@@ -1,0 +1,201 @@
+<?php
+// CB VIANA — DESAFIOS — ESTILO FINAL
+// Corrigido: URLs FPB corretos
+
+$_ma8d=['JAN'=>'01','FEV'=>'02','MAR'=>'03','ABR'=>'04','MAI'=>'05','JUN'=>'06',
+        'JUL'=>'07','AGO'=>'08','SET'=>'09','OUT'=>'10','NOV'=>'11','DEZ'=>'12'];
+$_mn8d=['01'=>'Janeiro','02'=>'Fevereiro','03'=>'Março','04'=>'Abril','05'=>'Maio',
+        '06'=>'Junho','07'=>'Julho','08'=>'Agosto','09'=>'Setembro','10'=>'Outubro',
+        '11'=>'Novembro','12'=>'Dezembro'];
+
+$_dir8d = ABSPATH . 'data/';
+if(!file_exists($_dir8d)) mkdir($_dir8d, 0755, true);
+
+// --- FETCH (Cache 1h) ---
+$_f8d = function($url, $file) {
+    if(!file_exists($file) || (time() - filemtime($file)) >= 3600){
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_ENCODING => '',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        ]);
+        $res = curl_exec($ch); curl_close($ch);
+        if($res && strlen($res) > 5000) file_put_contents($file, $res);
+    }
+    return file_exists($file) ? file_get_contents($file) : '';
+};
+
+// URLs CORRETOS
+$_ch8d = $_f8d('https://www.fpb.pt/calendario/clube_723/?clube=723&epoca=2025/2026', $_dir8d.'fpb_cal8.html');
+$_rh8d = $_f8d('https://www.fpb.pt/resultados/clube_723/?clube=723&epoca=2025/2026', $_dir8d.'fpb_res8.html');
+
+// --- PARSER ---
+$_p8d = function($html) use(&$_ma8d) {
+    $jogos = [];
+    if(!$html) return $jogos;
+    preg_match_all('/<div class="day-wrapper[^"]*">(.*?)<\/div>\s*<!-- END DAY ROW/si', $html, $days);
+    foreach($days[1] as $db){
+        preg_match('/<h3 class="date">\s*(.*?)\s*<\/h3>/si', $db, $dm);
+        $data = isset($dm[1]) ? trim(strip_tags($dm[1])) : '';
+        $ts = false;
+        if(preg_match('/(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/u', strtoupper($data), $tm)){
+            $ts = strtotime($tm[3].'-'.($_ma8d[$tm[2]]??'01').'-'.str_pad($tm[1],2,'0',STR_PAD_LEFT));
+        }
+        preg_match_all('/<a href="(\/ficha-de-jogo[^"]*)"[^>]*>\s*<div class="game-wrapper([^"]*)">(.*?)<\/div>\s*<\/a>/si', $db, $games);
+        foreach($games[3] as $idx=>$gb){
+            $link = 'https://www.fpb.pt'.$games[1][$idx];
+            $ir = strpos($games[2][$idx],'results') !== false;
+            preg_match_all('/<div class="team-container[^"]*">(.*?)<\/div>\s*<\/div>/si', $gb, $teams);
+            $ec=$ef=$lc=$lf='';
+            if(isset($teams[1][0])){
+                preg_match('/src="([^"]+)"/',$teams[1][0],$lm); $lc=$lm[1]??'';
+                preg_match('/<span class="sigla">([^<]+)<\/span>/',$teams[1][0],$nm); $ec=isset($nm[1])?trim($nm[1]):'';
+            }
+            if(isset($teams[1][1])){
+                preg_match('/src="([^"]+)"/',$teams[1][1],$lm2); $lf=$lm2[1]??'';
+                preg_match('/<span class="sigla">([^<]+)<\/span>/',$teams[1][1],$nm2); $ef=isset($nm2[1])?trim($nm2[1]):'';
+            }
+            $rc=$rf='';
+            if($ir){
+                preg_match('/<div class="results_wrapper[^"]*">(.*?)<\/div>/si',$gb,$rw);
+                if(isset($rw[1])){preg_match_all('/<h3[^>]*>\s*(\d+)\s*<\/h3>/',$rw[1],$sc);$rc=$sc[1][0]??'';$rf=$sc[1][1]??'';}
+            }
+            // Tenta o novo formato da FPB (div hour > h3)
+if(preg_match('/<div[^>]*class="hour[^"]*"[^>]*>\s*<h3>\s*([^<]+)\s*<\/h3>/si', $gb, $hm)){
+    $hora = trim($hm[1]);
+    // Converte "15H30" para "15:30"
+    if(preg_match('/^(\d{1,2})H(\d{2})$/i', $hora, $hc)) $hora = $hc[1].':'.$hc[2];
+} else {
+    // Fallback: se não encontrar o h3, tenta o span antigo
+    preg_match('/<span class="hour">([^<]+)<\/span>/',$gb,$hm); 
+    $hora = isset($hm[1]) ? trim($hm[1]) : '';
+}
+            preg_match('/<b>\s*(.*?)\s*<\/b>/si',$gb,$lm3); $local=isset($lm3[1])?trim(strip_tags($lm3[1])):'';
+            preg_match('/class="competition"[^>]*>.*?<span>\s*(.*?)\s*<\/span>/si',$gb,$cm); $comp=isset($cm[1])?trim(strip_tags($cm[1])):'';
+            $jogos[] = compact('data','ts','hora','ec','ef','lc','lf','rc','rf','local','comp','link','ir');
+        }
+    }
+    return $jogos;
+};
+
+$_cal = $_p8d($_ch8d);
+$_res = $_p8d($_rh8d);
+$_hoje = strtotime(date('Y-m-d'));
+
+// Agrupa por mês
+$_prox_m = [];
+foreach($_cal as $j){
+    if(!$j['ts'] || $j['ts'] >= $_hoje) $_prox_m[$j['ts'] ? date('Y-m',$j['ts']) : '0000-00'][] = $j;
+}
+ksort($_prox_m);
+
+$_ult_m = [];
+foreach($_res as $j){
+    if($j['ts']) $_ult_m[date('Y-m',$j['ts'])][] = $j;
+}
+krsort($_ult_m);
+
+// --- CSS & JS ---
+echo '<style>
+.cb-wrap{background:#7b1c2e;padding:20px;border-radius:8px;font-family:sans-serif;color:#fff;}
+.cb-tabs{display:flex;border-bottom:2px solid rgba(255,255,255,0.3);margin-bottom:20px;}
+.cb-tab-btn{padding:12px 20px;cursor:pointer;border:none;background:none;font-weight:800;color:rgba(255,255,255,0.4);text-transform:uppercase;font-size:13px;transition:all 0.2s;}
+.cb-tab-btn.active{color:#F0A500;border-bottom:3px solid #F0A500;margin-bottom:-2px;}
+.cb-pane{display:none;}
+.cb-pane.active{display:block;}
+.cb-month{background:#fff;color:#333;border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.cb-month summary{padding:12px 16px;font-weight:700;cursor:pointer;background:#f8f9fa;border-bottom:1px solid #eee;color:#7b1c2e;font-size:14px;}
+.cb-card{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f0;text-decoration:none;color:inherit;gap:8px;}
+.cb-card:hover{background:#fafafa;}
+.cb-card:last-child{border-bottom:none;}
+</style>
+<script>
+function cbTab(id,el){
+    document.querySelectorAll(".cb-pane").forEach(p=>p.classList.remove("active"));
+    document.querySelectorAll(".cb-tab-btn").forEach(b=>b.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    el.classList.add("active");
+}
+</script>';
+
+// --- RENDER CARD ---
+function renderCard8d($j){
+    $cb = 'https://sav2.fpb.pt/old_uploads/CLU/CLU_723_LOGO.jpg';
+    $lc = !empty($j['lc']) ? $j['lc'] : $cb;
+    $lf = !empty($j['lf']) ? $j['lf'] : $cb;
+    $rc_col = $rf_col = '#333';
+    $vence = false;
+    if($j['ir'] && $j['rc']!==''){
+        $vc = stripos($j['ec'],'viana')!==false;
+        if(($vc&&intval($j['rc'])>intval($j['rf']))||(!$vc&&intval($j['rf'])>intval($j['rc']))) $vence=true;
+        if(intval($j['rc'])>intval($j['rf'])){$rc_col='#155724';$rf_col='#721c24';}
+        else{$rc_col='#721c24';$rf_col='#155724';}
+    }
+    if($j['ir'] && $j['rc']!==''){
+        $centro = '<div style="text-align:center;min-width:80px;flex-shrink:0;">
+            <span style="font-size:20px;font-weight:800;color:'.$rc_col.';">'.esc_html($j['rc']).'</span>
+            <span style="color:#ddd;margin:0 2px;">-</span>
+            <span style="font-size:20px;font-weight:800;color:'.$rf_col.';">'.esc_html($j['rf']).'</span>
+            '.($vence?'<div style="font-size:9px;color:#155724;background:#d4edda;padding:1px 5px;border-radius:6px;display:inline-block;margin-top:2px;font-weight:700;">VITÓRIA</div>':'').'
+        </div>';
+    } else {
+        $centro = '<div style="text-align:center;min-width:60px;flex-shrink:0;">
+            '.($j['hora']?'<div style="font-size:14px;font-weight:800;color:#7b1c2e;">'.esc_html($j['hora']).'</div><div style="font-size:9px;color:#bbb;">VS</div>':'<div style="font-size:10px;color:#ccc;letter-spacing:2px;">VS</div>').'
+        </div>';
+    }
+    return '<a href="'.esc_url($j['link']).'" target="_blank" class="cb-card">
+        <div style="font-size:10px;color:#999;font-weight:600;min-width:55px;flex-shrink:0;">'.esc_html($j['data']).'</div>
+        <div style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;">
+            <img src="'.esc_url($lc).'" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;" onerror="this.src=\''.esc_url($cb).'\'">
+            <span style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'.esc_html($j['ec']).'</span>
+        </div>
+        '.$centro.'
+        <div style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;justify-content:flex-end;">
+            <span style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;">'.esc_html($j['ef']).'</span>
+            <img src="'.esc_url($lf).'" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;" onerror="this.src=\''.esc_url($cb).'\'">
+        </div>
+    </a>';
+}
+
+// --- OUTPUT ---
+echo '<div class="cb-wrap">';
+echo '<div class="cb-tabs">
+    <button class="cb-tab-btn active" onclick="cbTab(\'p1\',this)">📅 Próximos Desafios</button>
+    <button class="cb-tab-btn" onclick="cbTab(\'p2\',this)">📊 Resultados</button>
+</div>';
+
+// Próximos
+echo '<div id="p1" class="cb-pane active">';
+if(empty($_prox_m)){
+    echo '<p style="color:rgba(255,255,255,0.6);">Sem jogos agendados de momento.</p>';
+} else {
+    foreach($_prox_m as $mk => $jogos){
+        if($mk==='0000-00'){$label='Data a definir';}
+        else{$p=explode('-',$mk);$label=$_mn8d[$p[1]].' '.$p[0];}
+        echo '<details class="cb-month" open><summary>📅 '.esc_html($label).' ('.count($jogos).')</summary>';
+        foreach($jogos as $j) echo renderCard8d($j);
+        echo '</details>';
+    }
+}
+echo '</div>';
+
+// Resultados
+echo '<div id="p2" class="cb-pane">';
+if(empty($_ult_m)){
+    echo '<p style="color:rgba(255,255,255,0.6);">Sem resultados disponíveis.</p>';
+} else {
+    foreach($_ult_m as $mk => $jogos){
+        $p=explode('-',$mk); $label=$_mn8d[$p[1]].' '.$p[0];
+        echo '<details class="cb-month"><summary>📊 '.esc_html($label).' ('.count($jogos).')</summary>';
+        foreach($jogos as $j) echo renderCard8d($j);
+        echo '</details>';
+    }
+}
+echo '</div>';
+
+echo '</div>';
