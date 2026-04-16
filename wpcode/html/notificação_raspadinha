@@ -1,0 +1,75 @@
+<style>
+#cbv-raspadinha-toast{
+  position:fixed;
+  bottom:24px;right:24px;
+  z-index:99998;
+  background:linear-gradient(135deg,#7B1C2E,#9b2438);
+  border:1.5px solid #F0A500;
+  border-radius:16px;
+  padding:16px 20px;
+  max-width:300px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  display:none;
+  flex-direction:column;
+  gap:10px;
+  animation:toastSlide .4s cubic-bezier(.23,1,.32,1);
+  font-family:'DM Sans',system-ui,sans-serif;
+  position:fixed;
+}
+@keyframes toastSlide{
+  from{transform:translateX(120%);opacity:0;}
+  to{transform:translateX(0);opacity:1;}
+}
+#cbv-raspadinha-toast .t-icon{font-size:28px;text-align:center;}
+#cbv-raspadinha-toast .t-title{font-size:14px;font-weight:700;color:#F0A500;text-align:center;}
+#cbv-raspadinha-toast .t-sub{font-size:12px;color:rgba(255,255,255,0.7);text-align:center;line-height:1.4;}
+#cbv-raspadinha-toast .t-btn{display:block;width:100%;padding:10px;border-radius:10px;background:#F0A500;color:#7B1C2E;font-weight:700;font-size:13px;text-align:center;text-decoration:none;border:none;cursor:pointer;font-family:system-ui,sans-serif;}
+#cbv-raspadinha-toast .t-close{position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;line-height:1;}
+#cbv-rasp-badge{display:none;position:absolute;top:-6px;right:-6px;background:#F0A500;color:#7B1C2E;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;}
+</style>
+
+<div id="cbv-raspadinha-toast">
+  <button class="t-close" onclick="cbvCloseToast()">✕</button>
+  <div class="t-icon">🎰 <span id="cbv-toast-badge" style="display:none;background:#F0A500;color:#7B1C2E;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;vertical-align:middle;"></span></div>
+  <div class="t-title" id="cbv-toast-title">Tens uma Raspadinha!</div>
+  <div class="t-sub" id="cbv-toast-sub">O teu prémio diário está disponível. Raspa e ganha moedas!</div>
+  <a href="/raspadinha/" class="t-btn">Ir para a Raspadinha →</a>
+</div>
+
+<script>
+function cbvCloseToast(){
+  document.getElementById('cbv-raspadinha-toast').style.display='none';
+  sessionStorage.setItem('cbv_toast_seen','1');
+}
+
+(function(){
+  if(sessionStorage.getItem('cbv_toast_seen')) return;
+  if(window.location.pathname.indexOf('/raspadinha') !== -1) return;
+  fetch('/wp-json/cbv/v1/raspadinha',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.code) return;
+      var pendentes = d.pendentes || 0;
+      if(d.played || pendentes <= 0) return;
+
+      var badge = document.getElementById('cbv-toast-badge');
+      var title = document.getElementById('cbv-toast-title');
+      var sub   = document.getElementById('cbv-toast-sub');
+
+      if(pendentes > 1){
+        badge.style.display = 'inline';
+        badge.textContent   = pendentes;
+        title.textContent   = 'Tens '+pendentes+' Raspadinhas!';
+        sub.textContent     = 'Tens raspadinhas por raspar acumuladas. Raspa e ganha moedas!';
+      } else {
+        title.textContent = 'Tens uma Raspadinha!';
+        sub.textContent   = 'O teu prémio diário está disponível. Raspa e ganha moedas!';
+      }
+
+      setTimeout(function(){
+        document.getElementById('cbv-raspadinha-toast').style.display='flex';
+      },2000);
+    })
+    .catch(function(){});
+})();
+</script>
