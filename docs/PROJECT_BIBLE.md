@@ -1,18 +1,35 @@
 # PROJECT BIBLE — CB Viana Digital
 > Documento de contexto unificado para continuação por qualquer Claude.
 > Última atualização: Abril 2026
-> ⚠️ SEMPRE atualizar este ficheiro no fim de cada sessão de trabalho.
 > 🔗 Repositório: https://github.com/vianabasketball-maker/cbviana-digital
 
 ---
 
-## INSTRUÇÃO PARA O PRÓXIMO CLAUDE
+## ⚡ PROTOCOLO OBRIGATÓRIO — LÊ ISTO PRIMEIRO
 
-1. Lê a **Secção 9** para perceber o que está feito
-2. Lê a **Secção 10** para perceber o próximo passo
-3. Usa os raw URLs da **Secção 4** para ler o código real com `web_fetch`
-4. Nunca recomeças do zero — continua de onde ficou
-5. No fim da sessão, atualiza este ficheiro e faz upload para `docs/PROJECT_BIBLE.md` no GitHub
+### 🟢 INÍCIO DE CADA SESSÃO — O Claude deve fazer isto automaticamente:
+
+1. Lê este BIBLE completo
+2. Confirma ao utilizador: *"Li o PROJECT_BIBLE. Aqui está o estado actual do projecto: [resumo]. O próximo passo é: [passo 1 da Secção 10]."*
+3. Pergunta: *"O que queres trabalhar hoje?"*
+4. Antes de alterar qualquer ficheiro, lê o código actual do GitHub com `web_fetch` usando os URLs da Secção 4
+
+### 🔴 FIM DE CADA SESSÃO — O Claude deve fazer isto automaticamente:
+
+1. Gerar o BIBLE actualizado com tudo o que foi feito
+2. Avisar o utilizador: *"Sessão terminada. Aqui está o BIBLE actualizado. Faz o upload para o GitHub agora."*
+3. O utilizador faz: GitHub → `docs/PROJECT_BIBLE.md` → Edit → cola o novo conteúdo → Commit
+
+### ⚠️ REGRA DE OURO
+**Nunca termines uma sessão sem fazer upload do BIBLE actualizado para o GitHub.**
+O GitHub é a única fonte de verdade. O que não estiver no GitHub não existe para o próximo Claude.
+
+### 📋 PROMPT PARA INICIAR QUALQUER SESSÃO NOVA
+Cola isto como primeira mensagem em qualquer nova conversa:
+```
+Lê o PROJECT_BIBLE do projecto CB Viana e confirma o estado actual:
+web_fetch("https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/docs/PROJECT_BIBLE.md")
+```
 
 ---
 
@@ -147,7 +164,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wp-
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wp-blocks/equipas/sub16.html
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wp-blocks/equipas/sub18.html
 ```
-> Nota equipas: botão animado repetido, só muda o href de redireção. Ver equipas-hub.html como template.
+> Nota equipas: botão animado repetido, só muda o href. Ver equipas-hub.html como template.
 
 ### WPCODE — PHP
 ```
@@ -325,10 +342,9 @@ var ESCALOES = [
   { key: 'Sub_16_Femi',  titulo: 'Sub-16 Feminino',   raridade: 'rara',     jogadores: [...] },
   // + Sub-14, Sub-12, Mini-10 — ver código completo no GitHub
 ];
-// Lista completa de IDs de jogadores está em CadernetaViana.html
 ```
 
-### Assets da caderneta (Hostinger /public_html/Caderneta/)
+### Assets (Hostinger /public_html/Caderneta/)
 ```
 CadernetaViana.html  ← ficheiro principal
 background.png
@@ -395,17 +411,16 @@ openpack.mp4         ← vídeo abertura de pack (949KB)
 ## 10. PRÓXIMOS PASSOS (por prioridade)
 
 ### 🔴 Imediato
-1. Upload deste PROJECT_BIBLE para `docs/PROJECT_BIBLE.md` no GitHub
+1. Loja de pacotes com débito de moedas
+2. Mercado de trocas (interface + lógica backend)
 
 ### 🟡 A seguir
-2. Loja de pacotes com débito de moedas
-3. Mercado de trocas (interface + lógica backend)
-4. Persistência server-side da caderneta
+3. Persistência server-side da caderneta
+4. CRM atletas (role cbv_gestor + interface)
 
 ### 🟢 Futuro
-5. CRM atletas (role cbv_gestor + interface)
-6. Página histórica do clube (aguarda materiais Carlos)
-7. App Android/PlayStore
+5. Página histórica do clube (aguarda materiais Carlos)
+6. App Android/PlayStore
 
 ---
 
