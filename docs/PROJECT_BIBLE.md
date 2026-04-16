@@ -1,31 +1,27 @@
 # PROJECT BIBLE — CB Viana Digital
 > Documento de contexto unificado para continuação por qualquer Claude.
-> Última atualização: Abril 2026
+> Última atualização: Abril 2026 — Sessão: Menu Caderneta + Overlay Em Breve
 > 🔗 Repositório: https://github.com/vianabasketball-maker/cbviana-digital
 
 ---
 
 ## ⚡ PROTOCOLO OBRIGATÓRIO — LÊ ISTO PRIMEIRO
 
-### 🟢 INÍCIO DE CADA SESSÃO — O Claude deve fazer isto automaticamente:
-
-1. Lê este BIBLE completo
-2. Confirma ao utilizador: *"Li o PROJECT_BIBLE. Aqui está o estado actual do projecto: [resumo]. O próximo passo é: [passo 1 da Secção 10]."*
+### 🟢 INÍCIO DE CADA SESSÃO — O Claude faz isto automaticamente:
+1. Lê este BIBLE completo com `web_fetch`
+2. Confirma: *"Li o PROJECT_BIBLE. Estado actual: [resumo]. Próximo passo: [passo 1 da Secção 10]."*
 3. Pergunta: *"O que queres trabalhar hoje?"*
-4. Antes de alterar qualquer ficheiro, lê o código actual do GitHub com `web_fetch` usando os URLs da Secção 4
+4. Antes de alterar qualquer ficheiro, lê o código actual do GitHub com `web_fetch`
 
-### 🔴 FIM DE CADA SESSÃO — O Claude deve fazer isto automaticamente:
-
-1. Gerar o BIBLE actualizado com tudo o que foi feito
-2. Avisar o utilizador: *"Sessão terminada. Aqui está o BIBLE actualizado. Faz o upload para o GitHub agora."*
-3. O utilizador faz: GitHub → `docs/PROJECT_BIBLE.md` → Edit → cola o novo conteúdo → Commit
+### 🔴 FIM DE CADA SESSÃO — O Claude faz isto automaticamente:
+1. Gera o BIBLE actualizado com tudo o que foi feito
+2. Lista os ficheiros que foram alterados e precisam de update no GitHub
+3. Avisa: *"Sessão terminada. Faz o upload do BIBLE e dos ficheiros alterados para o GitHub."*
 
 ### ⚠️ REGRA DE OURO
-**Nunca termines uma sessão sem fazer upload do BIBLE actualizado para o GitHub.**
-O GitHub é a única fonte de verdade. O que não estiver no GitHub não existe para o próximo Claude.
+**Nunca termines uma sessão sem fazer upload do BIBLE actualizado + ficheiros alterados para o GitHub.**
 
 ### 📋 PROMPT PARA INICIAR QUALQUER SESSÃO NOVA
-Cola isto como primeira mensagem em qualquer nova conversa:
 ```
 Lê o PROJECT_BIBLE do projecto CB Viana e confirma o estado actual:
 web_fetch("https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/docs/PROJECT_BIBLE.md")
@@ -117,8 +113,6 @@ Cache:       /public_html/data/fpb_cal8.html e fpb_res8.html (gerados a cada 6h)
 
 ## 4. RAW URLS — REPOSITÓRIO COMPLETO
 
-> Usa estes URLs com `web_fetch` para ler o código de qualquer ficheiro.
-
 ### JOGOS
 ```
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/jogos/basketman.html
@@ -138,7 +132,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/cad
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/caderneta/openpack.mp4
 ```
 
-### PAGES-HTML (ficheiros standalone na raiz do Hostinger)
+### PAGES-HTML
 ```
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/pages-html/cbv-mascote-animacao.html
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/pages-html/colecao.html
@@ -147,7 +141,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/pag
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/pages-html/raspadinha.html
 ```
 
-### WP-BLOCKS (fragmentos HTML custom das páginas WordPress)
+### WP-BLOCKS
 ```
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wp-blocks/clube.html
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wp-blocks/contacto.html
@@ -198,13 +192,9 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/ins
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/insertphp/jogos-home
 ```
 
-### DATA
+### DATA + DOCS
 ```
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/data/horarios.csv
-```
-
-### DOCS
-```
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/docs/PROJECT_BIBLE.md
 ```
 
@@ -219,7 +209,8 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/doc
 | Horários | /horarios | `[xyz-ips snippet="horarios"]` |
 | Junta-te a Nós | /junta-te-a-nos | `[cbv_inscricoes]` (wpcode #625) |
 | Coleção | /colecao | `<iframe src="/colecao.html">` |
-| Raspadinha | /raspadinha | wp-blocks/raspadinha (via pages-html) |
+| **Caderneta** | **/caderneta** | **iframe CadernetaViana.html (injectado por WPCode para admins)** |
+| Raspadinha | /raspadinha | wp-blocks/raspadinha |
 | Galeria | /galeria | wp-blocks/galeria.html |
 | Clube | /clube | wp-blocks/clube.html |
 | Contacto | /contacto | wp-blocks/contacto.html |
@@ -253,7 +244,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/doc
 |---|---|---|---|---|
 | 601 | CBV Gamification System | Run Everywhere | PHP | Sistema central moedas + endpoints REST |
 | 605 | CBV Admin | Run Everywhere | PHP | Painel admin da gamificação |
-| 624 | CB Viana Menu | Run Everywhere | PHP | Menu principal do site |
+| 624 | CB Viana Menu | Run Everywhere | PHP | Menu + Caderneta overlay + iframe admin ⚠️ ACTUALIZADO |
 | 625 | Inscrições | Run Everywhere | PHP | Shortcode `[cbv_inscricoes]` |
 | 642 | BlocoDevMode | Run Everywhere | PHP | Proteção DevTools/F12 |
 | 593 | foto_puzzle | Run Everywhere | PHP | Fotos Puzzle via Cloudinary |
@@ -274,7 +265,25 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/doc
 
 ---
 
-## 7. ARQUITETURA CBVGam (SISTEMA DE MOEDAS)
+## 7. MENU — LÓGICA DA CADERNETA
+
+O item "Caderneta 25/26" no menu tem comportamento diferente por tipo de utilizador:
+
+```
+Administrador  → clica → vai para /caderneta/ com iframe da CadernetaViana.html
+Utilizador normal → clica → overlay "Em Breve" com capa_album.png a flutuar
+
+Overlay fecha com: botão ✕ / clicar fora / tecla Escape
+```
+
+O iframe na página /caderneta/ é injectado via WPCode directamente no `.entry-content`
+da página — a página WordPress fica vazia, o snippet trata do resto.
+
+Estilo do tab no menu: fundo dourado sólido + pulso de brilho (animation cadPulse).
+
+---
+
+## 8. ARQUITETURA CBVGam (SISTEMA DE MOEDAS)
 
 ### Padrão de integração — usado em TODOS os jogos
 ```javascript
@@ -283,29 +292,14 @@ function cbvGam() {
     (window.parent && window.parent.CBVGam) ||
     (window.parent && window.parent.parent && window.parent.parent.CBVGam) || null;
 }
-
 // Verificar saldo
-var gam = cbvGam();
-if (gam && !gam.canPay(CUSTO)) {
-  var s = gam.getState();
-  mostrarErro('Precisas de ' + CUSTO + ' moedas. Tens ' + s.moedas);
-  return;
-}
-
-// Descontar moedas para jogar
-gam.payCoins(CUSTO, function(d) {
-  if (d.sucesso) { iniciarJogo(); }
-});
-
-// Adicionar moedas como prémio
+if (gam && !gam.canPay(CUSTO)) { mostrarErro('...'); return; }
+// Descontar moedas
+gam.payCoins(CUSTO, function(d) { if (d.sucesso) iniciarJogo(); });
+// Adicionar moedas prémio
 gam.addCoins(Math.floor(score / 50), function() {});
-
-// Reportar pontuação cross-iframe via postMessage
-window.parent.postMessage({
-  type: 'cbv_score',
-  gameId: 'basketman',
-  entry: { name: nome, score: score, level: level }
-}, '*');
+// Reportar pontuação cross-iframe
+window.parent.postMessage({ type:'cbv_score', gameId:'basketman', entry:{name,score,level} }, '*');
 ```
 
 ### Economia
@@ -319,7 +313,7 @@ Chuva Bolas custo   → 5 moedas
 
 ---
 
-## 8. CADERNETA — ARQUITETURA
+## 9. CADERNETA — ARQUITETURA
 
 ### Cloudinary
 ```javascript
@@ -327,35 +321,37 @@ var CLOUD = 'dmwwjylsw';
 function imgUrl(pid) {
   return 'https://res.cloudinary.com/' + CLOUD + '/image/upload/c_fill,w_300,h_420,g_face/' + pid + '.jpg';
 }
-// pid = ID do ficheiro no Cloudinary ex: 'Afonso_Lima_da_Silva_gl7z5x'
-// g_face = crop automático centrado no rosto
 ```
 
 ### Escalões e raridades
-```javascript
-var ESCALOES = [
-  { key: 'Senior_Masc',  titulo: 'Sénior Masculino',  raridade: 'lendaria', jogadores: [...] },
-  { key: 'Senior_Femi',  titulo: 'Sénior Feminino',   raridade: 'lendaria', jogadores: [...] },
-  { key: 'Sub_18_Masc',  titulo: 'Sub-18 Masculino',  raridade: 'rara',     jogadores: [...] },
-  { key: 'Sub_18_Femi',  titulo: 'Sub-18 Feminino',   raridade: 'rara',     jogadores: [...] },
-  { key: 'Sub_16_Masc',  titulo: 'Sub-16 Masculino',  raridade: 'rara',     jogadores: [...] },
-  { key: 'Sub_16_Femi',  titulo: 'Sub-16 Feminino',   raridade: 'rara',     jogadores: [...] },
-  // + Sub-14, Sub-12, Mini-10 — ver código completo no GitHub
-];
 ```
+lendaria → Sénior Masc, Sénior Femi, Treinadores
+rara     → Sub-18 Masc/Femi, Sub-16 Masc/Femi
+comum    → Sub-14, Mini-12, Mini-10, Mini-8, Baby Basket
+```
+Lista completa de IDs de jogadores em `CadernetaViana.html` no GitHub.
 
 ### Assets (Hostinger /public_html/Caderneta/)
 ```
 CadernetaViana.html  ← ficheiro principal
 background.png
-capa_album.png
+capa_album.png       ← usada no overlay "Em Breve"
 lobo_cbv.png
 openpack.mp4         ← vídeo abertura de pack (949KB)
 ```
 
+### Estado actual da caderneta (localStorage — sem persistência server-side ainda)
+```javascript
+S = {
+  ganhos: {},      // {pid: nCopias}
+  colados: Set,    // pids colados no álbum
+  pacotes: 15,     // pacotes disponíveis
+}
+```
+
 ---
 
-## 9. ESTADO ATUAL — FEATURES
+## 10. ESTADO ATUAL — FEATURES
 
 ### Site WordPress
 | Feature | Estado |
@@ -373,6 +369,9 @@ openpack.mp4         ← vídeo abertura de pack (949KB)
 | Pop-up de registo | ✅ |
 | Avatar no header | ✅ |
 | Páginas de equipas (6 escalões) | ✅ |
+| Item "Caderneta 25/26" no menu | ✅ |
+| Overlay "Em Breve" para utilizadores normais | ✅ |
+| Página /caderneta com iframe para admins | ✅ |
 | Página Junta-te a Nós completa | ⏳ aguarda info Carlos |
 | Horários atualizados | ⏳ aguarda CSV Carlos |
 | Página histórica do clube | ⏳ aguarda materiais |
@@ -393,8 +392,9 @@ openpack.mp4         ← vídeo abertura de pack (949KB)
 | Memory | ✅ |
 | jogos.html com drawer lateral | ✅ |
 | Highscores via postMessage | ✅ |
-| Persistência server-side álbum | ⏳ |
-| Troca de cartas entre utilizadores | ⏳ |
+| **Persistência server-side álbum** | ⏳ PRÓXIMO |
+| Compra de packs (100 moedas) | ⏳ |
+| Gestão duplicados + trocas | ⏳ |
 
 ### Gamificação
 | Feature | Estado |
@@ -408,23 +408,30 @@ openpack.mp4         ← vídeo abertura de pack (949KB)
 
 ---
 
-## 10. PRÓXIMOS PASSOS (por prioridade)
+## 11. PRÓXIMOS PASSOS (por prioridade)
 
 ### 🔴 Imediato
-1. Loja de pacotes com débito de moedas
-2. Mercado de trocas (interface + lógica backend)
+1. **Persistência server-side da caderneta** — novo endpoint REST `/cbv/v1/colecao`:
+   - GET → lê `ganhos` e `colados` do user_meta
+   - POST → guarda `ganhos` e `colados` no user_meta
+   - A caderneta sincroniza ao abrir e ao colar/ganhar cromos
 
 ### 🟡 A seguir
-3. Persistência server-side da caderneta
-4. CRM atletas (role cbv_gestor + interface)
+2. **Compra de packs** — endpoint `/cbv/v1/pacote`:
+   - Debita 100 moedas
+   - Devolve 4 cromos aleatórios com as raridades correctas
+   - Guarda na coleção do utilizador
+
+3. **Gestão de duplicados + trocas**
 
 ### 🟢 Futuro
-5. Página histórica do clube (aguarda materiais Carlos)
+4. CRM atletas (role cbv_gestor)
+5. Página histórica do clube
 6. App Android/PlayStore
 
 ---
 
-## 11. DECISÕES TÉCNICAS
+## 12. DECISÕES TÉCNICAS
 
 | Decisão | Motivo |
 |---|---|
@@ -435,11 +442,12 @@ openpack.mp4         ← vídeo abertura de pack (949KB)
 | postMessage para highscores | localStorage bloqueado cross-origin em iframes |
 | CBVGam via window.parent chain | Jogos em iframe precisam aceder sistema de moedas |
 | MySQL WordPress (não Supabase) | Sem custo extra, integrado com WP users |
-| Snippets WPCode sem extensão no GitHub | Nome copiado directamente do WPCode |
+| Iframe caderneta injectado via WPCode | Página WP vazia — snippet trata do conteúdo |
+| Overlay Em Breve via menu snippet | Evita criar página separada, controlo centralizado |
 
 ---
 
-## 12. EQUIPA E CONTEXTO
+## 13. EQUIPA E CONTEXTO
 
 | Pessoa | Papel |
 |---|---|
