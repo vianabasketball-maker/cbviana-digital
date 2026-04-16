@@ -1,0 +1,153 @@
+<!-- CONTACTOS CB VIANA v3 — colar num bloco HTML personalizado no Gutenberg -->
+
+<style>
+.cbv-wrap{max-width:960px;margin:0 auto;padding:1.5rem 0;}
+
+/* HERO */
+.cbv-hero{display:grid;grid-template-columns:1fr 1fr;border-radius:12px;overflow:hidden;min-height:300px;margin-bottom:2rem;}
+.cbv-hero-left{background:#7B1C2E;padding:2.5rem 2rem;display:flex;flex-direction:column;justify-content:space-between;}
+.cbv-badge{display:inline-block;background:rgba(240,165,0,0.18);color:#F0A500;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:1rem;width:fit-content;}
+.cbv-hero-left h2{font-size:32px;font-weight:700;color:#ffffff;line-height:1.2;margin-bottom:0.75rem !important;}
+.cbv-hero-left p{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:1.5rem;}
+.cbv-btns{display:flex;flex-direction:column;gap:8px;}
+.cbv-btn-gold{background:#F0A500;color:#3a1a00;border:none;border-radius:6px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;width:100%;}
+.cbv-btn-outline{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;text-align:left;font-family:inherit;width:100%;}
+.cbv-btn-gold:hover{background:#d4920a;}
+.cbv-btn-outline:hover{background:rgba(255,255,255,0.15);}
+.cbv-hero-right{position:relative;overflow:hidden;min-height:300px;}
+.cbv-hero-right img{width:100%;height:100%;object-fit:cover;display:block;}
+.cbv-photo-tag{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.55);color:rgba(255,255,255,0.8);font-size:11px;padding:3px 8px;border-radius:4px;}
+
+/* PULLQUOTE */
+.cbv-pullquote{border-left:3px solid #F0A500;background:rgba(123,28,46,0.05);border-radius:0 8px 8px 0;padding:1rem 1.5rem;margin-bottom:2rem;}
+.cbv-pullquote p{font-size:15px;color:#7B1C2E;line-height:1.6;font-style:italic;margin:0 !important;}
+.cbv-pullquote cite{display:block;font-size:11px;color:#888;margin-top:6px;font-style:normal;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+
+/* INFO CARDS */
+.cbv-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+.cbv-card{background:#ffffff;border:1px solid #e5e5e5;border-radius:10px;padding:1.1rem;}
+.cbv-card-icon{width:34px;height:34px;border-radius:8px;background:rgba(123,28,46,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.cbv-card-icon svg{width:16px;height:16px;stroke:#7B1C2E;fill:none;stroke-width:2;}
+.cbv-card h4{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 5px 0 !important;}
+.cbv-card p,.cbv-card a{font-size:13px;color:#333;line-height:1.5;margin:0 0 2px 0 !important;text-decoration:none;}
+.cbv-card a{color:#7B1C2E;}
+
+/* BOTTOM GRID */
+.cbv-bottom{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.cbv-map{border-radius:10px;overflow:hidden;border:1px solid #e5e5e5;min-height:280px;}
+.cbv-map iframe{width:100%;height:100%;min-height:280px;border:0;display:block;}
+.cbv-form{background:#ffffff;border:1px solid #e5e5e5;border-radius:10px;padding:1.5rem;}
+.cbv-form h3{font-size:16px;font-weight:600;color:#7B1C2E;margin:0 0 1rem 0 !important;padding-bottom:0.75rem;border-bottom:1px solid #e5e5e5;}
+
+@media(max-width:640px){
+  .cbv-hero{grid-template-columns:1fr;}
+  .cbv-hero-right{display:none;}
+  .cbv-cards{grid-template-columns:1fr;}
+  .cbv-bottom{grid-template-columns:1fr;}
+}
+</style>
+
+<div class="cbv-wrap">
+
+  <!-- HERO SPLIT -->
+  <div class="cbv-hero">
+    <div class="cbv-hero-left">
+      <div>
+        <div class="cbv-badge">Clube Basquete Viana</div>
+        <h2>Fala connosco.<br>Estamos aqui.</h2>
+        <p>Inscrições, parcerias ou qualquer dúvida — a nossa equipa responde-te com rapidez.</p>
+      </div>
+      <div class="cbv-btns">
+        <button class="cbv-btn-gold" onclick="cbvSelect('Inscrições')">Quero inscrever-me no clube</button>
+        <button class="cbv-btn-outline" onclick="cbvSelect('Parcerias e patrocínios')">Proposta de parceria / patrocínio</button>
+        <button class="cbv-btn-outline" onclick="cbvSelect('Contactar a direção')">Contactar a direção</button>
+      </div>
+    </div>
+    <div class="cbv-hero-right">
+      <img src="https://cbviana.com/wp-content/uploads/2026/04/SantaMariaMaiorexterior.jpg" alt="Pavilhão Municipal de Viana do Castelo — Clube Basquete Viana" alt="Pavilhão Municipal de Viana do Castelo — Clube Basquete Viana">
+      <div class="cbv-photo-tag">Pavilhão Municipal · Viana do Castelo</div>
+    </div>
+  </div>
+
+  <!-- PULLQUOTE -->
+  <div class="cbv-pullquote">
+    <p>Seja para dar os primeiros passos no basquetebol, apoiar o clube ou estabelecer uma parceria, a porta do CB Viana está sempre aberta.</p>
+    <cite>Clube Basquete Viana — Direção</cite>
+  </div>
+
+  <!-- INFO CARDS -->
+  <div class="cbv-cards">
+
+    <div class="cbv-card">
+      <div class="cbv-card-icon">
+        <svg viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <h4>Morada</h4>
+      <p>Pavilhão St. Maria Maior<br>Sala 15 — 1º Andar<br>4900 Viana do Castelo</p>
+    </div>
+
+    <div class="cbv-card">
+      <div class="cbv-card-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <h4>Email</h4>
+      <p><a href="mailto:geral@cbviana.pt">geral@cbviana.pt</a></p>
+    </div>
+
+    <div class="cbv-card">
+      <div class="cbv-card-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+      </div>
+      <h4>Telefone</h4>
+      <p><a href="tel:+351258000000">+351 258 000 000</a></p>
+      <p><a href="tel:+351917815629">+351 917 815 629</a></p>
+    </div>
+
+    <div class="cbv-card">
+      <div class="cbv-card-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <h4>Horário</h4>
+      <p>Segunda-feira: 18:00 – 19:30</p>
+      <p>Terça-feira: 18:00 – 19:30</p>
+      <p>Quarta-feira: 18:00 – 19:30</p>
+      <p>Quinta-feira: 18:00 – 19:30</p>
+      <p>Sexta-feira: 18:00 – 19:30</p>
+    </div>
+
+  </div>
+
+  <!-- MAPA + FORMULÁRIO -->
+  <div class="cbv-bottom">
+    <div class="cbv-map">
+      <iframe src="https://www.google.com/maps/embed?pb=!4v1775571888870!6m8!1m7!1sp3z8gJlxVa2da-nlgAqULQ!2m2!1d41.70098107007423!2d-8.82256225125618!3f173.15726!4f0!5f0.7820865974627469" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="cbv-form" id="cbv-form-section">
+      <h3>Envia-nos uma mensagem</h3>
+      [wpforms id="340"]
+    </div>
+  </div>
+
+</div>
+
+<script>
+function cbvSelect(assunto) {
+  var formSection = document.getElementById('cbv-form-section');
+  if (formSection) {
+    formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  setTimeout(function() {
+    var select = document.getElementById('wpforms-340-field_4');
+    if (select) {
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].text === assunto) {
+          select.selectedIndex = i;
+          var event = new Event('change', { bubbles: true });
+          select.dispatchEvent(event);
+          break;
+        }
+      }
+    }
+  }, 600);
+}
+</script>
