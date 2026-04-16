@@ -390,6 +390,12 @@ function showGameOver(){
   // Dar moedas totais
   var gam=cbvGam();
   if(gam && totalCoins>0) gam.addCoins(totalCoins,function(){});
+  // Reportar score global
+  try{
+    var msg={type:'cbv_score',gameId:'lancamentos',entry:{score:pts}};
+    if(window.parent) window.parent.postMessage(msg,'*');
+    if(window.parent&&window.parent.parent) window.parent.parent.postMessage(msg,'*');
+  }catch(e){}
   var pct=(made+miss)>0?Math.round(made/(made+miss)*100):0;
   document.getElementById('go-stats').innerHTML=
     'Cestos: '+made+'/'+MAX_SHOTS+' · '+pct+'% acerto · '+pts+' pontos';
