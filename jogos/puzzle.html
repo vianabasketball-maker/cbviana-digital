@@ -741,6 +741,13 @@ function checkWin(){
       var coins = Math.max(5, Math.floor(200 / seconds * GRID));
       var gam4=cbvGam();
       if(gam4) gam4.addCoins(coins,function(){});
+      // Reportar score global
+      var scoreVal = Math.floor((1000 * GRID) / Math.max(1, seconds));
+      try{
+        var msg={type:'cbv_score',gameId:'puzzle',entry:{score:scoreVal,tries:moves}};
+        if(window.parent) window.parent.postMessage(msg,'*');
+        if(window.parent&&window.parent.parent) window.parent.parent.postMessage(msg,'*');
+      }catch(e){}
     }
   }
 }
