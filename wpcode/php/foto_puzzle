@@ -1,0 +1,48 @@
+add_action('rest_api_init', function(){
+  register_rest_route('cbv/v1', '/photos', [
+    'methods'  => 'GET',
+    'callback' => function($req){
+      $cloud      = 'dmwwjylsw';
+      $api_key    = '298553872981673';
+      $api_secret = '5bFH5b1qx1B-I2X6EqOvHoJEW0Q';
+      $auth       = base64_encode($api_key.':'.$api_secret);
+
+      $photos  = [];
+      $cursor  = null;
+      $max_pages = 20; // evitar loop infinito
+      $page = 0;
+
+      do {
+        $params = ['type'=>'upload','max_results'=>500];
+        if($cursor) $params['next_cursor'] = $cursor;
+
+        $url = 'https://api.cloudinary.com/v1_1/'.$cloud.'/resources/image?'.http_build_query($params);
+        $response = wp_remote_get($url, [
+          'headers' => ['Authorization' => 'Basic '.$auth],
+          'timeout' => 15,
+        ]);
+
+        if(is_wp_error($response)) break;
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        foreach($body['resources'] as $r){
+          // Filtrar só fotos da pasta fotos/
+          if(isset($r['asset_folder']) && strpos($r['asset_folder'], 'fotos/') === 0){
+            $photos[] = [
+              'url'    => 'https://res.cloudinary.com/'.$cloud.'/image/upload/c_fill,w_600,h_600,g_face/'.$r['public_id'],
+              'folder' => $r['asset_folder'],
+            ];
+          }
+        }
+
+        $cursor = isset($body['next_cursor']) ? $body['next_cursor'] : null;
+        $page++;
+
+      } while($cursor && $page < $max_pages);
+
+      shuffle($photos);
+      return rest_ensure_response(['photos' => $photos, 'total' => count($photos)]);
+    },
+    'permission_callback' => '__return_true',
+  ]);
+});
