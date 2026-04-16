@@ -1,0 +1,288 @@
+<!-- CBV HELP WIDGET -->
+<!-- WPCode → HTML Snippet → Site Wide Footer → Logged-in → True -->
+
+<style>
+/* Botão de ajuda flutuante */
+#cbv-help-btn{
+  position:fixed;bottom:24px;left:24px;z-index:99990;
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#7B1C2E,#9b2438);
+  border:1.5px solid rgba(240,165,0,0.5);
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  font-size:24px; /* Aumentei um pouco */
+  color: #F0A500; /* ESTA LINHA MUDA A COR PARA DOURADO */
+  transition:transform .2s,box-shadow .2s;
+  font-weight: bold;
+}
+#cbv-help-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(240,165,0,0.3);}
+
+/* Modal */
+#cbv-help-modal{
+  position:fixed;inset:0;z-index:99991;
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+}
+#cbv-help-modal.on{display:flex;}
+
+#cbv-help-inner{
+  background:linear-gradient(160deg,#0c0420,#150830);
+  border:1px solid rgba(240,165,0,0.2);
+  border-radius:20px;
+  width:100%;max-width:480px;
+  max-height:90vh;overflow-y:auto;
+  padding:28px 24px 24px;
+  position:relative;
+  animation:helpIn .3s cubic-bezier(.23,1,.32,1);
+  scrollbar-width:thin;scrollbar-color:#7B1C2E transparent;
+}
+@keyframes helpIn{from{transform:scale(.92) translateY(20px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
+
+#cbv-help-inner::-webkit-scrollbar{width:4px;}
+#cbv-help-inner::-webkit-scrollbar-thumb{background:#7B1C2E;border-radius:2px;}
+
+#cbv-help-close{
+  position:absolute;top:14px;right:14px;
+  background:rgba(255,255,255,0.06);border:none;
+  color:rgba(255,255,255,0.4);font-size:16px;
+  width:30px;height:30px;border-radius:8px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:system-ui;
+}
+#cbv-help-close:hover{background:rgba(255,255,255,0.12);color:#fff;}
+
+.help-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(240,165,0,0.08);border:0.5px solid rgba(240,165,0,0.25);
+  border-radius:30px;padding:4px 12px;
+  font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(240,165,0,0.6);margin-bottom:10px;
+  font-family:'DM Sans',system-ui;
+}
+.help-title{
+  font-family:'DM Sans',system-ui;font-size:22px;font-weight:700;
+  color:#fff;margin-bottom:4px;
+}
+.help-sub{
+  font-size:12px;color:rgba(255,255,255,0.3);
+  margin-bottom:24px;letter-spacing:.5px;
+  font-family:'DM Sans',system-ui;
+}
+
+.help-divider{
+  height:1px;background:linear-gradient(to right,transparent,rgba(240,165,0,0.15),transparent);
+  margin:20px 0;
+}
+
+/* Secções */
+.help-section{margin-bottom:20px;}
+.help-section-title{
+  display:flex;align-items:center;gap:8px;
+  font-family:'DM Sans',system-ui;font-size:11px;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;
+  color:rgba(240,165,0,0.5);margin-bottom:12px;
+}
+.help-section-title::after{
+  content:'';flex:1;height:1px;
+  background:rgba(240,165,0,0.1);
+}
+
+/* Cards */
+.help-cards{display:flex;flex-direction:column;gap:8px;}
+.help-card{
+  background:rgba(255,255,255,0.03);
+  border:0.5px solid rgba(255,255,255,0.06);
+  border-radius:12px;padding:12px 14px;
+  display:flex;align-items:flex-start;gap:12px;
+  font-family:'DM Sans',system-ui;
+}
+.help-card-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+.help-card-body{}
+.help-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;}
+.help-card-desc{font-size:11px;color:rgba(255,255,255,0.4);line-height:1.5;}
+
+/* Níveis */
+.help-levels{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}
+.help-level{
+  background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);
+  border-radius:8px;padding:8px 10px;
+  display:flex;align-items:center;gap:8px;
+  font-family:'DM Sans',system-ui;
+}
+.help-level-icon{font-size:16px;}
+.help-level-info{}
+.help-level-name{font-size:11px;font-weight:600;color:#fff;}
+.help-level-req{font-size:9px;color:rgba(255,255,255,0.3);}
+
+/* CTA */
+.help-cta{
+  background:linear-gradient(135deg,rgba(123,28,46,0.4),rgba(155,36,56,0.2));
+  border:1px solid rgba(240,165,0,0.2);
+  border-radius:12px;padding:14px 16px;
+  text-align:center;margin-top:20px;
+  font-family:'DM Sans',system-ui;
+}
+.help-cta-text{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;}
+.help-cta-btn{
+  display:inline-block;padding:10px 24px;
+  background:#F0A500;color:#7B1C2E;
+  font-weight:700;font-size:13px;
+  border-radius:10px;text-decoration:none;
+  font-family:'DM Sans',system-ui;
+  cursor:pointer;border:none;
+}
+.help-cta-btn:hover{background:#FFD060;}
+</style>
+
+<div id="cbv-help-btn" onclick="cbvHelpOpen()" title="Ajuda">?</div>
+<!-- Modal -->
+<div id="cbv-help-modal" onclick="cbvHelpClose(event)">
+  <div id="cbv-help-inner">
+    <button id="cbv-help-close" onclick="cbvHelpClose()">✕</button>
+
+    <div class="help-badge">CB Viana · Guia</div>
+    <div class="help-title">Bem-vindo à Zona TIMEOUT 🏀</div>
+    <div class="help-sub">Tudo o que precisas de saber para jogar e coleccionar</div>
+
+    <!-- MOEDAS -->
+    <div class="help-section">
+      <div class="help-section-title">🪙 Sistema de Moedas</div>
+      <div class="help-cards">
+        <div class="help-card">
+          <div class="help-card-icon">🪙</div>
+          <div class="help-card-body">
+            <div class="help-card-title">O que são as moedas?</div>
+            <div class="help-card-desc">As moedas são a moeda do CB Viana. Ganhas moedas ao visitar o site, jogar jogos e raspar raspadinhas. Usa-as para jogar ou para adquirir recompensas no futuro.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">📈</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Como ganhar moedas?</div>
+            <div class="help-card-desc">Visita o site diariamente (+1 acesso), joga jogos e ganha pontos, raspa raspadinhas diárias e sobe de nível para receber bónus.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">🎮</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Para que servem?</div>
+            <div class="help-card-desc">Cada jogo custa 5 🪙 para jogar. No futuro poderás também usar moedas para comprar cromos exclusivos da loja do clube.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-divider"></div>
+
+    <!-- RASPADINHA -->
+    <div class="help-section">
+      <div class="help-section-title">🎰 Raspadinha Diária</div>
+      <div class="help-cards">
+        <div class="help-card">
+          <div class="help-card-icon">🎰</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Uma raspadinha por dia</div>
+            <div class="help-card-desc">Todos os dias tens uma raspadinha gratuita disponível. Raspa para revelar um jogador ou membro do staff e ganhar moedas.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">📦</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Raspadinhas acumuladas</div>
+            <div class="help-card-desc">Se não jogardes num dia, a raspadinha fica guardada. Podes acumular até 7 raspadinhas e jogar todas quando quiseres.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">🃏</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Colecção</div>
+            <div class="help-card-desc">Cada raspadinha que jogas fica guardada na tua colecção. Clica no teu perfil no topo da página para ver todas as tuas cartas.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-divider"></div>
+
+    <!-- JOGOS -->
+    <div class="help-section">
+      <div class="help-section-title">🕹️ Zona de Jogos</div>
+      <div class="help-cards">
+        <div class="help-card">
+          <div class="help-card-icon">🏀</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Lançamentos</div>
+            <div class="help-card-desc">30 lançamentos, 3 níveis de dificuldade progressivos. Zona verde +2pts, zona azul +3pts. Ganhas moedas por cada cesto.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">🧩</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Puzzle</div>
+            <div class="help-card-desc">Monta a foto de um jogador do CB Viana. Escolhe o tamanho (3×3 a 6×6). Quanto mais rápido, mais moedas ganhas.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">🃏</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Memory</div>
+            <div class="help-card-desc">Encontra os pares jogador criança / adulto. Tens 5 minutos para completar todos os pares.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">⬇️</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Chuva de Bolas</div>
+            <div class="help-card-desc">Apanha as bolas com o cesto. A velocidade aumenta a cada 60 segundos. Tens 3 vidas.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">👮</div>
+          <div class="help-card-body">
+            <div class="help-card-title">BasketMan</div>
+            <div class="help-card-desc">Foge dos árbitros pelo campo. Quanto mais longe chegares, mais pontos e moedas ganhas.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-divider"></div>
+
+    <!-- NÍVEIS -->
+    <div class="help-section">
+      <div class="help-section-title">⭐ Níveis</div>
+      <div class="help-levels">
+        <div class="help-level"><div class="help-level-icon">👀</div><div class="help-level-info"><div class="help-level-name">Curioso</div><div class="help-level-req">0 acessos</div></div></div>
+        <div class="help-level"><div class="help-level-icon">🏀</div><div class="help-level-info"><div class="help-level-name">Adepto</div><div class="help-level-req">10 acessos · +5🪙</div></div></div>
+        <div class="help-level"><div class="help-level-icon">⭐</div><div class="help-level-info"><div class="help-level-name">Adepto Fiel</div><div class="help-level-req">30 acessos · +15🪙</div></div></div>
+        <div class="help-level"><div class="help-level-icon">🥉</div><div class="help-level-info"><div class="help-level-name">Bronze</div><div class="help-level-req">75 acessos · +40🪙</div></div></div>
+        <div class="help-level"><div class="help-level-icon">🥈</div><div class="help-level-info"><div class="help-level-name">Prata</div><div class="help-level-req">150 acessos · +100🪙</div></div></div>
+        <div class="help-level"><div class="help-level-icon">🥇</div><div class="help-level-info"><div class="help-level-name">Ouro</div><div class="help-level-req">300 acessos · +250🪙</div></div></div>
+        <div class="help-level"><div class="help-level-icon">🏆</div><div class="help-level-info"><div class="help-level-name">MVP</div><div class="help-level-req">500 acessos · +500🪙</div></div></div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="help-cta">
+      <div class="help-cta-text">Clica no widget no topo da página para ver o teu perfil, moedas e colecção.</div>
+      <a href="/colecao/" class="help-cta-btn">Ver a minha colecção →</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function cbvHelpOpen(){
+  document.getElementById('cbv-help-modal').classList.add('on');
+}
+function cbvHelpClose(e){
+  if(!e || e.target===document.getElementById('cbv-help-modal')){
+    document.getElementById('cbv-help-modal').classList.remove('on');
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') document.getElementById('cbv-help-modal').classList.remove('on');
+});
+</script>
