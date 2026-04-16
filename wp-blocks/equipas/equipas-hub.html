@@ -1,0 +1,200 @@
+<!-- 
+  CB VIANA — Botão "Ver Equipa" Multi-Instância
+  Podes duplicar este bloco à vontade. 
+  Lembra-te de mudar apenas o href="" e o texto no final do HTML.
+-->
+
+<div class="cbv-btn-wrap">
+  <div class="cbv-scene">
+
+    <!-- CESTO -->
+    <svg class="cbv-hoop" width="100" height="80" viewBox="0 0 100 80" fill="none" xmlns="http://w3.org">
+      <rect x="33" y="2" width="34" height="18" rx="3" fill="#7B1C2E" opacity="0.2" stroke="#7B1C2E" stroke-width="1" stroke-opacity="0.3"/>
+      <rect x="47" y="18" width="6" height="12" fill="#7B1C2E" opacity="0.45"/>
+      <ellipse cx="50" cy="32" rx="20" ry="4.5" stroke="#E8622A" stroke-width="3.5" fill="none"/>
+      <!-- A classe cbv-net-g identifica a rede para a animação -->
+      <g class="cbv-net-g">
+        <line x1="32" y1="32" x2="35" y2="55" stroke="#aaa" stroke-width="1.3"/>
+        <line x1="39" y1="32" x2="41" y2="57" stroke="#aaa" stroke-width="1.3"/>
+        <line x1="46" y1="32" x2="47" y2="59" stroke="#aaa" stroke-width="1.3"/>
+        <line x1="50" y1="32" x2="50" y2="59" stroke="#aaa" stroke-width="1.3"/>
+        <line x1="54" y1="32" x2="53" y2="59" stroke="#aaa" stroke-width="1.3"/>
+        <line x1="61" y1="32" x2="59" y2="57" stroke="#aaa" stroke-width="1.3"/>
+        <line x1="68" y1="32" x2="65" y2="55" stroke="#aaa" stroke-width="1.3"/>
+        <path d="M34 43 Q50 49 66 43" stroke="#aaa" stroke-width="1.1" fill="none"/>
+        <path d="M35 53 Q50 60 65 53" stroke="#aaa" stroke-width="1"   fill="none"/>
+        <path d="M36 59 Q50 67 64 59" stroke="#aaa" stroke-width="0.9" fill="none"/>
+      </g>
+    </svg>
+
+    <!-- PONTUAÇÃO (+2) -->
+    <div class="cbv-score">+2</div>
+
+    <!-- BOLA + LINK (Muda o href para o link desejado) -->
+    <a href="/equipas/mini-10-masculino" class="cbv-ball-area" onclick="cbvShoot(event, this)">
+      <svg class="cbv-ball-svg" viewBox="0 0 80 80" xmlns="http://w3.org">
+        <defs>
+          <radialGradient id="cbvBg" cx="38%" cy="32%" r="62%">
+            <stop offset="0%"   stop-color="#F47B30"/>
+            <stop offset="55%"  stop-color="#E8622A"/>
+            <stop offset="100%" stop-color="#9E3A10"/>
+          </radialGradient>
+          <radialGradient id="cbvShine" cx="35%" cy="28%" r="40%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.38)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+          <clipPath id="cbvCirc">
+            <circle cx="40" cy="40" r="38"/>
+          </clipPath>
+        </defs>
+        <circle cx="40" cy="40" r="38" fill="url(#cbvBg)"/>
+        <g clip-path="url(#cbvCirc)" stroke="#7B2800" stroke-width="1.8" fill="none" opacity="0.75">
+          <path d="M40 2 C40 2 40 78 40 78"/>
+          <path d="M2 40 Q40 8 78 40"/>
+          <path d="M2 40 Q40 72 78 40"/>
+          <path d="M10 16 Q30 28 40 28 Q50 28 70 16"/>
+          <path d="M10 64 Q30 52 40 52 Q50 52 70 64"/>
+        </g>
+        <circle cx="40" cy="40" r="38" fill="url(#cbvShine)"/>
+        <circle cx="40" cy="40" r="38" fill="none" stroke="#7B2800" stroke-width="1.5" opacity="0.5"/>
+      </svg>
+      <span class="cbv-label">Ver Equipa</span>
+    </a>
+
+  </div>
+</div>
+
+<style>
+/* Estilos Gerais (O WordPress carrega isto apenas uma vez se colado no mesmo sítio) */
+.cbv-btn-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 2rem 0;
+  font-family: inherit;
+}
+.cbv-scene {
+  position: relative;
+  width: 160px;
+  height: 180px;
+}
+.cbv-hoop {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.cbv-ball-area {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.cbv-ball-area:hover .cbv-ball-svg {
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.45));
+  transform: scale(1.08);
+}
+.cbv-ball-svg {
+  width: 72px;
+  height: 72px;
+  transition: transform 0.15s, filter 0.15s;
+  filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+}
+.cbv-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F0A500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.cbv-ball-area.cbv-go .cbv-ball-svg {
+  animation: cbvArc 1s cubic-bezier(0.33,1,0.68,1) forwards;
+}
+.cbv-ball-area.cbv-go .cbv-label {
+  opacity: 0;
+}
+@keyframes cbvArc {
+  0%   { transform: scale(1)    rotate(0deg)   translate(0,      0); opacity: 1; }
+  35%  { transform: scale(0.88) rotate(160deg) translate(10px, -130px); opacity: 1; }
+  65%  { transform: scale(0.72) rotate(270deg) translate(2px,  -162px); opacity: 1; }
+  85%  { transform: scale(0.64) rotate(320deg) translate(0,    -148px); opacity: 1; }
+  100% { transform: scale(0)    rotate(380deg) translate(0,    -145px); opacity: 0; }
+}
+.cbv-net-g { transform-origin: 50% 0; }
+.cbv-net-g.cbv-swing { animation: cbvSwing 0.6s ease-out; }
+@keyframes cbvSwing {
+  0%   { transform: scaleY(1)    scaleX(1); }
+  45%  { transform: scaleY(1.45) scaleX(0.8); }
+  75%  { transform: scaleY(0.92) scaleX(1.04); }
+  100% { transform: scaleY(1)    scaleX(1); }
+}
+.cbv-score {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20px;
+  font-weight: 700;
+  color: #F0A500;
+  opacity: 0;
+  pointer-events: none;
+}
+.cbv-score.cbv-pop { animation: cbvPop 1.1s ease-out forwards; }
+@keyframes cbvPop {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0)    scale(0.4); }
+  25%  { opacity: 1; transform: translateX(-50%) translateY(-8px)  scale(1.3); }
+  65%  { opacity: 1; transform: translateX(-50%) translateY(-18px) scale(1);   }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-34px) scale(0.7); }
+}
+</style>
+
+<script>
+// Verifica se a função já existe para não a redeclarar ao duplicar blocos
+if (typeof window.cbvShoot === 'undefined') {
+  window.cbvShoot = function(event, element) {
+    event.preventDefault();
+    
+    // Evita múltiplos cliques rápidos no mesmo botão
+    if (element.getAttribute('data-busy') === 'true') return;
+    element.setAttribute('data-busy', 'true');
+
+    var href = element.getAttribute('href');
+    var scene = element.closest('.cbv-scene');
+    var net = scene.querySelector('.cbv-net-g');
+    var sc = scene.querySelector('.cbv-score');
+
+    // Ativa animações
+    element.classList.add('cbv-go');
+
+    setTimeout(function() {
+      if (net) net.classList.add('cbv-swing');
+      if (sc) sc.classList.add('cbv-pop');
+    }, 900);
+
+    // Redireciona após a animação
+    setTimeout(function() {
+      if (href && href !== '#' && href !== '') {
+        window.location.href = href;
+      } else {
+        // Reset para testes se não houver link
+        element.classList.remove('cbv-go');
+        if (net) net.classList.remove('cbv-swing');
+        if (sc) sc.classList.remove('cbv-pop');
+        element.setAttribute('data-busy', 'false');
+      }
+    }, 1500);
+  };
+}
+</script>
