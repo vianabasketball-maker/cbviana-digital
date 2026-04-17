@@ -1,0 +1,3 @@
+Lê o PROJECT_BIBLE do projecto CB Viana:
+web_fetch("https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/docs/PROJECT_BIBLE.md")
+Depois diz-me o que está feito e qual é o próximo passo.
