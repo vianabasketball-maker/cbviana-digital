@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<!--
+  CB Viana · apostas.html
+  v1.4 · 2026-04-18
+  - Layout apostas igual aos cards de jogos (logos, odds bar, equipas)
+  - Odd apostada destacada em bold
+  - Notificação popup ao login (ganhaste X moedas)
+  - Devolução automática se jogo não se realizou (48h)
+  - Cancelar aposta com confirm dialog
+  - Aviso jogo virtual na primeira visita
+  - Botão ? com explicação completa
+-->
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBV Apostas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bord:#7B1C2E;--gold:#F0A500;--dark:#0f0409;--card:#1a0810;--border:#2a1018;--muted:#a08060;--text:#f0e8d0;--green:#4caf50;--red:#c0392b;}
+  html,body{min-height:100vh;background:var(--dark);color:var(--text);font-family:'Trebuchet MS',sans-serif;padding-bottom:80px;}
+  .hdr{background:#1a0810;padding:18px 16px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+  .hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .hdr-title{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);letter-spacing:2px;line-height:1;}
+  .hdr-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;}
+  .hdr-right{display:flex;align-items:center;gap:12px;}
+  .hdr-coins-label{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;text-align:right;}
+  .hdr-coins-val{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);}
+  .btn-info{width:28px;height:28px;border-radius:50%;background:rgba(240,165,0,.1);border:1px solid rgba(240,165,0,.3);color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .tabs{display:flex;border-top:1px solid var(--border);}
+  .tab{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:10px 14px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:color .2s;flex:1;}
+  .tab.active{color:var(--gold);border-bottom:2px solid var(--gold);}
+  .filters{display:flex;gap:8px;padding:12px;overflow-x:auto;scrollbar-width:none;}
+  .filters::-webkit-scrollbar{display:none;}
+  .filter-btn{background:#1a0810;border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:5px 13px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;white-space:nowrap;letter-spacing:1px;transition:all .2s;}
+  .filter-btn.active{background:var(--bord);border-color:var(--gold);color:var(--gold);}
+  /* CARD — partilhado entre jogos e apostas */
+  .game-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin:0 12px 12px;overflow:hidden;transition:border-color .2s;}
+  .game-card:hover{border-color:var(--bord);}
+  .game-card.pendente{border-left:3px solid var(--gold);}
+  .game-card.ganha{border-left:3px solid var(--green);}
+  .game-card.perdida{border-left:3px solid var(--red);}
+  .game-card.devolvida{border-left:3px solid #5b8dd9;}
+  .card-top{padding:10px 14px 6px;display:flex;justify-content:space-between;align-items:center;}
+  .comp-label{font-size:10px;color:var(--muted);font-family:'Oswald',sans-serif;letter-spacing:1px;flex:1;margin-right:8px;}
+  .pill{display:inline-block;border-radius:20px;padding:2px 9px;font-size:10px;font-family:'Oswald',sans-serif;background:#2a2a1a;color:#a09040;white-space:nowrap;}
+  .teams-row{padding:10px 14px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
+  .team{text-align:center;}
+  .team-logo{width:38px;height:38px;border-radius:50%;object-fit:contain;background:#2a1018;margin:0 auto 5px;display:block;}
+  .team-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;line-height:1.2;}
+  .team-stats{font-size:10px;color:var(--muted);margin-top:2px;}
+  .vs-block{text-align:center;min-width:44px;}
+  .vs-text{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--muted);}
+  .vs-hora{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--text);background:#2a1018;border-radius:6px;padding:3px 7px;}
+  .odds-section{padding:0 14px 6px;}
+  .odds-pct{display:flex;justify-content:space-between;margin-bottom:3px;}
+  .odds-pct span{font-size:10px;color:var(--muted);}
+  .odds-bar{height:4px;border-radius:3px;background:#2a1018;overflow:hidden;margin-bottom:5px;}
+  .odds-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--bord),var(--gold));}
+  .odds-vals{display:flex;justify-content:space-between;}
+  .odd-pill{background:#2a1018;border-radius:6px;padding:3px 10px;font-family:'Oswald',sans-serif;font-size:12px;color:var(--gold);}
+  .odd-pill.apostada{background:rgba(240,165,0,.2);border:1px solid var(--gold);}
+  .card-actions{padding:6px 14px 12px;display:flex;gap:8px;justify-content:space-between;align-items:center;}
+  .btn-apostar{background:var(--gold);color:#1a0810;border:none;border-radius:8px;padding:7px 16px;font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;cursor:pointer;letter-spacing:1px;transition:transform .1s;}
+  .btn-apostar:hover{transform:scale(1.04);}
+  .bet-status{display:flex;align-items:center;gap:8px;flex:1;}
+  .bet-status-text{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;}
+  .bet-status-val{font-family:'Bebas Neue',sans-serif;font-size:20px;margin-left:auto;}
+  .btn-cancelar{background:transparent;border:1px solid #3a1520;border-radius:6px;padding:4px 12px;color:#a08060;cursor:pointer;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1px;transition:all .2s;}
+  .btn-cancelar:hover{border-color:var(--red);color:var(--red);}
+  /* STATS */
+  .stats-row{display:flex;gap:10px;padding:14px 12px;}
+  .stat-card{flex:1;background:var(--card);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid var(--border);}
+  .stat-val{font-family:'Bebas Neue',sans-serif;font-size:26px;}
+  .stat-label{font-size:10px;color:var(--muted);font-family:'Oswald',sans-serif;}
+  /* MODAL */
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+  .modal-box{background:#1a0810;border-radius:20px;padding:20px 18px 26px;width:100%;max-width:440px;border:2px solid var(--gold);margin-top:16px;}
+  .modal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px;margin-bottom:4px;}
+  .modal-sub{font-size:11px;color:var(--muted);margin-bottom:14px;font-family:'Oswald',sans-serif;}
+  .team-btns{display:flex;gap:10px;margin-bottom:16px;}
+  .team-choice{background:transparent;border:2px solid var(--border);border-radius:10px;padding:12px 8px;cursor:pointer;color:var(--text);font-family:'Oswald',sans-serif;text-align:center;flex:1;transition:all .2s;}
+  .team-choice.sel{border-color:var(--gold);background:rgba(240,165,0,.1);}
+  .team-choice-logo{width:34px;height:34px;object-fit:contain;margin:0 auto 5px;display:block;}
+  .team-choice-name{font-size:11px;font-weight:600;margin-bottom:3px;}
+  .team-choice-odd{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);}
+  .team-choice-wr{font-size:10px;color:var(--muted);}
+  .amount-label{font-size:11px;color:var(--muted);font-family:'Oswald',sans-serif;letter-spacing:1px;margin-bottom:8px;}
+  .amount-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .amount-btn{background:#2a1018;border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;padding:6px 12px;font-family:'Oswald',sans-serif;font-size:13px;transition:all .15s;}
+  .amount-btn.sel{background:var(--gold);color:#1a0810;border-color:var(--gold);}
+  .amount-btn:hover:not(:disabled){border-color:var(--gold);}
+  .amount-btn:disabled{opacity:.3;cursor:not-allowed;}
+  .retorno-box{background:#0f0409;border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+  .retorno-label{font-size:12px;color:var(--muted);font-family:'Oswald',sans-serif;}
+  .retorno-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--green);}
+  .btn-confirmar{background:var(--gold);color:#1a0810;border:none;border-radius:10px;padding:12px;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;cursor:pointer;letter-spacing:1px;width:100%;}
+  .btn-confirmar:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-fechar{background:transparent;border:none;color:var(--muted);cursor:pointer;font-family:'Oswald',sans-serif;font-size:12px;width:100%;margin-top:10px;letter-spacing:1px;}
+  /* CONFIRM */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .confirm-box{background:#1a0810;border-radius:16px;padding:28px 20px;width:100%;max-width:320px;border:1px solid var(--border);text-align:center;}
+  .confirm-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);letter-spacing:2px;margin-bottom:8px;}
+  .confirm-sub{font-size:13px;color:var(--muted);font-family:'Oswald',sans-serif;margin-bottom:20px;}
+  .confirm-btns{display:flex;gap:10px;}
+  .confirm-ok{flex:1;background:var(--red);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;cursor:pointer;}
+  .confirm-no{flex:1;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:'Oswald',sans-serif;font-size:13px;cursor:pointer;}
+  /* AVISO */
+  .aviso-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .aviso-box{background:#1a0810;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;border-top:3px solid var(--gold);text-align:center;}
+  .aviso-icon{font-size:48px;margin-bottom:12px;}
+  .aviso-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:3px;margin-bottom:10px;}
+  .aviso-text{font-size:13px;color:rgba(255,255,255,.6);font-family:'Oswald',sans-serif;line-height:1.6;margin-bottom:24px;}
+  .aviso-text strong{color:var(--gold);}
+  .aviso-btns{display:flex;flex-direction:column;gap:10px;}
+  .aviso-aceitar{background:var(--gold);color:#1a0810;border:none;border-radius:12px;padding:14px;font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;cursor:pointer;letter-spacing:1px;}
+  .aviso-sair{background:transparent;border:1px solid #3a1520;color:#a08060;border-radius:12px;padding:12px;font-family:'Oswald',sans-serif;font-size:13px;text-decoration:none;display:block;}
+  /* AJUDA */
+  .ajuda-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+  .ajuda-box{background:#1a0810;border-radius:20px;padding:28px 22px;max-width:440px;width:100%;border:1px solid var(--border);margin-top:16px;}
+  .ajuda-title{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);letter-spacing:3px;margin-bottom:16px;text-align:center;}
+  .ajuda-s{margin-bottom:14px;}
+  .ajuda-s-title{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;color:var(--gold);margin-bottom:5px;}
+  .ajuda-s p,.ajuda-s li{font-size:12px;color:rgba(255,255,255,.6);font-family:'Oswald',sans-serif;line-height:1.6;padding:2px 0;}
+  .ajuda-s ul{list-style:none;padding:0;}
+  .ajuda-s li:before{content:'→ ';color:var(--gold);}
+  .ajuda-close{background:var(--gold);color:#1a0810;border:none;border-radius:10px;padding:12px;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;cursor:pointer;width:100%;margin-top:8px;}
+  /* NOTIF */
+  .notif-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .notif-box{background:#1a0810;border-radius:20px;padding:32px 24px;max-width:320px;width:100%;border-top:3px solid var(--gold);text-align:center;}
+  /* UTILS */
+  .loading{text-align:center;padding:40px 20px;color:var(--muted);font-family:'Oswald',sans-serif;font-size:14px;}
+  .empty{text-align:center;padding:40px 20px;color:var(--muted);font-family:'Oswald',sans-serif;}
+  .login-wall{text-align:center;padding:50px 20px;}
+  .login-wall p{color:var(--muted);font-family:'Oswald',sans-serif;font-size:14px;margin-bottom:16px;}
+  .login-wall a{color:var(--gold);text-decoration:none;font-family:'Oswald',sans-serif;border:1px solid var(--gold);padding:8px 20px;border-radius:8px;}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a0810;border:1px solid var(--gold);border-radius:10px;padding:10px 24px;font-family:'Oswald',sans-serif;font-size:13px;color:var(--text);z-index:600;display:none;white-space:nowrap;}
+  #toast.ok{border-color:var(--green);color:var(--green);}
+  #toast.err{border-color:var(--red);color:var(--red);}
+</style>
+</head>
+<body>
+
+<!-- AVISO -->
+<div class="aviso-overlay" id="aviso-overlay" style="display:none;">
+  <div class="aviso-box">
+    <div class="aviso-icon">🎮</div>
+    <div class="aviso-title">JOGO VIRTUAL</div>
+    <div class="aviso-text">
+      As <strong>CBV Apostas</strong> são um jogo de entretenimento com <strong>moedas virtuais</strong>.<br><br>
+      Não há dinheiro real envolvido. As moedas que ganhas e perdes existem apenas dentro do site do CB Viana.<br><br>
+      Joga com responsabilidade e diverte-te! 🏀
+    </div>
+    <div class="aviso-btns">
+      <button class="aviso-aceitar" onclick="fecharAviso()">Entendi, quero jogar!</button>
+      <label style="display:flex;align-items:center;gap:8px;justify-content:center;cursor:pointer;margin-top:4px;">
+        <input type="checkbox" id="aviso-lembrar" style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer;">
+        <span style="font-size:11px;color:var(--muted);font-family:'Oswald',sans-serif;letter-spacing:1px;">Não mostrar novamente</span>
+      </label>
+      <a class="aviso-sair" href="/" target="_top">Não, voltar à página inicial</a>
+    </div>
+  </div>
+</div>
+
+<!-- AJUDA -->
+<div class="ajuda-overlay" id="ajuda-overlay" style="display:none;">
+  <div class="ajuda-box">
+    <div class="ajuda-title">COMO FUNCIONA</div>
+    <div class="ajuda-s"><div class="ajuda-s-title">🎮 O que é isto?</div><p>Jogo virtual com moedas fictícias. Sem dinheiro real. Pura diversão!</p></div>
+    <div class="ajuda-s"><div class="ajuda-s-title">🪙 As moedas</div><ul><li>Ganhas jogando nos jogos TIMEOUT</li><li>Ganhas visitando o site diariamente</li><li>Gastas a fazer apostas</li><li>Ganhas o dobro (ou mais) se acertares!</li></ul></div>
+    <div class="ajuda-s"><div class="ajuda-s-title">📊 As odds</div><p>Calculadas com base nos resultados reais da FPB. Maior odd = menor probabilidade = maior prémio!</p></div>
+    <div class="ajuda-s"><div class="ajuda-s-title">⚠️ Regras</div><ul><li>Máximo 10 moedas por aposta</li><li>Uma aposta por jogo</li><li>Podes cancelar antes do jogo começar</li><li>Se o jogo não se realizar, moedas devolvidas</li></ul></div>
+    <button class="ajuda-close" onclick="document.getElementById('ajuda-overlay').style.display='none'">Fechar</button>
+  </div>
+</div>
+
+<!-- NOTIF -->
+<div class="notif-overlay" id="notif-overlay" style="display:none;">
+  <div class="notif-box">
+    <div style="font-size:52px;margin-bottom:12px;">🏆</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">GANHASTE!</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--green);line-height:1;margin-bottom:8px;" id="notif-moedas"></div>
+    <div style="font-size:12px;color:var(--muted);font-family:'Oswald',sans-serif;margin-bottom:28px;" id="notif-detalhe"></div>
+    <a href="/apostas/" target="_top" style="display:block;background:var(--gold);color:#1a0810;border-radius:10px;padding:14px;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;letter-spacing:2px;text-decoration:none;margin-bottom:10px;">VER AS MINHAS APOSTAS →</a>
+    <button onclick="document.getElementById('notif-overlay').style.display='none'" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;">FECHAR</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div><div class="hdr-title">CBV APOSTAS</div><div class="hdr-sub">Moedas virtuais</div></div>
+    <div class="hdr-right">
+      <button class="btn-info" onclick="document.getElementById('ajuda-overlay').style.display='flex'">?</button>
+      <div><div class="hdr-coins-label">Saldo</div><div class="hdr-coins-val" id="coins-display">🪙 —</div></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('jogos',this)">Jogos</button>
+    <button class="tab" onclick="showTab('apostas',this)">Apostas <span id="badge-pending"></span></button>
+    <button class="tab" onclick="showTab('ranking',this)">Equipas</button>
+  </div>
+</div>
+
+<!-- TAB JOGOS -->
+<div id="tab-jogos">
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('semana',this)">Esta semana</button>
+    <button class="filter-btn" onclick="setFilter('minhas',this)">As minhas</button>
+  </div>
+  <div id="jogos-list"><div class="loading">A carregar jogos...</div></div>
+</div>
+
+<!-- TAB APOSTAS -->
+<div id="tab-apostas" style="display:none;">
+  <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:4px;">
+    <button class="subtab active" id="subtab-pend" onclick="setSubtab('pendente',this)" style="flex:1;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:10px 14px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;">Pendentes <span id="st-pend" style="color:var(--gold)">0</span></button>
+    <button class="subtab" id="subtab-won" onclick="setSubtab('ganha',this)" style="flex:1;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:10px 14px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;">Ganhas <span id="st-won" style="color:var(--green)">0</span></button>
+    <button class="subtab" id="subtab-lost" onclick="setSubtab('perdida',this)" style="flex:1;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:10px 14px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;">Perdidas <span id="st-lost" style="color:var(--red)">0</span></button>
+  </div>
+  <div id="apostas-list"><div class="loading">A carregar...</div></div>
+  <div id="admin-resolver" style="display:none;padding:12px;text-align:center;">
+    <button onclick="resolverApostas()" style="background:transparent;border:1px solid #3a1520;border-radius:8px;padding:10px 20px;color:#a08060;cursor:pointer;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;">🔄 Resolver apostas pendentes</button>
+    <div id="resolver-status" style="font-size:11px;color:#a08060;margin-top:8px;font-family:'Oswald',sans-serif;"></div>
+  </div>
+</div>
+
+<!-- TAB RANKING -->
+<div id="tab-ranking" style="display:none;">
+  <div id="ranking-list"><div class="loading">A carregar...</div></div>
+</div>
+
+<!-- MODAL APOSTA -->
+<div class="modal-overlay" id="bet-modal" style="display:none;" onclick="closeBetModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">Fazer Aposta</div>
+    <div class="modal-sub" id="modal-subtitle">—</div>
+    <div class="team-btns" id="modal-teams"></div>
+    <div class="amount-label">Valor (máx. 10 🪙)</div>
+    <div class="amount-btns" id="modal-amounts"></div>
+    <div class="retorno-box" id="modal-retorno" style="display:none;">
+      <span class="retorno-label">Retorno potencial</span>
+      <span class="retorno-val" id="retorno-val">—</span>
+    </div>
+    <button class="btn-confirmar" id="btn-confirmar" disabled onclick="confirmarAposta()">Confirmar aposta</button>
+    <button class="btn-fechar" onclick="closeBetModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- CONFIRM CANCELAR -->
+<div class="confirm-overlay" id="confirm-modal" style="display:none;">
+  <div class="confirm-box">
+    <div class="confirm-title">Cancelar Aposta?</div>
+    <div class="confirm-sub">As moedas serão devolvidas ao teu saldo.</div>
+    <div class="confirm-btns">
+      <button class="confirm-ok" onclick="confirmarCancelamento()">Sim, cancelar</button>
+      <button class="confirm-no" onclick="fecharConfirm()">Não</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var API='/wp-json/cbv/v1';
+var _cancelarId=null;
+var state={coins:0,loggedIn:false,jogos:[],apostas:[],filter:'semana',subtab:'pendente',betModal:null,betChoice:null,betAmount:5,loading:false,nonce:null};
+
+function setSubtab(tipo,btn){
+  state.subtab=tipo;
+  document.querySelectorAll('.subtab').forEach(function(b){
+    b.style.color='var(--muted)';b.style.borderBottomColor='transparent';
+  });
+  if(btn){btn.style.color=tipo==='pendente'?'var(--gold)':tipo==='ganha'?'var(--green)':'var(--red)';btn.style.borderBottomColor=btn.style.color;}
+  renderApostas();
+}
+
+function cbvGam(){
+  if(window.CBVGam) return window.CBVGam;
+  try{if(window.parent&&window.parent.CBVGam) return window.parent.CBVGam;}catch(e){}
+  try{if(window.parent&&window.parent.parent&&window.parent.parent.CBVGam) return window.parent.parent.CBVGam;}catch(e){}
+  return null;
+}
+function waitForCBVGam(cb,n){n=n||0;var g=cbvGam();if(g){cb(g);return;}if(n>30){cb(null);return;}setTimeout(function(){waitForCBVGam(cb,n+1);},100);}
+
+function fecharAviso(){
+  document.getElementById('aviso-overlay').style.display='none';
+  var lembrar=document.getElementById('aviso-lembrar');
+  if(lembrar&&lembrar.checked){
+    // Guarda no servidor via user_meta — não depende de cookies/localStorage
+    fetch(API+'/apostas/aceitar-aviso',{method:'POST',credentials:'include'}).catch(function(){});
+    // Guarda também localmente como backup
+    try{localStorage.setItem('cbv_aviso','1');}catch(e){}
+    var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
+    document.cookie='cbv_aviso=1;expires='+exp.toUTCString()+';path=/;SameSite=None;Secure';
+  }
+}
+
+function toast(msg,type,dur){var el=document.getElementById('toast');el.textContent=msg;el.className=type||'';el.style.display='block';clearTimeout(el._t);el._t=setTimeout(function(){el.style.display='none';},dur||3000);}
+function renderCoins(){document.getElementById('coins-display').textContent='🪙 '+state.coins;}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+window.addEventListener('load',function(){
+  // Popup escondido por defeito — só mostra se servidor confirmar que não aceitou
+  document.getElementById('aviso-overlay').style.display='none';
+  fetch(API+'/apostas/aceitar-aviso',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.aceite){
+        document.getElementById('aviso-overlay').style.display='flex';
+      }
+    }).catch(function(){
+      // Em caso de erro (não logado etc) — mostra popup
+      document.getElementById('aviso-overlay').style.display='flex';
+    });
+  waitForCBVGam(function(gam){
+    if(gam){var s=gam.getState();state.coins=s.moedas||0;state.loggedIn=!!s.loggedIn;renderCoins();loadJogos();loadApostas();verificarNotificacao();}
+    else{fetch(API+'/gamification',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){if(!d.code){state.coins=d.moedas||0;state.loggedIn=true;}renderCoins();loadJogos();loadApostas();verificarNotificacao();}).catch(function(){renderCoins();loadJogos();});}
+  });
+});
+
+window.addEventListener('message',function(e){
+  if(!e.data) return;
+  if(e.data.type==='cbv_coins_update'){state.coins=e.data.moedas||0;state.loggedIn=true;renderCoins();}
+  if(e.data.type==='cbv_auth'){var a=e.data.auth;state.loggedIn=!!a.loggedIn;state.coins=parseInt(a.moedas)||0;state.nonce=a.nonce;if(a.isAdmin)document.getElementById('admin-resolver').style.display='block';renderCoins();loadJogos();loadApostas();verificarNotificacao();}
+});
+
+function verificarNotificacao(){
+  if(!state.loggedIn) return;
+  fetch(API+'/apostas/notificacao',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){if(d&&d.total){document.getElementById('notif-moedas').textContent='+'+d.total+' 🪙';var t=d.num+(d.num===1?' aposta ganha':' apostas ganhas');if(d.devolvidas)t+=' · '+d.devolvidas+' devolvida'+(d.devolvidas>1?'s':'');document.getElementById('notif-detalhe').textContent=t;document.getElementById('notif-overlay').style.display='flex';}}).catch(function(){});
+}
+
+function showTab(name,btn){['jogos','apostas','ranking'].forEach(function(t){document.getElementById('tab-'+t).style.display=t===name?'':'none';});document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');if(name==='apostas')loadApostas();if(name==='ranking')loadRanking();}
+function setFilter(f,btn){state.filter=f;document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderJogos();}
+
+function loadJogos(){fetch(API+'/apostas/jogos',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){state.jogos=Array.isArray(d)?d:[];renderJogos();}).catch(function(){document.getElementById('jogos-list').innerHTML='<div class="empty">Erro ao carregar jogos.</div>';});}
+
+function cardJogo(j,opts){
+  opts=opts||{};
+  var fb='https://sav2.fpb.pt/old_uploads/CLU/CLU_723_LOGO.jpg';
+  var h='<div class="game-card'+(opts.classe?' '+opts.classe:'')+'">';
+  h+='<div class="card-top"><span class="comp-label">'+esc(j.comp)+'</span><span class="pill">'+esc(j.data)+(j.hora?' · '+j.hora:'')+'</span></div>';
+  h+='<div class="teams-row">';
+  h+='<div class="team"><img class="team-logo" src="'+esc(j.logo_casa||fb)+'" onerror="this.src=\''+fb+'\'"><div class="team-name">'+esc(j.sigla_casa)+'</div>'+(j.stats_casa&&j.stats_casa.jogos?'<div class="team-stats">'+j.stats_casa.vitorias+'V '+j.stats_casa.derrotas+'D</div>':'')+'</div>';
+  h+='<div class="vs-block">'+(j.hora?'<div class="vs-hora">'+esc(j.hora)+'</div>':'<div class="vs-text">VS</div>')+'</div>';
+  h+='<div class="team"><img class="team-logo" src="'+esc(j.logo_fora||fb)+'" onerror="this.src=\''+fb+'\'"><div class="team-name">'+esc(j.sigla_fora)+'</div>'+(j.stats_fora&&j.stats_fora.jogos?'<div class="team-stats">'+j.stats_fora.vitorias+'V '+j.stats_fora.derrotas+'D</div>':'')+'</div>';
+  h+='</div>';
+  h+='<div class="odds-section"><div class="odds-pct"><span>'+esc(j.sigla_casa)+' '+j.pct_casa+'%</span><span>'+esc(j.sigla_fora)+' '+j.pct_fora+'%</span></div>';
+  h+='<div class="odds-bar"><div class="odds-fill" style="width:'+j.pct_casa+'%"></div></div>';
+  var casaAp=opts.escolha==='casa';var foraAp=opts.escolha==='fora';
+  h+='<div class="odds-vals"><div class="odd-pill'+(casaAp?' apostada':'')+'">×'+j.odd_casa+'</div><div class="odd-pill'+(foraAp?' apostada':'')+'">×'+j.odd_fora+'</div></div></div>';
+  h+=opts.footer||'';
+  h+='</div>';
+  return h;
+}
+
+function renderJogos(){
+  var jogos=state.jogos;
+  if(state.filter==='semana'){
+    var agora=Math.floor(Date.now()/1000);
+    // Início de hoje (meia-noite) — mostra jogos de hoje mesmo que ts seja meia-noite
+    var inicioDia=new Date();inicioDia.setHours(0,0,0,0);
+    var inicioDiaTs=Math.floor(inicioDia.getTime()/1000);
+    // Fim da semana (domingo 23:59)
+    var d=new Date();var dias=7-d.getDay();if(dias===7)dias=0;
+    d.setDate(d.getDate()+dias);d.setHours(23,59,59,0);
+    var fim=Math.floor(d.getTime()/1000);
+    jogos=jogos.filter(function(j){
+      // Mostra se o jogo é de hoje ou futuro
+      // Esconde se já passaram 30min da hora de início (ts + hora em segundos + 30min)
+      var tsJogo=j.ts;
+      if(j.hora){var hp=j.hora.split(':');if(hp.length===2)tsJogo=j.ts+(parseInt(hp[0])*3600+parseInt(hp[1])*60);}
+      return j.ts>=inicioDiaTs && j.ts<=fim && (tsJogo+1800)>agora;
+    });
+  }
+  var apostadosIds=state.apostas.filter(function(a){return a.estado!=='cancelada';}).map(function(a){return a.jogo_id;});
+  var pendIds=state.apostas.filter(function(a){return a.estado==='pendente';}).map(function(a){return a.jogo_id;});
+  if(state.filter==='minhas'){jogos=jogos.filter(function(j){return pendIds.indexOf(j.id)>=0;});}
+  else{jogos=jogos.filter(function(j){return apostadosIds.indexOf(j.id)===-1;});}
+  if(!jogos.length){document.getElementById('jogos-list').innerHTML='<div class="empty">Sem jogos disponíveis.</div>';return;}
+  var html='';
+  jogos.forEach(function(j){
+    var footer='<div class="card-actions">';
+    if(state.loggedIn){footer+='<button class="btn-apostar" onclick="openBetModal('+JSON.stringify(j).replace(/"/g,'&quot;')+')">Apostar</button>';}
+    else{footer+='<a href="/login" target="_top" style="font-size:11px;color:var(--gold);font-family:Oswald,sans-serif;">Login para apostar</a>';}
+    footer+='</div>';
+    html+=cardJogo(j,{footer:footer});
+  });
+  document.getElementById('jogos-list').innerHTML=html;
+}
+
+function loadApostas(){
+  if(!state.loggedIn){document.getElementById('apostas-list').innerHTML='<div class="login-wall"><p>Faz login para ver as tuas apostas.</p><a href="/login" target="_top">Entrar</a></div>';return;}
+  fetch(API+'/apostas/minhas',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){state.apostas=Array.isArray(d)?d:[];renderApostas();updateBadge();renderJogos();}).catch(function(){});
+}
+
+function renderApostas(){
+  var ap=state.apostas.filter(function(a){return a.estado!=='cancelada';});
+  // Deduplica — por jogo_id mantém só a mais recente (antes de contar)
+  var seen={};var apDedup=ap.filter(function(a){if(seen[a.jogo_id])return false;seen[a.jogo_id]=true;return true;});
+  // Contadores sobre deduplicados
+  document.getElementById('st-pend').textContent=apDedup.filter(function(a){return a.estado==='pendente';}).length;
+  var won=apDedup.filter(function(a){return a.estado==='ganha';}).length;
+  var dev=apDedup.filter(function(a){return a.estado==='devolvida';}).length;
+  document.getElementById('st-won').textContent=won+(dev?' (+'+dev+'↩)':'');
+  document.getElementById('st-lost').textContent=apDedup.filter(function(a){return a.estado==='perdida';}).length;
+  // Filtra por subtab activo
+  var filtrados=apDedup.filter(function(a){
+    if(state.subtab==='pendente') return a.estado==='pendente';
+    if(state.subtab==='ganha')   return a.estado==='ganha'||a.estado==='devolvida';
+    if(state.subtab==='perdida') return a.estado==='perdida';
+    return true;
+  });
+  if(!filtrados.length){document.getElementById('apostas-list').innerHTML='<div class="empty">Sem apostas neste separador.</div>';return;}
+  var sorted=filtrados.slice().sort(function(a,b){return b.criada_em-a.criada_em;});
+  var html='';
+  sorted.forEach(function(a){
+    var jogo=state.jogos.find(function(j){return j.id===a.jogo_id;});
+    var jogoFake=jogo||{comp:'Jogo anterior',data:new Date(a.criada_em*1000).toLocaleDateString('pt-PT'),hora:'',sigla_casa:a.sigla_casa||'Casa',sigla_fora:a.sigla_fora||'Fora',logo_casa:'',logo_fora:'',pct_casa:50,pct_fora:50,odd_casa:a.odd||1.8,odd_fora:a.odd||1.8,stats_casa:null,stats_fora:null};
+    var cor=a.estado==='ganha'?'var(--green)':a.estado==='perdida'?'var(--red)':a.estado==='devolvida'?'#5b8dd9':'var(--gold)';
+    var val=a.estado==='ganha'?'+'+a.payout+' 🪙':a.estado==='perdida'?'-'+a.montante+' 🪙':a.estado==='devolvida'?'↩ '+a.montante+' 🪙':a.montante+' 🪙';
+    var est=a.estado==='ganha'?'GANHA ×'+a.odd:a.estado==='perdida'?'PERDIDA':a.estado==='devolvida'?'DEVOLVIDA':'PENDENTE';
+    var footer='<div class="card-actions">';
+    footer+='<div class="bet-status"><span class="bet-status-text" style="color:'+cor+'">'+est+'</span>';
+    footer+='<span style="font-size:11px;color:var(--muted);font-family:Oswald,sans-serif;margin-left:8px;">Apostaste em '+esc(a.escolha==='casa'?jogoFake.sigla_casa:jogoFake.sigla_fora)+'</span></div>';
+    footer+='<div style="display:flex;align-items:center;gap:8px;"><span class="bet-status-val" style="color:'+cor+'">'+val+'</span>';
+    if(a.estado==='pendente')footer+='<button class="btn-cancelar" onclick="pedirCancelamento(\''+a.id+'\')">CANCELAR</button>';
+    footer+='</div></div>';
+    html+=cardJogo(jogoFake,{classe:a.estado,escolha:a.escolha,footer:footer});
+  });
+  document.getElementById('apostas-list').innerHTML=html;
+}
+
+function updateBadge(){var p=state.apostas.filter(function(a){return a.estado==='pendente';}).length;document.getElementById('badge-pending').textContent=p?' ('+p+')':'';}
+
+function openBetModal(jogo){
+  state.betModal=jogo;state.betChoice=null;state.betAmount=5;
+  document.getElementById('modal-subtitle').textContent=jogo.comp+' · '+jogo.data;
+  var fb='https://sav2.fpb.pt/old_uploads/CLU/CLU_723_LOGO.jpg';
+  document.getElementById('modal-teams').innerHTML=
+    '<button class="team-choice" id="choice-casa" onclick="selChoice(\'casa\')"><img class="team-choice-logo" src="'+esc(jogo.logo_casa||fb)+'" onerror="this.src=\''+fb+'\'"><div class="team-choice-name">'+esc(jogo.sigla_casa)+'</div><div class="team-choice-odd">×'+jogo.odd_casa+'</div><div class="team-choice-wr">'+jogo.pct_casa+'% prob.</div></button>'+
+    '<button class="team-choice" id="choice-fora" onclick="selChoice(\'fora\')"><img class="team-choice-logo" src="'+esc(jogo.logo_fora||fb)+'" onerror="this.src=\''+fb+'\'"><div class="team-choice-name">'+esc(jogo.sigla_fora)+'</div><div class="team-choice-odd">×'+jogo.odd_fora+'</div><div class="team-choice-wr">'+jogo.pct_fora+'% prob.</div></button>';
+  var saldo=state.coins>0?state.coins:999;
+  var ah='';[1,2,3,5,8,10].forEach(function(v){ah+='<button class="amount-btn'+(v===5?' sel':'')+'"'+(v>saldo?' disabled':'')+' onclick="selAmount('+v+')">'+v+'</button>';});
+  document.getElementById('modal-amounts').innerHTML=ah;
+  document.getElementById('modal-retorno').style.display='none';
+  document.getElementById('btn-confirmar').disabled=true;
+  document.getElementById('btn-confirmar').textContent='Confirmar aposta';
+  document.getElementById('bet-modal').style.display='flex';window.scrollTo(0,0);
+}
+function selChoice(c){state.betChoice=c;document.getElementById('choice-casa').classList.toggle('sel',c==='casa');document.getElementById('choice-fora').classList.toggle('sel',c==='fora');updateRetorno();}
+function selAmount(v){state.betAmount=v;document.querySelectorAll('.amount-btn').forEach(function(b){b.classList.toggle('sel',parseInt(b.textContent)===v);});updateRetorno();}
+function updateRetorno(){if(!state.betChoice||!state.betModal)return;var odd=state.betChoice==='casa'?state.betModal.odd_casa:state.betModal.odd_fora;var ret=Math.floor(state.betAmount*odd);document.getElementById('retorno-val').textContent=ret+' 🪙';document.getElementById('modal-retorno').style.display='flex';document.getElementById('btn-confirmar').disabled=false;document.getElementById('btn-confirmar').textContent='Confirmar — '+state.betAmount+' 🪙';}
+function closeBetModal(){document.getElementById('bet-modal').style.display='none';state.betModal=null;}
+
+function confirmarAposta(){
+  if(!state.betChoice||!state.betModal||state.loading)return;
+  state.loading=true;document.getElementById('btn-confirmar').disabled=true;
+  var montante=state.betAmount;var gam=cbvGam();
+  function _fazer(cbvgamPaid){
+    var h={'Content-Type':'application/json'};if(state.nonce)h['X-WP-Nonce']=state.nonce;
+    fetch(API+'/apostas/apostar',{method:'POST',credentials:'include',headers:h,body:JSON.stringify({jogo_id:state.betModal.id,escolha:state.betChoice,montante:montante,cbvgam_paid:!!cbvgamPaid})})
+      .then(function(r){return r.json();}).then(function(d){state.loading=false;
+        if(d.sucesso){
+          // Sincroniza saldo — CBVGam é fonte de verdade
+          if(gam){var s=gam.getState();state.coins=s.moedas||0;}
+          else{state.coins=d.moedas_restantes||state.coins;}
+          renderCoins();state.apostas.push(d.aposta);closeBetModal();renderJogos();renderApostas();updateBadge();toast('✓ Aposta registada!','ok');
+        } else {
+          // Falhou — reembolsa CBVGam se tinha descontado
+          if(gam&&cbvgamPaid) gam.addCoins(montante,function(){var s=gam.getState();state.coins=s.moedas||0;renderCoins();});
+          state.loading=false;document.getElementById('btn-confirmar').disabled=false;toast('Erro: '+(d.message||'Tenta novamente'),'err');
+        }
+      }).catch(function(){
+        if(gam&&cbvgamPaid) gam.addCoins(montante,function(){var s=gam.getState();state.coins=s.moedas||0;renderCoins();});
+        state.loading=false;document.getElementById('btn-confirmar').disabled=false;toast('Erro de ligação.','err');
+      });
+  }
+  if(gam&&gam.canPay){
+    if(!gam.canPay(montante)){state.loading=false;document.getElementById('btn-confirmar').disabled=false;toast('Moedas insuficientes!','err');return;}
+    gam.payCoins(montante,function(d){
+      if(d.sucesso){state.coins=d.moedas;_fazer(true);} // cbvgamPaid=true
+      else{state.loading=false;document.getElementById('btn-confirmar').disabled=false;toast('Moedas insuficientes!','err');}
+    });
+  } else _fazer(false); // PHP desconta
+}
+
+function pedirCancelamento(id){_cancelarId=id;document.getElementById('confirm-modal').style.display='flex';}
+function fecharConfirm(){document.getElementById('confirm-modal').style.display='none';_cancelarId=null;}
+function confirmarCancelamento(){
+  var id=_cancelarId;fecharConfirm();if(!id)return;
+  var h={'Content-Type':'application/json'};if(state.nonce)h['X-WP-Nonce']=state.nonce;
+  fetch(API+'/apostas/cancelar',{method:'POST',credentials:'include',headers:h,body:JSON.stringify({aposta_id:id})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.sucesso){
+        var gam=cbvGam();
+        if(gam){
+          // Usa gam.sync() para re-fetch do servidor e atualizar header + iframe
+          if(gam.sync){
+            gam.sync(function(r){if(r.sucesso){state.coins=r.moedas||0;renderCoins();}});
+          } else {
+            // Fallback se sync não existir ainda
+            fetch(API+'/gamification',{credentials:'include'}).then(function(r){return r.json();}).then(function(g){if(!g.code){state.coins=g.moedas||0;renderCoins();}}).catch(function(){});
+          }
+        } else {state.coins=d.moedas||state.coins;renderCoins();}
+        state.apostas=state.apostas.filter(function(a){return a.id!==id;});
+        renderApostas();renderJogos();updateBadge();
+        toast('✓ Aposta cancelada — moedas devolvidas','ok');
+      } else toast('Erro ao cancelar: '+(d.message||'?'),'err');
+    }).catch(function(){toast('Erro de ligação.','err');});
+}
+
+function loadRanking(){
+  fetch(API+'/apostas/stats',{credentials:'include'}).then(function(r){return r.json();}).then(function(data){
+    var eq=Object.values(data).sort(function(a,b){return b.winRate-a.winRate;});
+    var fb='https://sav2.fpb.pt/old_uploads/CLU/CLU_723_LOGO.jpg';
+    var h='<div style="padding:14px 12px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px;margin-bottom:12px;">Win Rate das Equipas</div>';
+    eq.forEach(function(e,i){var p=Math.round(e.winRate*100);h+='<div style="display:flex;align-items:center;gap:12px;background:var(--card);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border);"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:var(--muted);min-width:24px;">'+(i+1)+'</div><img src="'+esc(e.logo||fb)+'" style="width:32px;height:32px;object-fit:contain;border-radius:50%;background:#2a1018;" onerror="this.src=\''+fb+'\'"><div style="flex:1;"><div style="font-family:\'Oswald\',sans-serif;font-size:13px;margin-bottom:5px;">'+esc(e.sigla)+' <span style="color:var(--muted);font-size:11px;">('+e.jogos+'J · '+e.vitorias+'V · '+e.derrotas+'D)</span></div><div style="height:4px;border-radius:2px;background:#2a1018;overflow:hidden;"><div style="height:100%;width:'+p+'%;background:linear-gradient(90deg,var(--bord),var(--gold));border-radius:2px;"></div></div></div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:var(--gold);min-width:44px;text-align:right;">'+p+'%</div></div>';});
+    h+='</div>';document.getElementById('ranking-list').innerHTML=h;
+  }).catch(function(){document.getElementById('ranking-list').innerHTML='<div class="empty">Erro ao carregar.</div>';});
+}
+
+function resolverApostas(){
+  document.getElementById('resolver-status').textContent='A resolver...';
+  var h={};if(state.nonce)h['X-WP-Nonce']=state.nonce;
+  fetch(API+'/apostas/resolver',{method:'POST',credentials:'include',headers:h}).then(function(r){return r.json();}).then(function(d){document.getElementById('resolver-status').textContent=d.sucesso?d.resolvidas+' resolvidas, '+d.pagas+' pagas.':'Erro.';if(d.sucesso)loadApostas();}).catch(function(){document.getElementById('resolver-status').textContent='Erro de ligação.';});
+}
+</script>
+</body>
+</html>
