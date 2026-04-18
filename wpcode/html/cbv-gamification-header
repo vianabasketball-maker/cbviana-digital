@@ -112,8 +112,14 @@ function fetchData(){
       state.username=d.username||'';
       state.display_name=d.display_name||'';
       renderBar();
-      registerAccess();
+	  registerAccess();
       document.dispatchEvent(new CustomEvent('cbv:ready',{detail:window.CBVGam.getState()}));
+	  // Notifica iframes do saldo
+      try{
+        document.querySelectorAll('iframe').forEach(function(f){
+          f.contentWindow.postMessage({type:'cbv_coins_update',moedas:state.moedas},'*');
+        });
+      }catch(e){}
     }).catch(function(){});
 }
 
@@ -174,7 +180,22 @@ window.CBVGam = {
     .then(function(d){if(callback)callback(d);})
     .catch(function(e){if(callback)callback({sucesso:false,erro:'network'});});
   },
-
+// ── NOVO v1.2: Sync forçado do servidor ──
+  sync:function(callback){
+    fetch('/wp-json/cbv/v1/gamification',{credentials:'include'})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.code){if(callback)callback({sucesso:false});return;}
+        state.moedas=d.moedas||0;
+        state.acessos=d.acessos||0;
+        state.nivel=d.nivel||1;
+        renderBar();
+        try{document.querySelectorAll('iframe').forEach(function(f){
+          f.contentWindow.postMessage({type:'cbv_coins_update',moedas:state.moedas},'*');
+        });}catch(e){}
+        if(callback)callback({sucesso:true,moedas:state.moedas});
+      }).catch(function(){if(callback)callback({sucesso:false});});
+  },
   // ── NOVO: Ler highscores globais ──
   getScores:function(callback){
     fetch('/wp-json/cbv/v1/scores',{credentials:'include'})
