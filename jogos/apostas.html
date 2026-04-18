@@ -142,6 +142,21 @@
 </head>
 <body>
 
+<!-- ACESSO RESTRITO -->
+<div id="beta-wall" style="display:none;position:fixed;inset:0;background:var(--dark);z-index:999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a0810;border-radius:20px;padding:36px 28px;max-width:400px;width:100%;border-top:3px solid var(--gold);text-align:center;">
+    <div style="font-size:52px;margin-bottom:16px;">🏀</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold);letter-spacing:3px;margin-bottom:8px;">CBV APOSTAS</div>
+    <div style="display:inline-block;background:var(--bord);color:var(--gold);font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;padding:4px 14px;border-radius:20px;margin-bottom:20px;border:1px solid var(--gold);">VERSÃO BETA</div>
+    <p style="font-family:'Oswald',sans-serif;font-size:14px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:28px;">
+      As CBV Apostas estão em fase de testes.<br>
+      O acesso está reservado a utilizadores selecionados.<br><br>
+      Em breve disponível para todos! 🚀
+    </p>
+    <a href="/" target="_top" style="display:block;background:var(--gold);color:#1a0810;border-radius:10px;padding:13px;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;letter-spacing:2px;text-decoration:none;">VOLTAR AO SITE</a>
+  </div>
+</div>
+
 <!-- AVISO -->
 <div class="aviso-overlay" id="aviso-overlay" style="display:none;">
   <div class="aviso-box">
@@ -311,14 +326,31 @@ window.addEventListener('load',function(){
         document.getElementById('aviso-overlay').style.display='flex';
       }
     }).catch(function(){
-      // Em caso de erro (não logado etc) — mostra popup
       document.getElementById('aviso-overlay').style.display='flex';
     });
+  // Verifica acesso beta antes de carregar
+  verificarAcessoBeta(function(temAcesso){
+    if(!temAcesso){
+      document.getElementById('beta-wall').style.display='flex';
+      return;
+    }
+    _initApp();
+  });
+});
+
+function verificarAcessoBeta(cb){
+  fetch('/wp-json/cbv/v1/apostas/acesso',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){cb(d&&d.acesso);})
+    .catch(function(){cb(false);});
+}
+
+function _initApp(){
   waitForCBVGam(function(gam){
     if(gam){var s=gam.getState();state.coins=s.moedas||0;state.loggedIn=!!s.loggedIn;renderCoins();loadJogos();loadApostas();verificarNotificacao();}
     else{fetch(API+'/gamification',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){if(!d.code){state.coins=d.moedas||0;state.loggedIn=true;}renderCoins();loadJogos();loadApostas();verificarNotificacao();}).catch(function(){renderCoins();loadJogos();});}
   });
-});
+}  // fim _initApp
 
 window.addEventListener('message',function(e){
   if(!e.data) return;
@@ -367,10 +399,21 @@ function renderJogos(){
     d.setDate(d.getDate()+dias);d.setHours(23,59,59,0);
     var fim=Math.floor(d.getTime()/1000);
     jogos=jogos.filter(function(j){
-      // Mostra se o jogo é de hoje ou futuro
-      // Esconde se já passaram 30min da hora de início (ts + hora em segundos + 30min)
-      var tsJogo=j.ts;
-      if(j.hora){var hp=j.hora.split(':');if(hp.length===2)tsJogo=j.ts+(parseInt(hp[0])*3600+parseInt(hp[1])*60);}
+      // ts do jogo é meia-noite UTC do dia — converte para local
+      var tsMeiaNocheLocal=j.ts;
+      var tsJogo=tsMeiaNocheLocal;
+      if(j.hora){
+        var hp=j.hora.split(':');
+        // A hora da FPB é hora local (Lisboa) — usa Date para converter corretamente
+        if(hp.length===2){
+          var dataJogo=new Date(tsMeiaNocheLocal*1000);
+          dataJogo.setHours(parseInt(hp[0]),parseInt(hp[1]),0,0);
+          tsJogo=Math.floor(dataJogo.getTime()/1000);
+        }
+      } else {
+        tsJogo=tsMeiaNocheLocal+86399;
+      }
+      // Mostra até 30min após início
       return j.ts>=inicioDiaTs && j.ts<=fim && (tsJogo+1800)>agora;
     });
   }
