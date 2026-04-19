@@ -1,0 +1,275 @@
+/**
+ * CB Viana — Admin Stats Dashboard
+ * v1.3 · 2026-04-19
+ * WPCode PHP Snippet — Run Everywhere
+ *
+ * v1.0 · 2026-04-18 — Dashboard inicial (Apostas, Jogos, Utilizadores)
+ * v1.1 · 2026-04-19 — Pendentes por user, filtro utilizador, limite 20/50
+ * v1.2 · 2026-04-19 — Scores via REST fallback, labels apostas sem dados
+ * v1.3 · 2026-04-19 — Reescrita com createElement sem aspas aninhadas
+ *                      Botao enriquecer apostas antigas
+ */
+
+add_action('admin_menu', function() {
+    add_menu_page('CBV Stats','CBV Stats','manage_options','cbv-stats','cbv_stats_page','dashicons-chart-bar',30);
+});
+
+add_action('rest_api_init', function() {
+    register_rest_route('cbv/v1', '/admin/stats', [
+        'methods'             => 'GET',
+        'permission_callback' => function(){ return current_user_can('manage_options'); },
+        'callback'            => function() {
+            $apostas = get_option('cbv_apostas_v1', []);
+
+            $jogos_count = [];
+            $por_user    = [];
+            foreach ($apostas as $a) {
+                $sc  = $a['sigla_casa'] ?? '';
+                $sf  = $a['sigla_fora'] ?? '';
+                $key = ($sc && $sf) ? ($sc.' vs '.$sf) : ('Sem dados ('.date('M Y',$a['criada_em']).')');
+                $jogos_count[$key] = ($jogos_count[$key] ?? 0) + 1;
+                $uid = $a['uid'];
+                if (!isset($por_user[$uid])) $por_user[$uid] = ['uid'=>$uid,'username'=>$a['username']??'','total'=>0,'pendentes'=>0,'ganhas'=>0,'perdidas'=>0,'moedas_apostadas'=>0,'moedas_ganhas'=>0];
+                $por_user[$uid]['total']++;
+                if ($a['estado']==='pendente') $por_user[$uid]['pendentes']++;
+                if ($a['estado']==='ganha')  { $por_user[$uid]['ganhas']++;  $por_user[$uid]['moedas_ganhas']    += $a['payout']??0; }
+                if ($a['estado']==='perdida')  $por_user[$uid]['perdidas']++;
+                $por_user[$uid]['moedas_apostadas'] += $a['montante']??0;
+            }
+            arsort($jogos_count);
+            usort($por_user, fn($a,$b) => $b['total']-$a['total']);
+
+            $scores_raw = get_option('cbv_scores',[]);
+            if (empty($scores_raw)) $scores_raw = get_option('cbv_scores_v1',[]);
+            if (empty($scores_raw)) { $req=new WP_REST_Request('GET','/cbv/v1/scores'); $res=rest_do_request($req); $scores_raw=$res->get_data()?:[]; }
+            $jogos_stats = [];
+            foreach ($scores_raw as $gid => $entries) {
+                if (!is_array($entries)) continue;
+                usort($entries, fn($a,$b)=>($b['score']??0)-($a['score']??0));
+                $jogos_stats[$gid] = ['jogo'=>$gid,'jogadores'=>count($entries),'top_score'=>!empty($entries)?max(array_column($entries,'score')):0,'top_player'=>$entries[0]['username']??'','entries'=>array_slice($entries,0,5)];
+            }
+
+            $users_data = [];
+            foreach (get_users(['fields'=>['ID','display_name','user_email','user_registered']]) as $u) {
+                $users_data[] = ['uid'=>$u->ID,'nome'=>$u->display_name,'email'=>$u->user_email,'moedas'=>(int)get_user_meta($u->ID,'cbv_moedas',true),'acessos'=>(int)get_user_meta($u->ID,'cbv_acessos',true),'nivel'=>(int)get_user_meta($u->ID,'cbv_nivel',true),'registado'=>date('d/m/Y',strtotime($u->user_registered))];
+            }
+            usort($users_data, fn($a,$b)=>$b['moedas']-$a['moedas']);
+
+            $pend  = count(array_filter($apostas,fn($a)=>$a['estado']==='pendente'));
+            $ganh  = count(array_filter($apostas,fn($a)=>$a['estado']==='ganha'));
+            $perd  = count(array_filter($apostas,fn($a)=>$a['estado']==='perdida'));
+            $mpag  = array_sum(array_column(array_filter($apostas,fn($a)=>$a['estado']==='ganha'),'payout'));
+            $mrisco= array_sum(array_column(array_filter($apostas,fn($a)=>$a['estado']==='pendente'),'montante'));
+
+            return rest_ensure_response([
+                'apostas'=>['total'=>count($apostas),'pendentes'=>$pend,'ganhas'=>$ganh,'perdidas'=>$perd,'moedas_pagas'=>$mpag,'moedas_risco'=>$mrisco,'top_jogos'=>array_slice($jogos_count,0,5,true),'por_user'=>array_values($por_user),'lista'=>array_reverse($apostas)],
+                'jogos'=>$jogos_stats,
+                'users'=>$users_data,
+            ]);
+        },
+    ]);
+});
+
+function cbv_stats_page() {
+    $nonce = wp_create_nonce('wp_rest');
+?>
+<style>
+#cbv-sw{font-family:-apple-system,sans-serif;max-width:1200px;padding:20px 0;}
+.cbv-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #ddd;}
+.cbv-tab{background:none;border:none;padding:10px 20px;cursor:pointer;font-size:13px;font-weight:600;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;}
+.cbv-tab.active{color:#7B1C2E;border-bottom-color:#7B1C2E;}
+.cbv-panel{display:none;}.cbv-panel.active{display:block;}
+.cbv-cards{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
+.cbv-card{flex:1;background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;min-width:110px;text-align:center;}
+.cbv-cv{font-size:30px;font-weight:700;color:#7B1C2E;}
+.cbv-cl{font-size:11px;color:#666;margin-top:4px;}
+.cbv-st{font-size:15px;font-weight:600;color:#1d2327;margin:20px 0 10px;}
+table.ct{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;}
+table.ct th{background:#7B1C2E;color:#F0A500;padding:9px 12px;font-size:12px;text-align:left;}
+table.ct td{padding:8px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;}
+.bge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;}
+.bg-gold{background:#fff8e1;color:#f57f17;}.bg-gr{background:#e8f5e9;color:#2e7d32;}
+.bg-rd{background:#ffebee;color:#c62828;}.bg-bl{background:#e3f2fd;color:#1565c0;}
+.bg-gy{background:#f5f5f5;color:#666;}
+#cbv-load{text-align:center;padding:60px;color:#666;}
+</style>
+<div id="cbv-sw" class="wrap">
+  <div style="font-size:22px;font-weight:700;margin-bottom:20px;">CBV Stats <span style="background:#7B1C2E;color:#F0A500;padding:4px 12px;border-radius:6px;font-size:14px;margin-left:8px;">Dashboard</span></div>
+  <div class="cbv-tabs">
+    <button class="cbv-tab active" onclick="cvTab('a',this)">Apostas</button>
+    <button class="cbv-tab" onclick="cvTab('j',this)">Jogos TIMEOUT</button>
+    <button class="cbv-tab" onclick="cvTab('u',this)">Utilizadores</button>
+  </div>
+  <div id="cbv-load">A carregar dados...</div>
+  <div id="cp-a" class="cbv-panel active" style="display:none;"></div>
+  <div id="cp-j" class="cbv-panel" style="display:none;"></div>
+  <div id="cp-u" class="cbv-panel" style="display:none;"></div>
+</div>
+<script>
+var cvd=null, cvnonce='<?php echo esc_js($nonce); ?>';
+
+function cvTab(n,btn){
+  document.querySelectorAll('.cbv-tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  ['a','j','u'].forEach(function(t){
+    var p=document.getElementById('cp-'+t);
+    if(p) p.style.display=t===n?'block':'none';
+  });
+}
+
+function mk(tag,css,txt){
+  var e=document.createElement(tag);
+  if(css) e.style.cssText=css;
+  if(txt!==undefined) e.textContent=txt;
+  return e;
+}
+
+function mkTable(heads,rows){
+  var t=document.createElement('table');
+  t.className='ct';
+  t.innerHTML='<thead><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody>';
+  return t;
+}
+
+function renderApostas(){
+  var a=cvd.apostas, p=document.getElementById('cp-a');
+  if(!p||p.dataset.ok) return;
+  p.dataset.ok='1';
+
+  // Cards
+  var cards=mk('div');cards.className='cbv-cards';
+  [[a.total,'Total'],[a.pendentes,'Pendentes'],[a.ganhas,'Ganhas'],[a.perdidas,'Perdidas'],[a.moedas_pagas+' mds','Pagas'],[a.moedas_risco+' mds','Em Jogo']].forEach(function(r){
+    var c=mk('div');c.className='cbv-card';
+    var v=mk('div','font-size:28px;font-weight:700;color:#7B1C2E;');v.textContent=r[0];
+    var l=mk('div','font-size:11px;color:#666;margin-top:4px;',r[1]);
+    c.appendChild(v);c.appendChild(l);cards.appendChild(c);
+  });
+  p.appendChild(cards);
+
+  // Top jogos
+  p.appendChild(mk('div','font-size:15px;font-weight:600;margin:20px 0 10px;','Jogos mais apostados'));
+  p.appendChild(mkTable(['Jogo','Apostas'],Object.entries(a.top_jogos).map(function(e){
+    return '<tr><td>'+e[0]+'</td><td><strong>'+e[1]+'</strong></td></tr>';
+  })));
+
+  // Por utilizador
+  p.appendChild(mk('div','font-size:15px;font-weight:600;margin:20px 0 10px;','Por Utilizador'));
+  p.appendChild(mkTable(['Utilizador','Total','Pendentes','Ganhas','Perdidas','Apostado','Ganho'],a.por_user.map(function(u){
+    return '<tr>'+
+      '<td><strong style="cursor:pointer;color:#7B1C2E;text-decoration:underline;" class="cvfu" data-u="'+u.username+'">'+u.username+'</strong></td>'+
+      '<td>'+u.total+'</td>'+
+      '<td>'+(u.pendentes>0?'<span class="bge bg-gold">'+u.pendentes+'</span>':'0')+'</td>'+
+      '<td><span class="bge bg-gr">'+u.ganhas+'</span></td>'+
+      '<td><span class="bge bg-rd">'+u.perdidas+'</span></td>'+
+      '<td>'+u.moedas_apostadas+' mds</td>'+
+      '<td>'+u.moedas_ganhas+' mds</td></tr>';
+  })));
+
+  // Botao enriquecer
+  var dv=mk('div','margin:12px 0;padding:10px 14px;background:#fff8e1;border-radius:8px;border:1px solid #f0a500;display:flex;align-items:center;justify-content:space-between;');
+  dv.appendChild(mk('span','font-size:12px;color:#7B1C2E;','Apostas sem dados podem ser atualizadas'));
+  var be=mk('button','background:#F0A500;color:#1a0810;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;','Atualizar dados');
+  be.addEventListener('click',enricher);
+  dv.appendChild(be);p.appendChild(dv);
+
+  // Titulo + filtro
+  var st=mk('div','font-size:15px;font-weight:600;margin:20px 0 10px;');
+  st.innerHTML='Apostas <span id="flbl" style="color:#7B1C2E;font-size:13px;"></span>';
+  var bl=mk('button','display:none;background:#7B1C2E;color:#F0A500;border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:11px;margin-left:8px;','x Todos');
+  bl.id='btn-bl';bl.addEventListener('click',function(){filtrar('');});
+  st.appendChild(bl);p.appendChild(st);
+
+  var df=mk('div','margin-bottom:10px;display:flex;gap:8px;align-items:center;');
+  var sel=document.createElement('select');
+  sel.id='fsel';sel.style.cssText='padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;';
+  sel.innerHTML='<option value="">Todos os utilizadores</option>'+a.por_user.map(function(u){return '<option value="'+u.username+'">'+u.username+' ('+u.total+')</option>';}).join('');
+  sel.addEventListener('change',function(){filtrar(this.value);});
+  var sp=mk('span','font-size:12px;color:#666;');sp.id='ftot';
+  df.appendChild(sel);df.appendChild(sp);p.appendChild(df);
+
+  var tbl=document.createElement('table');tbl.className='ct';tbl.id='ftbl';
+  tbl.innerHTML='<thead><tr><th>Utilizador</th><th>Jogo</th><th>Escolha</th><th>Montante</th><th>Estado</th><th>Data</th></tr></thead><tbody id="ftbody"></tbody>';
+  p.appendChild(tbl);
+
+  p.addEventListener('click',function(e){if(e.target.classList.contains('cvfu'))filtrar(e.target.dataset.u);});
+  window._ap=a.lista;
+  setTimeout(function(){filtrar('');},50);
+}
+
+function filtrar(u){
+  var all=window._ap||[];
+  var fil=u?all.filter(function(a){return a.username===u;}):all;
+  var show=fil.slice(0,u?20:50);
+  var lb=document.getElementById('flbl');
+  var bl=document.getElementById('btn-bl');
+  var sel=document.getElementById('fsel');
+  var tot=document.getElementById('ftot');
+  var tb=document.getElementById('ftbody');
+  if(lb) lb.textContent=u?'— '+u:'';
+  if(bl) bl.style.display=u?'inline-block':'none';
+  if(sel) sel.value=u;
+  if(tot) tot.textContent='A mostrar '+show.length+' de '+fil.length;
+  if(!tb) return;
+  tb.innerHTML=show.map(function(ap){
+    var bg=ap.estado==='ganha'?'bg-gr':ap.estado==='perdida'?'bg-rd':ap.estado==='pendente'?'bg-gold':'bg-gy';
+    var ts=ap.sigla_casa&&ap.sigla_fora;
+    var jogo=ts?(ap.sigla_casa+' vs '+ap.sigla_fora):(ap.comp||(ap.data?'Aposta '+ap.data:'Aposta anterior'));
+    var esc=ap.escolha==='casa'?(ap.sigla_casa||'Casa'):(ap.sigla_fora||'Fora');
+    var dt=new Date(ap.criada_em*1000).toLocaleString('pt-PT');
+    return '<tr><td><strong>'+ap.username+'</strong></td><td>'+jogo+'</td><td>'+esc+'</td><td>'+ap.montante+' mds</td><td><span class="bge '+bg+'">'+ap.estado.toUpperCase()+'</span></td><td>'+dt+'</td></tr>';
+  }).join('');
+}
+
+function enricher(){
+  fetch('/wp-json/cbv/v1/apostas/enriquecer',{method:'POST',credentials:'include',headers:{'X-WP-Nonce':cvnonce}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.sucesso){alert('Atualizadas: '+d.atualizadas+' de '+d.total);location.reload();}
+    else alert('Erro ao atualizar');
+  }).catch(function(){alert('Erro de ligacao');});
+}
+
+function renderJogos(){
+  var jg=cvd.jogos,p=document.getElementById('cp-j');
+  if(!p||p.dataset.ok) return;p.dataset.ok='1';
+  var nm={lancamentos:'Lancamentos',basketman:'Basketman',chuva_bolas:'Chuva de Bolas',puzzle:'Puzzle',memory:'Memory'};
+  p.appendChild(mkTable(['Jogo','Jogadores','Top Score','Melhor Jogador'],Object.entries(jg).map(function(e){
+    var d=e[1];return '<tr><td><strong>'+(nm[e[0]]||e[0])+'</strong></td><td>'+d.jogadores+'</td><td>'+d.top_score+'</td><td>'+d.top_player+'</td></tr>';
+  })));
+  Object.entries(jg).forEach(function(e){
+    var d=e[1];if(!d.entries||!d.entries.length) return;
+    p.appendChild(mk('div','font-size:15px;font-weight:600;margin:20px 0 10px;','Top 5 - '+(nm[e[0]]||e[0])));
+    p.appendChild(mkTable(['#','Jogador','Score','Data'],d.entries.map(function(en,i){
+      return '<tr><td>'+(i+1)+'</td><td>'+en.username+'</td><td><strong>'+en.score+'</strong></td><td>'+en.date+'</td></tr>';
+    })));
+  });
+}
+
+function renderUsers(){
+  var us=cvd.users,p=document.getElementById('cp-u');
+  if(!p||p.dataset.ok) return;p.dataset.ok='1';
+  var tm=us.reduce(function(s,u){return s+u.moedas;},0);
+  var cards=mk('div');cards.className='cbv-cards';
+  [[us.length,'Utilizadores'],[tm+' mds','Moedas Circulacao']].forEach(function(r){
+    var c=mk('div');c.className='cbv-card';
+    var v=mk('div','font-size:28px;font-weight:700;color:#7B1C2E;');v.textContent=r[0];
+    c.appendChild(v);c.appendChild(mk('div','font-size:11px;color:#666;margin-top:4px;',r[1]));
+    cards.appendChild(c);
+  });
+  p.appendChild(cards);
+  p.appendChild(mkTable(['Utilizador','Email','Moedas','Acessos','Nivel','Registado'],us.map(function(u){
+    return '<tr><td><strong>'+u.nome+'</strong></td><td>'+u.email+'</td><td><strong>'+u.moedas+' mds</strong></td><td>'+u.acessos+'</td><td><span class="bge bg-bl">'+u.nivel+'</span></td><td>'+u.registado+'</td></tr>';
+  })));
+}
+
+fetch('/wp-json/cbv/v1/admin/stats',{credentials:'include',headers:{'X-WP-Nonce':cvnonce}})
+.then(function(r){return r.json();})
+.then(function(d){
+  cvd=d;
+  document.getElementById('cbv-load').style.display='none';
+  document.getElementById('cp-a').style.display='block';
+  renderApostas();renderJogos();renderUsers();
+}).catch(function(){document.getElementById('cbv-load').textContent='Erro ao carregar dados.';});
+</script>
+<?php
+}
