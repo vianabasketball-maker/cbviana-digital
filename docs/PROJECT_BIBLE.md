@@ -95,6 +95,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wpc
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wpcode/php/cbv-ajuda-wpcode
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wpcode/php/cbv-raspadinha-php4
 https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wpcode/php/foto_puzzle
+https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/wpcode/php/Inscri%C3%A7%C3%B5es
 ```
 
 ### WPCODE — HTML
@@ -125,6 +126,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/doc
 | TIMEOUT | /test | Público |
 | Raspadinha | /raspadinha | Público |
 | Ajuda-nos a Crescer | /ajuda-nos-a-crescer | Público |
+| Competições | /desafios | Público |
 | Contacto | /contacto | Público |
 | Galeria | /galeria | Público |
 | Equipas | /equipas | Público |
@@ -139,7 +141,7 @@ https://raw.githubusercontent.com/vianabasketball-maker/cbviana-digital/main/doc
 |---|---|---|
 | CBV Gamification System | PHP | Moedas + scores + ajuda endpoint |
 | CB Viana Menu | PHP | Menu v1.2 |
-| cbv-apostas-wpcode | PHP | Sistema apostas completo |
+| cbv-apostas-wpcode | PHP | Sistema apostas completo + cron fix |
 | cbv-beta-access | PHP | Role beta_tester + fix UM |
 | cbv-admin-stats | PHP | Dashboard admin |
 | cbv-ajuda-wpcode | PHP | Endpoint /cbv/v1/ajuda → email |
@@ -201,30 +203,116 @@ Sem histórico       → ×3.00 / ×1.50
 Jogo sem Viana      → ×1.85 / ×1.85
 ```
 
-### Cache FPB (partilhada com jogos-fpb)
-```
-/public_html/data/fpb_cal8.html  (cache 1h)
-/public_html/data/fpb_res8.html  (cache 1h)
-```
-
-### Cron
-- `cbv_apostas_cron` — cada 2h
-- Resolve apostas, deteta jogos cancelados (+1🪙 bónus), devolução 48h
+### Filtro jogos (apostas.html)
+- "Esta semana" = próximos 7 dias a partir de hoje
+- Jogos já terminados (30min após início) não aparecem
+- Se não há jogos nos próximos 7 dias → mostra semana seguinte automaticamente
 
 ---
 
-## 9. HIGHSCORES GLOBAIS
+## 9. CRON E CACHE FPB — ARQUITECTURA COMPLETA
+
+### ⚠️ PROBLEMA RESOLVIDO — Documentado para futuras sessões
+
+**Sintoma:** `refresh-info` mostrava sempre o mesmo timestamp (ex: 11:19) mesmo após horas.
+
+**Causa raiz:** Dois problemas em conjunto:
+1. O WP-Cron só corria quando havia visitas ao site — sem visitas, não disparava
+2. A função `cbv_ap_cron_resolver()` não actualizava a cache FPB nem o `cbv_fpb_ultimo_refresh`
+
+**Solução aplicada:**
+
+**Fix 1 — Hostinger Cron Job** (`0 * * * *`):
+```
+/usr/bin/php /home/u952199276/domains/cbviana.com/public_html/wp-cron.php
+```
+Corre a cada hora em ponto, independentemente de visitas.
+
+**Fix 2 — `cbv_ap_cron_resolver()`** no snippet `cbv-apostas-wpcode`:
+Adicionado no início da função o código que faz fetch à FPB e actualiza o timestamp:
+```php
+$dir = ABSPATH . 'data/';
+$urls = [
+    $dir.'fpb_cal8.html' => 'https://www.fpb.pt/calendario/clube_723/...',
+    $dir.'fpb_res8.html' => 'https://www.fpb.pt/resultados/clube_723/...',
+];
+$atualizado = false;
+foreach($urls as $file => $url){
+    if(!file_exists($file) || (time() - filemtime($file)) >= 3600){
+        // curl fetch...
+        if($res && strlen($res) > 5000){ file_put_contents($file,$res); $atualizado=true; }
+    }
+}
+if($atualizado) update_option('cbv_fpb_ultimo_refresh', time());
+```
+
+**Fix 3 — Reagendar evento WordPress:**
+Após qualquer alteração ao cron, reagendar via:
+```
+https://cbviana.com/?cbv_reschedule=1
+```
+(requer snippet temporário — ver abaixo)
+
+### Fluxo completo após fix
+```
+Hostinger Cron Job (cada hora em ponto)
+→ chama wp-cron.php
+→ WordPress executa cbv_apostas_cron
+→ cbv_ap_cron_resolver() corre:
+   → faz fetch FPB (se cache > 1h)
+   → actualiza fpb_cal8.html + fpb_res8.html
+   → actualiza cbv_fpb_ultimo_refresh
+   → resolve apostas pendentes
+   → deteta jogos cancelados (+1🪙 bónus)
+   → devolução automática após 48h
+```
+
+### Cache FPB
+```
+/public_html/data/fpb_cal8.html  → calendário (cache 1h)
+/public_html/data/fpb_res8.html  → resultados (cache 1h)
+wp_option: cbv_fpb_ultimo_refresh → timestamp último refresh
+```
+
+### ⚠️ Fuso horário
+- WordPress configurado para `Europe/Lisbon`
+- O `refresh-info` mostra hora UTC internamente — a GUI converte para hora local via `new Date(timestamp*1000)`
+- Se `proximo_hora` no JSON mostrar hora errada → é o PHP a usar `date()` em vez de `wp_date()` — fix pendente
+
+### Snippet temporário para emergências
+Se o cron parar de funcionar, criar snippet WPCode temporário:
+```php
+add_action('init', function(){
+  if(isset($_GET['cbv_force_refresh']) && current_user_can('administrator')){
+    cbv_ap_cron_resolver();
+    die('Refresh feito: '.date('H:i:s'));
+  }
+  if(isset($_GET['cbv_reschedule']) && current_user_can('administrator')){
+    wp_clear_scheduled_hook('cbv_apostas_cron');
+    wp_schedule_event(time(), 'hourly', 'cbv_apostas_cron');
+    die('Reagendado! Próximo: '.date('H:i:s', wp_next_scheduled('cbv_apostas_cron')));
+  }
+});
+```
+URLs de uso:
+- `https://cbviana.com/?cbv_force_refresh=1` — força refresh imediato
+- `https://cbviana.com/?cbv_reschedule=1` — reagenda o evento
+- Apagar o snippet depois de usar!
+
+---
+
+## 10. HIGHSCORES GLOBAIS
 
 ```
-GET  /cbv/v1/scores → top 3 por jogo
-POST /cbv/v1/scores → guarda score
+GET  /wp-json/cbv/v1/scores → top 3 por jogo
+POST /wp-json/cbv/v1/scores → guarda score
 ```
 
 Fluxo: jogo → postMessage → jogos.html → WordPress (cbv-gamification-header) → API
 
 ---
 
-## 10. MENU — CB Viana Menu v1.2
+## 11. MENU — CB Viana Menu v1.2
 
 ```php
 // Estrutura array $nav
@@ -234,19 +322,11 @@ Fluxo: jogo → postMessage → jogos.html → WordPress (cbv-gamification-heade
 $is_beta = true;  // mudar para false para fechar
 
 // Itens especiais
-'caderneta'   → dourado pulsante (overlay "Em Breve" para não-admins)
-'special'     → dourado sólido (TIMEOUT)
-'apostas-beta'→ azul com ribbon BETA
-'ajuda'       → verde transparente rgba(26,92,58,0.5)
+'caderneta'    → dourado pulsante (overlay "Em Breve" para não-admins)
+'special'      → dourado sólido (TIMEOUT)
+'apostas-beta' → azul com ribbon BETA
+'ajuda'        → verde transparente rgba(26,92,58,0.5)
 ```
-
----
-
-## 11. RASPADINHA v2.1
-
-- Fix `proximaRaspadinha()` — reset completo DOM canvas
-- Botões após raspar: "Ver a minha Coleção" + "Voltar à Home"
-- Múltiplas raspadinhas pendentes suportadas
 
 ---
 
@@ -270,7 +350,12 @@ $is_beta = true;  // mudar para false para fechar
 | Highscores globais todos os jogos | ✅ |
 | Raspadinha múltipla fix | ✅ |
 | Página Ajuda-nos a Crescer | ✅ (faltam imagens Fintas + logo) |
-| Post Facebook apostas + ajuda | ⏳ |
+| Cron FPB automático (Hostinger + WP) | ✅ |
+| Filtro jogos — próximos 7 dias + fallback semana seguinte | ✅ |
+| Fuso horário WordPress → Europe/Lisbon | ✅ |
+| Fuso horário refresh-info GUI | ⚠️ mostra UTC — fix pendente |
+| Post Facebook apostas + ajuda | ⏳ vídeo Fintas em preparação |
+| Imagens Fintas + logo na página ajuda | ⏳ |
 | Persistência server-side caderneta | ⏳ |
 | Loja de pacotes (100 moedas) | ⏳ |
 | Mercado de trocas | ⏳ |
@@ -282,14 +367,15 @@ $is_beta = true;  // mudar para false para fechar
 ## 14. PRÓXIMOS PASSOS
 
 ### 🟡 Imediato
-1. **Post Facebook** — anunciar apostas abertas + Ajuda-nos a Crescer
-2. **Imagens Fintas + logo** — substituir placeholders em wp-blocks/ajuda.html
+1. **Fix fuso horário refresh-info** — PHP usar `wp_date()` em vez de `date()` no endpoint `refresh-info`
+2. **Post Facebook** — vídeo Fintas + texto preparado
+3. **Imagens Fintas + logo** — substituir placeholders em wp-blocks/ajuda.html
 
 ### 🟢 Futuro
-3. Persistência server-side caderneta (endpoint /cbv/v1/colecao)
-4. Loja de pacotes (100 moedas → 4 cromos)
-5. Mercado de trocas
-6. Página histórica (aguarda Carlos)
+4. Persistência server-side caderneta
+5. Loja de pacotes (100 moedas → 4 cromos)
+6. Mercado de trocas
+7. Página histórica (aguarda Carlos)
 
 ---
 
@@ -297,11 +383,12 @@ $is_beta = true;  // mudar para false para fechar
 
 | Decisão | Motivo |
 |---|---|
+| Hostinger Cron Job para WP-Cron | WP-Cron não dispara sem visitas |
+| cbv_ap_cron_resolver() faz fetch FPB | Garante cache actualizada mesmo sem visitas |
 | UM restringe /apostas | Mais limpo que beta-wall manual |
 | $is_beta = true | Apostas abertas — false para fechar |
 | Aviso comentado | Rollback fácil |
-| Cache FPB partilhada | Zero fetches duplos |
-| Dados jogo guardados na aposta | Card visível mesmo após jogo sair da FPB |
+| Filtro 7 dias + fallback | Nunca mostra "Sem jogos" se há jogos futuros |
 | CBVGam via window.parent chain | Cookies não passam em iframes |
 
 ---
@@ -317,8 +404,13 @@ $is_beta = true;  // mudar para false para fechar
 
 ### Hostinger
 ```
-/public_html/jogos/      ← jogos + apostas.html
-/public_html/data/       ← cache FPB
-/public_html/Caderneta/  ← caderneta + assets
+/public_html/jogos/        ← jogos + apostas.html
+/public_html/data/         ← cache FPB (fpb_cal8.html, fpb_res8.html)
+/public_html/Caderneta/    ← caderneta + assets
 /public_html/data_apostas/ ← ap_logomap.json
+```
+
+### Hostinger Cron Jobs activos
+```
+0 * * * * → /usr/bin/php /home/u952199276/domains/cbviana.com/public_html/wp-cron.php
 ```
