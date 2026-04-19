@@ -939,3 +939,10 @@ add_action('rest_api_init', function() {
         },
     ]);
 });
+// Endpoint cron público com token secreto
+add_action('init', function(){
+    if(isset($_GET['cbv_cron_token']) && $_GET['cbv_cron_token'] === 'cbv2026viana'){
+        cbv_ap_cron_resolver();
+        die('ok');
+    }
+});
