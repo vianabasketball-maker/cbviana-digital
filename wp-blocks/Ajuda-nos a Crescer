@@ -1,0 +1,320 @@
+<!-- wp-blocks/ajuda.html · v1.1 · 2026-04-19 — Hero com Fintas + logo CBV -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+.ajuda-page{
+  max-width:680px;margin:0 auto;padding:48px 24px 80px;
+  font-family:'DM Sans',sans-serif;
+}
+
+/* ── HERO ── */
+.ajuda-hero{
+  position:relative;
+  background:linear-gradient(160deg,#7B1C2E 0%,#5a1220 60%,#3d0d18 100%);
+  border-radius:24px;
+  padding:40px 32px 32px;
+  margin-bottom:40px;
+  overflow:hidden;
+  text-align:left;
+}
+/* Brilho dourado no canto */
+.ajuda-hero::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(240,165,0,0.18) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.ajuda-hero-inner{display:flex;align-items:flex-end;gap:24px;position:relative;z-index:1;}
+
+/* Fintas + logo */
+.ajuda-hero-mascote{
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.ajuda-fintas{
+  width:110px;height:140px;
+  border-radius:16px;
+  object-fit:cover;object-position:top;
+  border:3px solid rgba(240,165,0,0.4);
+  box-shadow:0 0 24px rgba(240,165,0,0.15);
+  /* SUBSTITUIR por URL real da foto do Fintas */
+  background:#3d0d18;
+}
+.ajuda-cbv-logo{
+  width:64px;height:64px;
+  object-fit:contain;
+  opacity:0.7;
+  /* SUBSTITUIR por URL real do logo CBV */
+}
+
+/* Texto */
+.ajuda-hero-txt{flex:1;}
+.ajuda-hero-tag{
+  display:inline-block;
+  font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(240,165,0,0.6);
+  background:rgba(240,165,0,0.08);
+  border:0.5px solid rgba(240,165,0,0.2);
+  border-radius:20px;padding:3px 10px;
+  margin-bottom:10px;
+}
+.ajuda-hero-titulo{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(22px,4vw,32px);
+  font-weight:900;color:#fff;
+  line-height:1.15;margin-bottom:10px;
+}
+.ajuda-hero-titulo em{
+  font-style:normal;
+  color:#F0A500;
+}
+.ajuda-hero-texto{
+  font-size:13px;color:rgba(255,255,255,0.55);
+  line-height:1.7;
+}
+.ajuda-hero-texto strong{color:rgba(255,255,255,0.8);}
+
+/* Linha decorativa */
+.ajuda-hero-linha{
+  height:1px;background:rgba(240,165,0,0.15);
+  margin:20px 0 0;
+}
+
+/* ── INTRO ── */
+.ajuda-intro{
+  font-size:14px;color:rgba(255,255,255,0.6);
+  line-height:1.8;
+  border-left:3px solid #F0A500;
+  padding-left:18px;
+  margin-bottom:40px;
+}
+.ajuda-intro strong{color:#7B1C2E;}
+
+/* ── CATEGORIAS ── */
+.ajuda-cats-titulo{
+  font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:(240,165,0,0.6);margin-bottom:12px;
+}
+.ajuda-cats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:36px;}
+@media(min-width:480px){.ajuda-cats{grid-template-columns:repeat(4,1fr);}}
+.ajuda-cat{
+  background:#fff;border:1.5px solid rgba(0,0,0,0.08);
+  border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;
+  transition:all .2s;
+}
+.ajuda-cat:hover,.ajuda-cat.sel{
+  border-color:#F0A500;background:rgba(240,165,0,0.04);
+  transform:translateY(-2px);box-shadow:0 4px 16px rgba(240,165,0,0.12);
+}
+.ajuda-cat input{display:none;}
+.ajuda-cat-icon{font-size:26px;margin-bottom:6px;display:block;}
+.ajuda-cat-label{font-size:11px;font-weight:600;letter-spacing:0.5px;color:rgba(0,0,0,0.45);}
+.ajuda-cat.sel .ajuda-cat-label{color:#7B1C2E;}
+
+/* ── FORM ── */
+.ajuda-form{display:flex;flex-direction:column;gap:18px;}
+.ajuda-field label{
+  display:block;font-size:10px;font-weight:600;letter-spacing:1.5px;
+  text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:7px;
+}
+.ajuda-field input,
+.ajuda-field textarea{
+  width:100%;border:1.5px solid rgba(0,0,0,0.1);
+  border-radius:12px;padding:13px 15px;
+  font-family:'DM Sans',sans-serif;font-size:14px;color:#222;
+  background:#fafafa;outline:none;transition:border-color .2s,box-shadow .2s;
+  resize:vertical;
+}
+.ajuda-field input:focus,
+.ajuda-field textarea:focus{
+  border-color:#F0A500;background:#fff;
+  box-shadow:0 0 0 3px rgba(240,165,0,0.08);
+}
+.ajuda-field textarea{min-height:130px;}
+
+/* ── SUBMIT ── */
+.ajuda-submit{
+  background:linear-gradient(135deg,#7B1C2E,#9b2438);
+  color:#fff;border:none;border-radius:14px;
+  padding:15px 32px;font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:1.5px;
+  cursor:pointer;transition:all .2s;width:100%;
+  text-transform:uppercase;
+}
+.ajuda-submit:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(123,28,46,0.25);}
+.ajuda-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ── SUCESSO ── */
+.ajuda-sucesso{
+  display:none;text-align:center;
+  background:linear-gradient(135deg,#7B1C2E,#5a1220);
+  border-radius:24px;padding:48px 32px;color:#fff;
+}
+.ajuda-sucesso .suc-icon{font-size:52px;margin-bottom:16px;display:block;}
+.ajuda-sucesso .suc-titulo{
+  font-family:'Playfair Display',serif;font-size:28px;
+  font-weight:900;color:#F0A500;margin-bottom:12px;
+}
+.ajuda-sucesso .suc-texto{
+  font-size:14px;color:rgba(255,255,255,0.6);line-height:1.8;
+  max-width:400px;margin:0 auto 28px;
+}
+.ajuda-sucesso a{
+  display:inline-block;padding:12px 28px;border-radius:12px;
+  background:#F0A500;color:#3d0d18;text-decoration:none;
+  font-weight:700;font-size:13px;letter-spacing:1px;
+}
+
+/* ── NOTA ── */
+.ajuda-nota{
+  text-align:center;margin-top:28px;
+  font-size:11px;color:rgba(0,0,0,0.25);line-height:1.8;
+}
+</style>
+
+<div class="ajuda-page">
+
+  <!-- HERO COM FINTAS -->
+  <div class="ajuda-hero">
+    <div class="ajuda-hero-inner">
+
+      <div class="ajuda-hero-mascote">
+        <!-- SUBSTITUIR src pela URL real do Fintas -->
+        <img class="ajuda-fintas"
+             src="https://cbviana.com/wp-content/uploads/2026/04/cbv-mascote.webp"
+             alt="Fintas — Mascote do CB Viana"
+             onerror="this.style.display='none'">
+        <!-- SUBSTITUIR src pelo logo CBV -->
+        <img class="ajuda-cbv-logo"
+             src="https://cbviana.com/wp-content/uploads/2026/04/LogoSite-1.png"
+             alt="CB Viana"
+             onerror="this.style.display='none'">
+      </div>
+
+      <div class="ajuda-hero-txt">
+        <div class="ajuda-hero-tag">Mascote Oficial · CB Viana</div>
+        <div class="ajuda-hero-titulo">
+          Olá! Sou o <em>Fintas</em> <br>
+          e preciso da tua ajuda!
+        </div>
+        <p class="ajuda-hero-texto">
+          Talvez ainda não me conheças — sou a mascote do clube!
+          Este site é a <strong>nossa casa digital</strong> e queremos
+          que seja cada vez melhor. Conta-nos o que pensas!
+        </p>
+        <div class="ajuda-hero-linha"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <p class="ajuda-intro">
+    Encontraste algo que não funciona? Tens uma ideia? Queres ver algo que ainda não existe?<br><br>
+    <strong>Fala connosco.</strong> Faremos sempre o nosso melhor para melhorar, dentro das nossas possibilidades. Não prometemos tudo — mas prometemos ouvir com atenção.
+  </p>
+
+  <!-- CATEGORIAS -->
+  <div class="ajuda-cats-titulo">O que nos queres dizer?</div>
+  <div class="ajuda-cats" id="ajuda-cats">
+    <label class="ajuda-cat sel" onclick="selCat(this,'erro')">
+      <input type="radio" name="cat" value="erro" checked>
+      <span class="ajuda-cat-icon">🐛</span>
+      <span class="ajuda-cat-label">Erro técnico</span>
+    </label>
+    <label class="ajuda-cat" onclick="selCat(this,'ideia')">
+      <input type="radio" name="cat" value="ideia">
+      <span class="ajuda-cat-icon">💡</span>
+      <span class="ajuda-cat-label">Ideia / Sugestão</span>
+    </label>
+    <label class="ajuda-cat" onclick="selCat(this,'conteudo')">
+      <input type="radio" name="cat" value="conteudo">
+      <span class="ajuda-cat-icon">📝</span>
+      <span class="ajuda-cat-label">Conteúdo</span>
+    </label>
+    <label class="ajuda-cat" onclick="selCat(this,'outro')">
+      <input type="radio" name="cat" value="outro">
+      <span class="ajuda-cat-icon">💬</span>
+      <span class="ajuda-cat-label">Outro</span>
+    </label>
+  </div>
+
+  <!-- FORM -->
+  <form class="ajuda-form" id="ajuda-form" onsubmit="enviarAjuda(event)">
+    <div class="ajuda-field">
+      <label>O teu nome (opcional)</label>
+      <input type="text" id="f-nome" placeholder="Como te chamamos?">
+    </div>
+    <div class="ajuda-field">
+      <label>O teu email (opcional)</label>
+      <input type="email" id="f-email" placeholder="Para te respondermos, se quiseres">
+    </div>
+    <div class="ajuda-field">
+      <label>A tua mensagem *</label>
+      <textarea id="f-msg" placeholder="Conta-nos tudo — com detalhe se possível. Ajuda-nos a perceber melhor!" required></textarea>
+    </div>
+    <button type="submit" class="ajuda-submit" id="ajuda-btn">Enviar mensagem →</button>
+  </form>
+
+  <!-- SUCESSO -->
+  <div class="ajuda-sucesso" id="ajuda-sucesso">
+    <span class="suc-icon">🏀</span>
+    <div class="suc-titulo">Obrigado!</div>
+    <p class="suc-texto">
+      A tua mensagem chegou até nós. Vamos ler com atenção e fazer o possível para melhorar.<br><br>
+      O CB Viana cresce com a ajuda de todos vós. Obrigado por fazeres parte! 🙏
+    </p>
+    <a href="/">Voltar ao início</a>
+  </div>
+
+  <!-- NOTA -->
+  <p class="ajuda-nota">
+    As mensagens são enviadas directamente para a equipa do CB Viana.<br>
+    Faremos sempre o nosso melhor — obrigado pela compreensão e pelo apoio.
+  </p>
+
+</div>
+
+<script>
+function selCat(el,val){
+  document.querySelectorAll('.ajuda-cat').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+}
+
+function enviarAjuda(e){
+  e.preventDefault();
+  var btn=document.getElementById('ajuda-btn');
+  btn.disabled=true;btn.textContent='A enviar...';
+
+  var cat=document.querySelector('.ajuda-cat.sel input');
+  var catVal=cat?cat.value:'outro';
+  var catLabels={erro:'Erro técnico',ideia:'Ideia / Sugestão',conteudo:'Conteúdo',outro:'Outro'};
+
+  var nome=document.getElementById('f-nome').value||'Anónimo';
+  var email=document.getElementById('f-email').value||'Não fornecido';
+  var msg=document.getElementById('f-msg').value;
+
+  fetch('/wp-json/cbv/v1/ajuda',{
+    method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({nome:nome,email:email,categoria:catVal,mensagem:msg})
+  })
+  .then(function(r){return r.json();})
+  .then(function(){mostrarSucesso();})
+  .catch(function(){
+    // Fallback mailto
+    var body='Categoria: '+catLabels[catVal]+'\nNome: '+nome+'\nEmail: '+email+'\n\nMensagem:\n'+msg;
+    window.location.href='mailto:vianabasketball@gmail.com?subject=[CBV]+Ajuda-nos+a+Crescer&body='+encodeURIComponent(body);
+    mostrarSucesso();
+  });
+}
+
+function mostrarSucesso(){
+  document.getElementById('ajuda-form').style.display='none';
+  document.getElementById('ajuda-cats').style.display='none';
+  document.querySelector('.ajuda-intro').style.display='none';
+  document.querySelector('.ajuda-cats-titulo').style.display='none';
+  document.getElementById('ajuda-sucesso').style.display='block';
+}
+</script>
