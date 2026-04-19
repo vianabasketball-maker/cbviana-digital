@@ -1,0 +1,46 @@
+// CBV Ajuda-nos a Crescer — endpoint REST
+// WPCode → PHP → Run Everywhere
+// v1.0 · 2026-04-19
+
+add_action('rest_api_init', function(){
+  register_rest_route('cbv/v1', '/ajuda', [
+    'methods'             => 'POST',
+    'permission_callback' => '__return_true',
+    'callback'            => function($req){
+      $nome      = sanitize_text_field($req->get_param('nome')) ?: 'Anónimo';
+      $email     = sanitize_email($req->get_param('email'))     ?: 'Não fornecido';
+      $categoria = sanitize_text_field($req->get_param('categoria'));
+      $mensagem  = sanitize_textarea_field($req->get_param('mensagem'));
+
+      if(empty($mensagem)){
+        return new WP_Error('invalid','Mensagem em falta',['status'=>400]);
+      }
+
+      $cat_labels = [
+        'erro'     => 'Erro técnico',
+        'ideia'    => 'Ideia / Sugestão',
+        'conteudo' => 'Conteúdo',
+        'outro'    => 'Outro',
+      ];
+      $cat_label = $cat_labels[$categoria] ?? 'Outro';
+
+      $assunto = '[CBV] Ajuda-nos a Crescer — ' . $cat_label;
+
+      $corpo  = "Nova mensagem via 'Ajuda-nos a Crescer'\n\n";
+      $corpo .= "Categoria: " . $cat_label . "\n";
+      $corpo .= "Nome: " . $nome . "\n";
+      $corpo .= "Email: " . $email . "\n\n";
+      $corpo .= "Mensagem:\n" . $mensagem . "\n\n";
+      $corpo .= "---\nEnviado em " . date('d/m/Y H:i') . " via cbviana.com";
+
+      $headers = ['Content-Type: text/plain; charset=UTF-8'];
+      if($email && $email !== 'Não fornecido'){
+        $headers[] = 'Reply-To: ' . $email;
+      }
+
+      $enviado = wp_mail('vianabasketball@gmail.com', $assunto, $corpo, $headers);
+
+      return rest_ensure_response(['sucesso' => $enviado]);
+    },
+  ]);
+});
