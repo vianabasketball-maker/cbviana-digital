@@ -470,31 +470,48 @@ function renderJogos(){
   var jogos=state.jogos;
   if(state.filter==='semana'){
     var agora=Math.floor(Date.now()/1000);
-    // Início de hoje (meia-noite) — mostra jogos de hoje mesmo que ts seja meia-noite
     var inicioDia=new Date();inicioDia.setHours(0,0,0,0);
     var inicioDiaTs=Math.floor(inicioDia.getTime()/1000);
-    // Fim da semana (domingo 23:59)
-    var d=new Date();var dias=7-d.getDay();if(dias===7)dias=0;
-    d.setDate(d.getDate()+dias);d.setHours(23,59,59,0);
-    var fim=Math.floor(d.getTime()/1000);
-    jogos=jogos.filter(function(j){
-      // ts do jogo é meia-noite UTC do dia — converte para local
-      var tsMeiaNocheLocal=j.ts;
-      var tsJogo=tsMeiaNocheLocal;
+
+    // Filtra jogos futuros (com margem de 30min após início)
+    var jogosFuturos=jogos.filter(function(j){
+      if(j.ts<inicioDiaTs) return false;
+      var tsJogo=j.ts;
       if(j.hora){
         var hp=j.hora.split(':');
-        // A hora da FPB é hora local (Lisboa) — usa Date para converter corretamente
         if(hp.length===2){
-          var dataJogo=new Date(tsMeiaNocheLocal*1000);
+          var dataJogo=new Date(j.ts*1000);
           dataJogo.setHours(parseInt(hp[0]),parseInt(hp[1]),0,0);
           tsJogo=Math.floor(dataJogo.getTime()/1000);
         }
       } else {
-        tsJogo=tsMeiaNocheLocal+86399;
+        tsJogo=j.ts+86399;
       }
       // Mostra até 30min após início
-      return j.ts>=inicioDiaTs && j.ts<=fim && (tsJogo+1800)>agora;
+      return (tsJogo+1800)>agora;
     });
+
+    // Próximos 7 dias
+    var d7=new Date();d7.setDate(d7.getDate()+7);d7.setHours(23,59,59,0);
+    var fim7=Math.floor(d7.getTime()/1000);
+    var jogos7=jogosFuturos.filter(function(j){return j.ts<=fim7;});
+
+    if(jogos7.length>0){
+      // Tem jogos nos próximos 7 dias — mostra esses
+      jogos=jogos7;
+    } else {
+      // Não tem — mostra os próximos disponíveis (semana seguinte)
+      if(jogosFuturos.length>0){
+        var proximoTs=jogosFuturos[0].ts;
+        var semanaProxima=new Date(proximoTs*1000);
+        semanaProxima.setDate(semanaProxima.getDate()+7);
+        semanaProxima.setHours(23,59,59,0);
+        var fimProxima=Math.floor(semanaProxima.getTime()/1000);
+        jogos=jogosFuturos.filter(function(j){return j.ts<=fimProxima;});
+      } else {
+        jogos=[];
+      }
+    }
   }
   var apostadosIds=state.apostas.filter(function(a){return a.estado!=='cancelada';}).map(function(a){return a.jogo_id;});
   var pendIds=state.apostas.filter(function(a){return a.estado==='pendente';}).map(function(a){return a.jogo_id;});
