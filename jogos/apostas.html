@@ -336,15 +336,15 @@ function waitForCBVGam(cb,n){n=n||0;var g=cbvGam();if(g){cb(g);return;}if(n>30){
 
 function fecharAviso(){
   document.getElementById('aviso-overlay').style.display='none';
+  /* GUARDADO PARA ROLLBACK
   var lembrar=document.getElementById('aviso-lembrar');
   if(lembrar&&lembrar.checked){
-    // Guarda no servidor via user_meta — não depende de cookies/localStorage
     fetch(API+'/apostas/aceitar-aviso',{method:'POST',credentials:'include'}).catch(function(){});
-    // Guarda também localmente como backup
     try{localStorage.setItem('cbv_aviso','1');}catch(e){}
     var exp=new Date();exp.setFullYear(exp.getFullYear()+1);
     document.cookie='cbv_aviso=1;expires='+exp.toUTCString()+';path=/;SameSite=None;Secure';
   }
+  */
 }
 
 function toast(msg,type,dur){var el=document.getElementById('toast');el.textContent=msg;el.className=type||'';el.style.display='block';clearTimeout(el._t);el._t=setTimeout(function(){el.style.display='none';},dur||3000);}
@@ -352,8 +352,8 @@ function renderCoins(){document.getElementById('coins-display').textContent='�
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 window.addEventListener('load',function(){
-  // Popup escondido por defeito — só mostra se servidor confirmar que não aceitou
   document.getElementById('aviso-overlay').style.display='none';
+  /* AVISO DESACTIVADO TEMPORARIAMENTE
   fetch(API+'/apostas/aceitar-aviso',{credentials:'include'})
     .then(function(r){return r.json();})
     .then(function(d){
@@ -363,7 +363,7 @@ window.addEventListener('load',function(){
     }).catch(function(){
       document.getElementById('aviso-overlay').style.display='flex';
     });
-  // Verifica acesso beta antes de carregar
+  */
   verificarAcessoBeta(function(temAcesso){
     if(!temAcesso){
       document.getElementById('beta-wall').style.display='flex';
@@ -374,10 +374,13 @@ window.addEventListener('load',function(){
 });
 
 function verificarAcessoBeta(cb){
+  /* VERIFICAÇÃO BETA DESACTIVADA — aberto a todos
   fetch('/wp-json/cbv/v1/apostas/acesso',{credentials:'include'})
     .then(function(r){return r.json();})
     .then(function(d){cb(d&&d.acesso);})
     .catch(function(){cb(false);});
+  */
+  cb(true); // todos têm acesso
 }
 
 function _initApp(){
