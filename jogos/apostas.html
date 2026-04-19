@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
   CB Viana · apostas.html
+  v1.9 · 2026-04-19
+
   v1.4 · 2026-04-18
   - Layout apostas igual aos cards de jogos (logos, odds bar, equipas)
   - Odd apostada destacada em bold
@@ -9,6 +11,34 @@
   - Cancelar aposta com confirm dialog
   - Aviso jogo virtual na primeira visita
   - Botão ? com explicação completa
+
+  v1.5 · 2026-04-19
+  - Tab Equipas removida
+  - Odds: favorito ×2/×1.75, azarão ×4/×1.25, base ×3/×1.50
+  - Badge contexto no card: 🏆 Viana favorito / 🔥 Viana azarão / ⚡ Primeiro confronto
+  - Mostra "🔄 Próxima atualização às HH:MM"
+  - Mensagem especial para jogo cancelado (+1🪙 bónus)
+  - Jogo desaparecido da FPB → "Jogo não encontrado — devolvido +1🪙"
+  - Fuso horário corrigido no filtro de jogos
+
+  v1.6 · 2026-04-19
+  - Toast cancelamento com detalhes: devolvido + saldo anterior → atual
+
+  v1.7 · 2026-04-19
+  - Ajuda corrigida: máximo 50 moedas por aposta
+  - Botões montante atualizados: 1, 2, 5, 10, 25, 50
+
+  v1.8 · 2026-04-19
+  - Input numérico livre (1-50) ao lado dos botões de montante
+  - Validação: borda vermelha + botão desativado se saldo insuficiente
+  - Botões de atalho limpam o input e vice-versa
+
+  v1.9 · 2026-04-19
+  - Modal confirmação cancelamento mostra: saldo atual, devolução e saldo após
+v1.11 · 2026-04-19
+  - Refresh info: mostra último e próximo refresh com fuso horário local correto
+v1.12 · 2026-04-19
+  - Refresh info: fonte maior (12px), cor dourada, mais visível
 -->
 <html lang="pt">
 <head>
@@ -184,8 +214,16 @@
     <div class="ajuda-title">COMO FUNCIONA</div>
     <div class="ajuda-s"><div class="ajuda-s-title">🎮 O que é isto?</div><p>Jogo virtual com moedas fictícias. Sem dinheiro real. Pura diversão!</p></div>
     <div class="ajuda-s"><div class="ajuda-s-title">🪙 As moedas</div><ul><li>Ganhas jogando nos jogos TIMEOUT</li><li>Ganhas visitando o site diariamente</li><li>Gastas a fazer apostas</li><li>Ganhas o dobro (ou mais) se acertares!</li></ul></div>
-    <div class="ajuda-s"><div class="ajuda-s-title">📊 As odds</div><p>Calculadas com base nos resultados reais da FPB. Maior odd = menor probabilidade = maior prémio!</p></div>
-    <div class="ajuda-s"><div class="ajuda-s-title">⚠️ Regras</div><ul><li>Máximo 10 moedas por aposta</li><li>Uma aposta por jogo</li><li>Podes cancelar antes do jogo começar</li><li>Se o jogo não se realizar, moedas devolvidas</li></ul></div>
+    <div class="ajuda-s"><div class="ajuda-s-title">📊 As odds</div>
+      <p>As odds refletem a história entre o CB Viana e o adversário nesta época:</p>
+      <ul>
+        <li>🏆 <b>Viana favorito</b> (ganhou o último jogo) → Viana ×2.00 / Adversário ×1.75</li>
+        <li>🔥 <b>Viana azarão</b> (perdeu o último jogo) → Viana ×4.00 / Adversário ×1.25</li>
+        <li>⚡ <b>Primeiro confronto</b> (sem histórico) → Viana ×3.00 / Adversário ×1.50</li>
+      </ul>
+      <p>Quanto mais difícil a vitória do Viana, maior a recompensa se acertares!</p>
+    </div>
+    <div class="ajuda-s"><div class="ajuda-s-title">⚠️ Regras</div><ul><li>Máximo 50 moedas por aposta</li><li>Uma aposta por jogo</li><li>Podes cancelar antes do jogo começar</li><li>Se o jogo não se realizar, moedas devolvidas</li></ul></div>
     <button class="ajuda-close" onclick="document.getElementById('ajuda-overlay').style.display='none'">Fechar</button>
   </div>
 </div>
@@ -214,7 +252,6 @@
   <div class="tabs">
     <button class="tab active" onclick="showTab('jogos',this)">Jogos</button>
     <button class="tab" onclick="showTab('apostas',this)">Apostas <span id="badge-pending"></span></button>
-    <button class="tab" onclick="showTab('ranking',this)">Equipas</button>
   </div>
 </div>
 
@@ -234,6 +271,7 @@
     <button class="subtab" id="subtab-won" onclick="setSubtab('ganha',this)" style="flex:1;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:10px 14px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;">Ganhas <span id="st-won" style="color:var(--green)">0</span></button>
     <button class="subtab" id="subtab-lost" onclick="setSubtab('perdida',this)" style="flex:1;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:10px 14px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;">Perdidas <span id="st-lost" style="color:var(--red)">0</span></button>
   </div>
+  <div id="proximo-refresh" style="text-align:center;padding:8px;font-size:16px;color:var(--gold);font-family:'Oswald',sans-serif;letter-spacing:1px;opacity:.8;"></div>
   <div id="apostas-list"><div class="loading">A carregar...</div></div>
   <div id="admin-resolver" style="display:none;padding:12px;text-align:center;">
     <button onclick="resolverApostas()" style="background:transparent;border:1px solid #3a1520;border-radius:8px;padding:10px 20px;color:#a08060;cursor:pointer;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;">🔄 Resolver apostas pendentes</button>
@@ -241,10 +279,7 @@
   </div>
 </div>
 
-<!-- TAB RANKING -->
-<div id="tab-ranking" style="display:none;">
-  <div id="ranking-list"><div class="loading">A carregar...</div></div>
-</div>
+
 
 <!-- MODAL APOSTA -->
 <div class="modal-overlay" id="bet-modal" style="display:none;" onclick="closeBetModal()">
@@ -267,7 +302,7 @@
 <div class="confirm-overlay" id="confirm-modal" style="display:none;">
   <div class="confirm-box">
     <div class="confirm-title">Cancelar Aposta?</div>
-    <div class="confirm-sub">As moedas serão devolvidas ao teu saldo.</div>
+    <div class="confirm-sub" id="confirm-sub">As moedas serão devolvidas ao teu saldo.</div>
     <div class="confirm-btns">
       <button class="confirm-ok" onclick="confirmarCancelamento()">Sim, cancelar</button>
       <button class="confirm-no" onclick="fecharConfirm()">Não</button>
@@ -347,8 +382,8 @@ function verificarAcessoBeta(cb){
 
 function _initApp(){
   waitForCBVGam(function(gam){
-    if(gam){var s=gam.getState();state.coins=s.moedas||0;state.loggedIn=!!s.loggedIn;renderCoins();loadJogos();loadApostas();verificarNotificacao();}
-    else{fetch(API+'/gamification',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){if(!d.code){state.coins=d.moedas||0;state.loggedIn=true;}renderCoins();loadJogos();loadApostas();verificarNotificacao();}).catch(function(){renderCoins();loadJogos();});}
+    if(gam){var s=gam.getState();state.coins=s.moedas||0;state.loggedIn=!!s.loggedIn;renderCoins();loadJogos();loadApostas();verificarNotificacao();carregarRefreshInfo();}
+    else{fetch(API+'/gamification',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){if(!d.code){state.coins=d.moedas||0;state.loggedIn=true;}renderCoins();loadJogos();loadApostas();verificarNotificacao();carregarRefreshInfo();}).catch(function(){renderCoins();loadJogos();});}
   });
 }  // fim _initApp
 
@@ -358,15 +393,49 @@ window.addEventListener('message',function(e){
   if(e.data.type==='cbv_auth'){var a=e.data.auth;state.loggedIn=!!a.loggedIn;state.coins=parseInt(a.moedas)||0;state.nonce=a.nonce;if(a.isAdmin)document.getElementById('admin-resolver').style.display='block';renderCoins();loadJogos();loadApostas();verificarNotificacao();}
 });
 
+function carregarRefreshInfo(){
+  fetch(API+'/apostas/refresh-info',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var el=document.getElementById('proximo-refresh');
+      if(!el||!d) return;
+      // Converte timestamps UTC para hora local do browser
+      var ultimoHora='--:--';var proximoHora='--:--';
+      if(d.ultimo_refresh){
+        var u=new Date(d.ultimo_refresh*1000);
+        ultimoHora=u.getHours().toString().padStart(2,'0')+':'+u.getMinutes().toString().padStart(2,'0');
+      }
+      if(d.proximo_refresh){
+        var p=new Date(d.proximo_refresh*1000);
+        proximoHora=p.getHours().toString().padStart(2,'0')+':'+p.getMinutes().toString().padStart(2,'0');
+      }
+      el.textContent='🕐 Último refresh: '+ultimoHora+'  |  🔄 Próximo: '+proximoHora;
+    }).catch(function(){});
+}
+
 function verificarNotificacao(){
   if(!state.loggedIn) return;
   fetch(API+'/apostas/notificacao',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){if(d&&d.total){document.getElementById('notif-moedas').textContent='+'+d.total+' 🪙';var t=d.num+(d.num===1?' aposta ganha':' apostas ganhas');if(d.devolvidas)t+=' · '+d.devolvidas+' devolvida'+(d.devolvidas>1?'s':'');document.getElementById('notif-detalhe').textContent=t;document.getElementById('notif-overlay').style.display='flex';}}).catch(function(){});
 }
 
-function showTab(name,btn){['jogos','apostas','ranking'].forEach(function(t){document.getElementById('tab-'+t).style.display=t===name?'':'none';});document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');if(name==='apostas')loadApostas();if(name==='ranking')loadRanking();}
+function showTab(name,btn){['jogos','apostas'].forEach(function(t){document.getElementById('tab-'+t).style.display=t===name?'':'none';});document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');if(name==='apostas')loadApostas();}
 function setFilter(f,btn){state.filter=f;document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderJogos();}
 
-function loadJogos(){fetch(API+'/apostas/jogos',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){state.jogos=Array.isArray(d)?d:[];renderJogos();}).catch(function(){document.getElementById('jogos-list').innerHTML='<div class="empty">Erro ao carregar jogos.</div>';});}
+function loadJogos(){
+  // Busca jogos futuros (calendário) + jogos passados (resultados) em paralelo
+  var p1=fetch(API+'/apostas/jogos',{credentials:'include'}).then(function(r){return r.json();}).catch(function(){return[];});
+  var p2=fetch(API+'/apostas/resultados',{credentials:'include'}).then(function(r){return r.json();}).catch(function(){return[];});
+  Promise.all([p1,p2]).then(function(res){
+    var futuros=Array.isArray(res[0])?res[0]:[];
+    var passados=Array.isArray(res[1])?res[1]:[];
+    // Merge — futuros têm prioridade (dados mais frescos)
+    var idx={};
+    futuros.forEach(function(j){idx[j.id]=j;});
+    passados.forEach(function(j){if(!idx[j.id])idx[j.id]=j;});
+    state.jogos=Object.values(idx);
+    renderJogos();
+  }).catch(function(){document.getElementById('jogos-list').innerHTML='<div class="empty">Erro ao carregar jogos.</div>';});
+}
 
 function cardJogo(j,opts){
   opts=opts||{};
@@ -381,7 +450,14 @@ function cardJogo(j,opts){
   h+='<div class="odds-section"><div class="odds-pct"><span>'+esc(j.sigla_casa)+' '+j.pct_casa+'%</span><span>'+esc(j.sigla_fora)+' '+j.pct_fora+'%</span></div>';
   h+='<div class="odds-bar"><div class="odds-fill" style="width:'+j.pct_casa+'%"></div></div>';
   var casaAp=opts.escolha==='casa';var foraAp=opts.escolha==='fora';
-  h+='<div class="odds-vals"><div class="odd-pill'+(casaAp?' apostada':'')+'">×'+j.odd_casa+'</div><div class="odd-pill'+(foraAp?' apostada':'')+'">×'+j.odd_fora+'</div></div></div>';
+  // Badge de contexto das odds
+  var ctxLabel=''; var ctxColor='';
+  if(j.contexto==='favorito'){ctxLabel='🏆 Viana favorito';ctxColor='#4caf50';}
+  else if(j.contexto==='azarao'){ctxLabel='🔥 Viana azarão — aposta alta!';ctxColor='#F0A500';}
+  else if(j.contexto==='base'){ctxLabel='⚡ Primeiro confronto';ctxColor='#a08060';}
+  h+='<div class="odds-vals"><div class="odd-pill'+(casaAp?' apostada':'')+'">×'+j.odd_casa+'</div>';
+  if(ctxLabel) h+='<span style="font-size:10px;color:'+ctxColor+';font-family:Oswald,sans-serif;letter-spacing:1px;">'+ctxLabel+'</span>';
+  h+='<div class="odd-pill'+(foraAp?' apostada':'')+'">×'+j.odd_fora+'</div></div></div>';
   h+=opts.footer||'';
   h+='</div>';
   return h;
@@ -460,15 +536,37 @@ function renderApostas(){
   var html='';
   sorted.forEach(function(a){
     var jogo=state.jogos.find(function(j){return j.id===a.jogo_id;});
-    var jogoFake=jogo||{comp:'Jogo anterior',data:new Date(a.criada_em*1000).toLocaleDateString('pt-PT'),hora:'',sigla_casa:a.sigla_casa||'Casa',sigla_fora:a.sigla_fora||'Fora',logo_casa:'',logo_fora:'',pct_casa:50,pct_fora:50,odd_casa:a.odd||1.8,odd_fora:a.odd||1.8,stats_casa:null,stats_fora:null};
+    var fb='https://sav2.fpb.pt/old_uploads/CLU/CLU_723_LOGO.jpg';
+    // 1. Tenta encontrar nos jogos carregados (calendário tem prioridade, depois resultados)
+    // 2. Se não encontra, usa dados guardados na aposta
+    // 3. Se não há dados, jogoFake com aviso
+    var temDadosGuardados=!!(a.sigla_casa&&a.sigla_casa!=='Casa');
+    var jogoFake=jogo||{
+      comp:a.comp||(temDadosGuardados?'':'⚠️ Dados não disponíveis na FPB'),
+      data:a.data||new Date(a.criada_em*1000).toLocaleDateString('pt-PT'),
+      hora:a.hora||'',
+      sigla_casa:a.sigla_casa||'?',
+      sigla_fora:a.sigla_fora||'?',
+      logo_casa:a.logo_casa||fb,
+      logo_fora:a.logo_fora||fb,
+      pct_casa:a.pct_casa||50,
+      pct_fora:a.pct_fora||50,
+      odd_casa:a.odd_casa||a.odd||1.8,
+      odd_fora:a.odd_fora||a.odd||1.8,
+      stats_casa:null,stats_fora:null
+    };
     var cor=a.estado==='ganha'?'var(--green)':a.estado==='perdida'?'var(--red)':a.estado==='devolvida'?'#5b8dd9':'var(--gold)';
     var val=a.estado==='ganha'?'+'+a.payout+' 🪙':a.estado==='perdida'?'-'+a.montante+' 🪙':a.estado==='devolvida'?'↩ '+a.montante+' 🪙':a.montante+' 🪙';
-    var est=a.estado==='ganha'?'GANHA ×'+a.odd:a.estado==='perdida'?'PERDIDA':a.estado==='devolvida'?'DEVOLVIDA':'PENDENTE';
+    var motivo=a.motivo||'';
+    var est=a.estado==='ganha'?'GANHA ×'+a.odd:a.estado==='perdida'?'PERDIDA':a.estado==='devolvida'?(motivo==='jogo_cancelado'?'JOGO CANCELADO ↩':'DEVOLVIDA'):'PENDENTE';
     var footer='<div class="card-actions">';
     footer+='<div class="bet-status"><span class="bet-status-text" style="color:'+cor+'">'+est+'</span>';
-    footer+='<span style="font-size:11px;color:var(--muted);font-family:Oswald,sans-serif;margin-left:8px;">Apostaste em '+esc(a.escolha==='casa'?jogoFake.sigla_casa:jogoFake.sigla_fora)+'</span></div>';
+    var infoExtra=motivo==='jogo_cancelado'?
+      '<span style="font-size:10px;color:#5b8dd9;font-family:Oswald,sans-serif;margin-left:8px;">Jogo não encontrado na FPB — devolvido +1🪙 bónus</span>':
+      '<span style="font-size:11px;color:var(--muted);font-family:Oswald,sans-serif;margin-left:8px;">Apostaste em '+esc(a.escolha==='casa'?jogoFake.sigla_casa:jogoFake.sigla_fora)+'</span>';
+    footer+=infoExtra+'</div>';
     footer+='<div style="display:flex;align-items:center;gap:8px;"><span class="bet-status-val" style="color:'+cor+'">'+val+'</span>';
-    if(a.estado==='pendente')footer+='<button class="btn-cancelar" onclick="pedirCancelamento(\''+a.id+'\')">CANCELAR</button>';
+    if(a.estado==='pendente')footer+='<button class="btn-cancelar" onclick="pedirCancelamento(\''+a.id+'\','+a.montante+')">CANCELAR</button>';
     footer+='</div></div>';
     html+=cardJogo(jogoFake,{classe:a.estado,escolha:a.escolha,footer:footer});
   });
@@ -485,7 +583,8 @@ function openBetModal(jogo){
     '<button class="team-choice" id="choice-casa" onclick="selChoice(\'casa\')"><img class="team-choice-logo" src="'+esc(jogo.logo_casa||fb)+'" onerror="this.src=\''+fb+'\'"><div class="team-choice-name">'+esc(jogo.sigla_casa)+'</div><div class="team-choice-odd">×'+jogo.odd_casa+'</div><div class="team-choice-wr">'+jogo.pct_casa+'% prob.</div></button>'+
     '<button class="team-choice" id="choice-fora" onclick="selChoice(\'fora\')"><img class="team-choice-logo" src="'+esc(jogo.logo_fora||fb)+'" onerror="this.src=\''+fb+'\'"><div class="team-choice-name">'+esc(jogo.sigla_fora)+'</div><div class="team-choice-odd">×'+jogo.odd_fora+'</div><div class="team-choice-wr">'+jogo.pct_fora+'% prob.</div></button>';
   var saldo=state.coins>0?state.coins:999;
-  var ah='';[1,2,3,5,8,10].forEach(function(v){ah+='<button class="amount-btn'+(v===5?' sel':'')+'"'+(v>saldo?' disabled':'')+' onclick="selAmount('+v+')">'+v+'</button>';});
+  var ah='';[1,2,5,10,25,50].forEach(function(v){ah+='<button class="amount-btn'+(v===5?' sel':'')+'"'+(v>saldo?' disabled':'')+' onclick="selAmount('+v+')">'+v+'</button>';});
+  ah+='<input type="number" id="amount-custom" min="1" max="50" placeholder="?" style="width:52px;background:#2a1018;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-family:Oswald,sans-serif;font-size:13px;text-align:center;" oninput="selAmountCustom(this.value)">';
   document.getElementById('modal-amounts').innerHTML=ah;
   document.getElementById('modal-retorno').style.display='none';
   document.getElementById('btn-confirmar').disabled=true;
@@ -493,7 +592,40 @@ function openBetModal(jogo){
   document.getElementById('bet-modal').style.display='flex';window.scrollTo(0,0);
 }
 function selChoice(c){state.betChoice=c;document.getElementById('choice-casa').classList.toggle('sel',c==='casa');document.getElementById('choice-fora').classList.toggle('sel',c==='fora');updateRetorno();}
-function selAmount(v){state.betAmount=v;document.querySelectorAll('.amount-btn').forEach(function(b){b.classList.toggle('sel',parseInt(b.textContent)===v);});updateRetorno();}
+function selAmount(v){
+  state.betAmount=v;
+  document.querySelectorAll('.amount-btn').forEach(function(b){b.classList.toggle('sel',parseInt(b.textContent)===v);});
+  var inp=document.getElementById('amount-custom');
+  if(inp) inp.value='';
+  updateRetorno();
+}
+function selAmountCustom(v){
+  var val=parseInt(v);
+  var inp=document.getElementById('amount-custom');
+  if(isNaN(val)||val<1){
+    if(inp) inp.style.borderColor='var(--border)';
+    return;
+  }
+  // Limite máximo 50
+  if(val>50){
+    if(inp){inp.value=50;inp.style.borderColor='var(--red)';}
+    document.getElementById('btn-confirmar').disabled=true;
+    document.getElementById('btn-confirmar').textContent='Máximo 50 moedas!';
+    setTimeout(function(){if(inp){inp.value=50;inp.style.borderColor='var(--gold)';}selAmountCustom(50);},1200);
+    return;
+  }
+  // Saldo insuficiente
+  if(state.coins>0&&val>state.coins){
+    if(inp) inp.style.borderColor='var(--red)';
+    document.getElementById('btn-confirmar').disabled=true;
+    document.getElementById('btn-confirmar').textContent='Saldo insuficiente! ('+state.coins+' 🪙)';
+    return;
+  }
+  if(inp) inp.style.borderColor='var(--gold)';
+  state.betAmount=val;
+  document.querySelectorAll('.amount-btn').forEach(function(b){b.classList.remove('sel');});
+  updateRetorno();
+}
 function updateRetorno(){if(!state.betChoice||!state.betModal)return;var odd=state.betChoice==='casa'?state.betModal.odd_casa:state.betModal.odd_fora;var ret=Math.floor(state.betAmount*odd);document.getElementById('retorno-val').textContent=ret+' 🪙';document.getElementById('modal-retorno').style.display='flex';document.getElementById('btn-confirmar').disabled=false;document.getElementById('btn-confirmar').textContent='Confirmar — '+state.betAmount+' 🪙';}
 function closeBetModal(){document.getElementById('bet-modal').style.display='none';state.betModal=null;}
 
@@ -529,7 +661,16 @@ function confirmarAposta(){
   } else _fazer(false); // PHP desconta
 }
 
-function pedirCancelamento(id){_cancelarId=id;document.getElementById('confirm-modal').style.display='flex';}
+function pedirCancelamento(id,montante){
+  _cancelarId=id;
+  var aposta=state.apostas.find(function(a){return a.id===id;});
+  var m=montante||( aposta?aposta.montante:0)||0;
+  document.getElementById('confirm-sub').innerHTML=
+    'Saldo atual: <strong style="color:var(--gold)">'+state.coins+' 🪙</strong><br>'+
+    'Devolução: <strong style="color:var(--green)">+'+m+' 🪙</strong><br>'+
+    'Saldo após devolução: <strong style="color:var(--gold)">'+(state.coins+m)+' 🪙</strong>';
+  document.getElementById('confirm-modal').style.display='flex';
+}
 function fecharConfirm(){document.getElementById('confirm-modal').style.display='none';_cancelarId=null;}
 function confirmarCancelamento(){
   var id=_cancelarId;fecharConfirm();if(!id)return;
@@ -537,19 +678,23 @@ function confirmarCancelamento(){
   fetch(API+'/apostas/cancelar',{method:'POST',credentials:'include',headers:h,body:JSON.stringify({aposta_id:id})})
     .then(function(r){return r.json();}).then(function(d){
       if(d.sucesso){
+        var saldoAntes=state.coins;
         var gam=cbvGam();
+        function _aposSync(){
+          state.apostas=state.apostas.filter(function(a){return a.id!==id;});
+          renderApostas();renderJogos();updateBadge();
+          var devolvido=d.moedas_devolvidas||d.montante||'?';
+          var msg='✓ Devolvido: +'+devolvido+' 🪙  |  Saldo: '+saldoAntes+' → '+state.coins;
+          toast(msg,'ok',5000);
+        }
         if(gam){
-          // Usa gam.sync() para re-fetch do servidor e atualizar header + iframe
           if(gam.sync){
-            gam.sync(function(r){if(r.sucesso){state.coins=r.moedas||0;renderCoins();}});
+            gam.sync(function(r){if(r.sucesso){state.coins=r.moedas||0;renderCoins();}_aposSync();});
           } else {
-            // Fallback se sync não existir ainda
             fetch(API+'/gamification',{credentials:'include'}).then(function(r){return r.json();}).then(function(g){if(!g.code){state.coins=g.moedas||0;renderCoins();}}).catch(function(){});
+            _aposSync();
           }
-        } else {state.coins=d.moedas||state.coins;renderCoins();}
-        state.apostas=state.apostas.filter(function(a){return a.id!==id;});
-        renderApostas();renderJogos();updateBadge();
-        toast('✓ Aposta cancelada — moedas devolvidas','ok');
+        } else {state.coins=d.moedas||state.coins;renderCoins();_aposSync();}
       } else toast('Erro ao cancelar: '+(d.message||'?'),'err');
     }).catch(function(){toast('Erro de ligação.','err');});
 }
