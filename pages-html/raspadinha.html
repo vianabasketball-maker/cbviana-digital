@@ -261,7 +261,8 @@ body{
     </div>
 
     <div class="scratch-hint" id="scratch-hint">✦ Raspa para revelar ✦</div>
-    <button id="btn-continuar" onclick="continuar()">Ir para o meu perfil →</button>
+    <button id="btn-continuar" onclick="window.location.href='/colecao/'" style="...mesmo estilo...">Ver a minha Coleção →</button>
+    <button id="btn-home" onclick="window.location.href='/'" style="display:none;margin-top:8px;background:transparent;border:1px solid rgba(240,165,0,.4);color:rgba(240,165,0,.7);padding:10px;border-radius:10px;font-family:DM Sans,sans-serif;font-size:12px;cursor:pointer;width:100%;">Voltar à Home →</button>
     <button id="btn-skip" onclick="skip()">Saltar por hoje</button>
   <button id="btn-proxima" onclick="proximaRaspadinha()" style="display:none;margin-top:8px;background:transparent;border:1px solid rgba(240,165,0,.4);color:rgba(240,165,0,.7);padding:10px;border-radius:10px;font-family:DM Sans,sans-serif;font-size:12px;cursor:pointer;width:100%;">Raspar a próxima →</button>
   </div>
@@ -558,6 +559,7 @@ function onRevealed(){
   // Mostrar botões
   setTimeout(function(){
     document.getElementById('btn-continuar').classList.add('show');
+    document.getElementById('btn-home').style.display='block';
     document.getElementById('btn-skip').style.display='none';
     // Se tem mais pendentes mostrar botão próxima
     if(pendentesTotal>1){
@@ -598,12 +600,28 @@ function showCoinExplosion(moedas){
 
 /* ── PRÓXIMA RASPADINHA ── */
 function proximaRaspadinha(){
-  // Reset estado e carregar nova carta
   revealed=false;
   cartaData=null;
+  
+  // Reset completo do scratch zone
+  var wrap=document.getElementById('scratch-wrap');
+  // Repõe o HTML original do scratch-wrap
+  wrap.className='scratch-wrap';
+  wrap.innerHTML=
+    '<div class="scratch-content" id="scratch-content">'+
+    '<div class="sc-foto-placeholder" id="sc-foto-wrap">🏀</div>'+
+    '<div class="sc-info">'+
+    '<div class="sc-categoria" id="sc-categoria">—</div>'+
+    '<div class="sc-nome" id="sc-nome">—</div>'+
+    '<div class="sc-moedas" id="sc-moedas">—</div>'+
+    '<div class="sc-moedas-lbl">moedas ganhas</div>'+
+    '</div></div>'+
+    '<canvas id="scratch-canvas"></canvas>';
+
   document.getElementById('scratch-zone').style.display='none';
   document.getElementById('btn-proxima').style.display='none';
   document.getElementById('btn-continuar').classList.remove('show');
+  document.getElementById('scratch-hint').classList.remove('hidden');
   document.getElementById('loading').style.display='block';
 
   fetch('/wp-json/cbv/v1/raspadinha',{credentials:'include'})
@@ -611,16 +629,12 @@ function proximaRaspadinha(){
     .then(function(d){
       document.getElementById('loading').style.display='none';
       document.getElementById('saldo-val').textContent=d.moedas||0;
-      if(d.played||!d.pendentes){
+      if(!d.pendentes||d.pendentes<=0){
         document.getElementById('already-played').style.display='block';
         return;
       }
       pendentesTotal=d.pendentes;
-      if(pendentesTotal>1){
-        document.getElementById('hdr-sub').textContent='Tens '+pendentesTotal+' raspadinhas por raspar!';
-      } else {
-        document.getElementById('hdr-sub').textContent='A tua última raspadinha!';
-      }
+      document.getElementById('hdr-sub').textContent=pendentesTotal>1?'Tens '+pendentesTotal+' raspadinhas por raspar!':'A tua ultima raspadinha!';
       cartaData=d.carta;
       setupScratch(d.carta);
       document.getElementById('scratch-zone').style.display='block';
