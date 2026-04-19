@@ -1,6 +1,9 @@
 <?php
 // CB VIANA — DESAFIOS — ESTILO FINAL
-// Corrigido: URLs FPB corretos
+// Corrigido: URLs FPB corretos + aviso apostas
+// v1.1 — 2026-04-19
+// Alterações: $_f8d devolve array {html, atualizado}
+//             update_option cbv_fpb_ultimo_refresh quando re-fetched
 
 $_ma8d=['JAN'=>'01','FEV'=>'02','MAR'=>'03','ABR'=>'04','MAI'=>'05','JUN'=>'06',
         'JUL'=>'07','AGO'=>'08','SET'=>'09','OUT'=>'10','NOV'=>'11','DEZ'=>'12'];
@@ -11,8 +14,9 @@ $_mn8d=['01'=>'Janeiro','02'=>'Fevereiro','03'=>'Março','04'=>'Abril','05'=>'Ma
 $_dir8d = ABSPATH . 'data/';
 if(!file_exists($_dir8d)) mkdir($_dir8d, 0755, true);
 
-// --- FETCH (Cache 1h) ---
+// --- FETCH (Cache 1h) — devolve html + flag se foi realmente atualizado ---
 $_f8d = function($url, $file) {
+    $atualizado = false;
     if(!file_exists($file) || (time() - filemtime($file)) >= 3600){
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -25,14 +29,24 @@ $_f8d = function($url, $file) {
             CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         ]);
         $res = curl_exec($ch); curl_close($ch);
-        if($res && strlen($res) > 5000) file_put_contents($file, $res);
+        if($res && strlen($res) > 5000) {
+            file_put_contents($file, $res);
+            $atualizado = true;
+        }
     }
-    return file_exists($file) ? file_get_contents($file) : '';
+    return ['html' => file_exists($file) ? file_get_contents($file) : '', 'atualizado' => $atualizado];
 };
 
 // URLs CORRETOS
-$_ch8d = $_f8d('https://www.fpb.pt/calendario/clube_723/?clube=723&epoca=2025/2026', $_dir8d.'fpb_cal8.html');
-$_rh8d = $_f8d('https://www.fpb.pt/resultados/clube_723/?clube=723&epoca=2025/2026', $_dir8d.'fpb_res8.html');
+$_r1   = $_f8d('https://www.fpb.pt/calendario/clube_723/?clube=723&epoca=2025/2026', $_dir8d.'fpb_cal8.html');
+$_r2   = $_f8d('https://www.fpb.pt/resultados/clube_723/?clube=723&epoca=2025/2026', $_dir8d.'fpb_res8.html');
+$_ch8d = $_r1['html'];
+$_rh8d = $_r2['html'];
+
+// Só atualiza timestamp se algum ficheiro foi realmente re-fetched da FPB
+if($_r1['atualizado'] || $_r2['atualizado']) {
+    update_option('cbv_fpb_ultimo_refresh', time());
+}
 
 // --- PARSER ---
 $_p8d = function($html) use(&$_ma8d) {
@@ -66,15 +80,13 @@ $_p8d = function($html) use(&$_ma8d) {
                 if(isset($rw[1])){preg_match_all('/<h3[^>]*>\s*(\d+)\s*<\/h3>/',$rw[1],$sc);$rc=$sc[1][0]??'';$rf=$sc[1][1]??'';}
             }
             // Tenta o novo formato da FPB (div hour > h3)
-if(preg_match('/<div[^>]*class="hour[^"]*"[^>]*>\s*<h3>\s*([^<]+)\s*<\/h3>/si', $gb, $hm)){
-    $hora = trim($hm[1]);
-    // Converte "15H30" para "15:30"
-    if(preg_match('/^(\d{1,2})H(\d{2})$/i', $hora, $hc)) $hora = $hc[1].':'.$hc[2];
-} else {
-    // Fallback: se não encontrar o h3, tenta o span antigo
-    preg_match('/<span class="hour">([^<]+)<\/span>/',$gb,$hm); 
-    $hora = isset($hm[1]) ? trim($hm[1]) : '';
-}
+            if(preg_match('/<div[^>]*class="hour[^"]*"[^>]*>\s*<h3>\s*([^<]+)\s*<\/h3>/si', $gb, $hm)){
+                $hora = trim($hm[1]);
+                if(preg_match('/^(\d{1,2})H(\d{2})$/i', $hora, $hc)) $hora = $hc[1].':'.$hc[2];
+            } else {
+                preg_match('/<span class="hour">([^<]+)<\/span>/',$gb,$hm);
+                $hora = isset($hm[1]) ? trim($hm[1]) : '';
+            }
             preg_match('/<b>\s*(.*?)\s*<\/b>/si',$gb,$lm3); $local=isset($lm3[1])?trim(strip_tags($lm3[1])):'';
             preg_match('/class="competition"[^>]*>.*?<span>\s*(.*?)\s*<\/span>/si',$gb,$cm); $comp=isset($cm[1])?trim(strip_tags($cm[1])):'';
             $jogos[] = compact('data','ts','hora','ec','ef','lc','lf','rc','rf','local','comp','link','ir');
