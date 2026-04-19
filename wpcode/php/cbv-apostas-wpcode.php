@@ -752,7 +752,34 @@ add_action('rest_api_init', function() {
 // ─── CRON AUTOMÁTICO — resolve apostas diariamente ───────────────────────────
 add_action('cbv_apostas_cron', 'cbv_ap_cron_resolver');
 function cbv_ap_cron_resolver() {
-    // Lê ficheiro local já produzido pelo snippet do site
+    $dir = ABSPATH . 'data/';
+    if(!file_exists($dir)) mkdir($dir, 0755, true);
+
+    // ── NOVO: Força actualização da cache FPB + timestamp ──
+    $urls = [
+        $dir.'fpb_cal8.html' => 'https://www.fpb.pt/calendario/clube_723/?clube=723&epoca=2025/2026',
+        $dir.'fpb_res8.html' => 'https://www.fpb.pt/resultados/clube_723/?clube=723&epoca=2025/2026',
+    ];
+    $atualizado = false;
+    foreach($urls as $file => $url){
+        if(!file_exists($file) || (time() - filemtime($file)) >= 3600){
+            $ch = curl_init();
+            curl_setopt_array($ch,[
+                CURLOPT_URL            => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 20,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_ENCODING       => '',
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            ]);
+            $res = curl_exec($ch); curl_close($ch);
+            if($res && strlen($res) > 5000){ file_put_contents($file, $res); $atualizado = true; }
+        }
+    }
+    if($atualizado) update_option('cbv_fpb_ultimo_refresh', time());
+
+    // ── Lê ficheiro local já produzido pelo snippet do site ──
     $res_html = cbv_ap_get_html_res();
     $resultados = cbv_ap_parse_fpb($res_html);
     $res_idx = [];
@@ -784,9 +811,7 @@ function cbv_ap_cron_resolver() {
             && $aposta['estado'] === 'pendente'
         ) {
             $uid = $aposta['uid'];
-            // Reembolso + 1 moeda bónus
             $reembolso = $aposta['montante'] + 1;
-            // Adiciona moedas diretamente via user_meta (mesmo método do sistema de gamificação)
             $moedas_atuais = (int) get_user_meta($uid, 'cbv_moedas', true);
             update_user_meta($uid, 'cbv_moedas', $moedas_atuais + $reembolso);
             $aposta['estado']       = 'devolvida';
@@ -820,7 +845,7 @@ function cbv_ap_cron_resolver() {
         if ($ts_jogo > 0 && ($agora - $ts_jogo) > (48 * 3600)) {
             $aposta['estado']       = 'devolvida';
             $aposta['ganhou']       = null;
-            $aposta['payout']       = $aposta['montante']; // devolve o que apostou
+            $aposta['payout']       = $aposta['montante'];
             $aposta['resolvida_em'] = $agora;
             $aposta['notificado']   = false;
             $moedas = (int) get_user_meta($aposta['uid'], 'cbv_moedas', true);
