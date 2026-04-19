@@ -777,7 +777,7 @@ function cbv_ap_cron_resolver() {
             if($res && strlen($res) > 5000){ file_put_contents($file, $res); $atualizado = true; }
         }
     }
-    if($atualizado) update_option('cbv_fpb_ultimo_refresh', time());
+    update_option('cbv_fpb_ultimo_refresh', time());
 
     // ── Lê ficheiro local já produzido pelo snippet do site ──
     $res_html = cbv_ap_get_html_res();
