@@ -5,12 +5,24 @@
 if ( ! defined('CBV_AP_CLUBE_ID') ) {
     define('CBV_AP_CLUBE_ID',   '723');
     define('CBV_AP_VIANA_PAT',  'VIA');
-    define('CBV_AP_STATS_FILE', ABSPATH . 'data_apostas/ap_stats.json');
-    define('CBV_AP_STATS_TTL',  86400);
     define('CBV_AP_EPOCA',      '2025/2026');
-    define('CBV_AP_MAX_APOSTA', 10);
+    define('CBV_AP_MAX_APOSTA', 50);   // Limite aumentado para 50 moedas
     define('CBV_AP_BETS_KEY',   'cbv_apostas_v1');
+    define('CBV_AP_DATA_DIR',   ABSPATH . 'data/');         // Partilhado com site
+    define('CBV_AP_CAL_FILE',   ABSPATH . 'data/fpb_cal8.html');
+    define('CBV_AP_RES_FILE',   ABSPATH . 'data/fpb_res8.html');
+    define('CBV_AP_LOGOMAP',    ABSPATH . 'data_apostas/ap_logomap.json');
 }
+
+// ─── HOOK: SNIPPET SITE AVISA APOSTAS ────────────────────────────────────────
+// O snippet jogos-fpb chama: do_action('cbv_fpb_atualizado') após atualizar ficheiros
+// As apostas subscrevem e resolvem pendentes automaticamente
+add_action('cbv_fpb_atualizado', function() {
+    // Guarda timestamp do último refresh
+    update_option('cbv_fpb_ultimo_refresh', time());
+    // Dispara resolução de apostas pendentes
+    cbv_ap_cron_resolver();
+});
 
 // ─── FETCH COM CACHE ──────────────────────────────────────────────────────────
 function cbv_ap_fetch($url, $cache_file, $ttl = 3600) {
@@ -160,20 +172,12 @@ function cbv_ap_parse_fpb($html) {
 
 // ─── MAPA SIGLA → LOGO (extrai todos os logos conhecidos dos resultados) ────────
 function cbv_ap_logo_map() {
-    $dir = ABSPATH . 'data_apostas/';
-    $map_file = $dir . 'ap_logomap.json';
+    $map_file = CBV_AP_LOGOMAP;
     if (file_exists($map_file) && (time() - filemtime($map_file)) < 86400) {
         $d = json_decode(file_get_contents($map_file), true);
         if ($d) return $d;
     }
-    $html = cbv_ap_fetch(
-        'https://www.fpb.pt/resultados/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-        $dir . 'ap_res.html', 3600
-    );
-    $cal_html = cbv_ap_fetch(
-        'https://www.fpb.pt/calendario/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-        $dir . 'ap_cal.html', 3600
-    );
+    $html = cbv_ap_get_html_res(); // usa ficheiro local do site
     $map = [];
     // Processa HTML extraindo img com alt="Logo X" e src="URL"
     foreach ([$html, $cal_html] as $h) {
@@ -218,115 +222,105 @@ function cbv_ap_get_logo($sigla, $logo_map, $fallback = '') {
 // ─── CALCULAR + GUARDAR STATS DAS EQUIPAS ────────────────────────────────────
 // Para cada equipa adversária faz fetch dos seus resultados na FPB
 // e calcula: jogos, vitórias, derrotas, winRate
-function cbv_ap_atualizar_stats() {
-    $dir = ABSPATH . 'data_apostas/';
-
-    // 1. Resultados do CB Viana → extrai IDs dos adversários
-    $res_html = cbv_ap_fetch(
-        'https://www.fpb.pt/resultados/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-        $dir . 'ap_res.html',
-        3600
-    );
-
-    $jogos_viana = cbv_ap_parse_fpb($res_html);
-
-    // Extrai adversários únicos (sigla + id)
-    $adversarios = [];
-    foreach ($jogos_viana as $j) {
-        $is_casa = stripos($j['sigla_casa'], CBV_AP_VIANA_PAT) !== false
-                || $j['id_casa'] === CBV_AP_CLUBE_ID;
-        if ($is_casa && $j['id_fora']) {
-            $adversarios[$j['id_fora']] = [
-                'sigla' => $j['sigla_fora'],
-                'logo'  => $j['logo_fora'],
-            ];
-        } elseif (!$is_casa && $j['id_casa']) {
-            $adversarios[$j['id_casa']] = [
-                'sigla' => $j['sigla_casa'],
-                'logo'  => $j['logo_casa'],
-            ];
-        }
+// ─── LER FICHEIROS DO SITE (sem fetch próprio) ───────────────────────────────
+// As apostas reutilizam os ficheiros já produzidos pelo snippet jogos-fpb
+// Timestamp do último refresh disponível em wp_options cbv_fpb_ultimo_refresh
+function cbv_ap_get_html_cal() {
+    return file_exists(CBV_AP_CAL_FILE) ? file_get_contents(CBV_AP_CAL_FILE) : '';
+}
+function cbv_ap_get_html_res() {
+    return file_exists(CBV_AP_RES_FILE) ? file_get_contents(CBV_AP_RES_FILE) : '';
+}
+function cbv_ap_proximo_refresh() {
+    $ultimo = (int) get_option('cbv_fpb_ultimo_refresh', 0);
+    if (!$ultimo) {
+        // Se não há registo, usa o filemtime do ficheiro
+        $ultimo = file_exists(CBV_AP_RES_FILE) ? filemtime(CBV_AP_RES_FILE) : time();
     }
+    return $ultimo + 3600; // próximo refresh em 1 hora
+}
 
-    // Inclui sempre o CB Viana
-    $adversarios[CBV_AP_CLUBE_ID] = [
-        'sigla' => 'CBV',
-        'logo'  => 'https://sav2.fpb.pt/old_uploads/CLU/CLU_'.CBV_AP_CLUBE_ID.'_LOGO.jpg',
-    ];
 
-    // 2. Para cada clube (incluindo CBV) → fetch resultados → conta V/D
-    $stats = [];
-    foreach ($adversarios as $clube_id => $info) {
-        $cache_file = $dir . 'ap_res_' . $clube_id . '.html';
-        $url = 'https://www.fpb.pt/resultados/clube_'.$clube_id.'/?clube='.$clube_id.'&epoca='.urlencode(CBV_AP_EPOCA);
-        $html = cbv_ap_fetch($url, $cache_file, CBV_AP_STATS_TTL);
+function cbv_ap_get_stats_cached() { return []; } // odds agora baseadas no último jogo
 
-        $jogos = cbv_ap_parse_fpb($html);
+// ─── CALCULAR ODDS ────────────────────────────────────────────────────────────
+// Lógica baseada no último jogo desta época entre o CB Viana e o adversário:
+//   Viana GANHOU o último jogo → Viana ×2.00 / Adversário ×1.75
+//   Viana PERDEU o último jogo → Viana ×4.00 / Adversário ×1.25 (azarão — máxima emoção!)
+//   Sem histórico entre os dois → Viana ×3.00 / Adversário ×1.50 (base)
+//   Jogo sem CB Viana → ×1.85 / ×1.85 (neutro)
+function cbv_ap_calcular_odds_jogo($sigla_casa, $sigla_fora, $jogos_epoca) {
+    $id_viana = CBV_AP_CLUBE_ID;
+    $pat      = CBV_AP_VIANA_PAT;
 
-        $total    = 0;
-        $vitorias = 0;
-        $derrotas = 0;
+    $e_viana_casa = stripos($sigla_casa, $pat) !== false || stripos($sigla_casa, 'viana') !== false;
+    $e_viana_fora = stripos($sigla_fora, $pat) !== false || stripos($sigla_fora, 'viana') !== false;
 
-        foreach ($jogos as $j) {
-            if (!$j['tem_resultado'] || $j['vencedor'] === null) continue;
-
-            $e_casa = stripos($j['sigla_casa'], $info['sigla']) !== false
-                   || $j['id_casa'] === (string)$clube_id;
-
-            $ganhou = ($e_casa && $j['vencedor'] === 'casa')
-                   || (!$e_casa && $j['vencedor'] === 'fora');
-
-            $total++;
-            if ($ganhou) $vitorias++;
-            else         $derrotas++;
-        }
-
-        // Fallback se não tiver jogos suficientes
-        if ($total < 3) {
-            $total    = 10;
-            $vitorias = 5;
-            $derrotas = 5;
-        }
-
-        $stats[$clube_id] = [
-            'sigla'    => $info['sigla'],
-            'logo'     => $info['logo'],
-            'jogos'    => $total,
-            'vitorias' => $vitorias,
-            'derrotas' => $derrotas,
-            'winRate'  => round($vitorias / $total, 4),
+    // Jogo sem CB Viana → odds neutras
+    if (!$e_viana_casa && !$e_viana_fora) {
+        return [
+            'odd_casa' => 1.85, 'odd_fora' => 1.85,
+            'pct_casa' => 50,   'pct_fora' => 50,
+            'contexto' => 'neutro',
         ];
     }
 
-    // 3. Guarda JSON
-    file_put_contents(CBV_AP_STATS_FILE, json_encode($stats, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-    return $stats;
-}
-
-// ─── LER STATS (com cache 24h) ────────────────────────────────────────────────
-function cbv_ap_get_stats_cached() {
-    if (file_exists(CBV_AP_STATS_FILE) && (time() - filemtime(CBV_AP_STATS_FILE)) < CBV_AP_STATS_TTL) {
-        $data = json_decode(file_get_contents(CBV_AP_STATS_FILE), true);
-        if ($data && count($data) > 0) return $data;
+    // Procura último jogo entre estes dois esta época
+    $ultimo = null;
+    foreach (array_reverse($jogos_epoca) as $j) {
+        if (!$j['tem_resultado']) continue;
+        $match_casa = stripos($j['sigla_casa'], $pat) !== false || stripos($j['sigla_casa'], 'viana') !== false;
+        $match_fora = stripos($j['sigla_fora'], $pat) !== false || stripos($j['sigla_fora'], 'viana') !== false;
+        // Verifica se é o mesmo adversário
+        $adv_casa = $e_viana_casa ? $sigla_fora : $sigla_casa;
+        $e_mesmo  = stripos($j['sigla_casa'], substr($adv_casa, 0, 6)) !== false
+                 || stripos($j['sigla_fora'], substr($adv_casa, 0, 6)) !== false;
+        if (($match_casa || $match_fora) && $e_mesmo) {
+            $ultimo = $j;
+            break;
+        }
     }
-    return cbv_ap_atualizar_stats();
+
+    // Determina se Viana ganhou ou perdeu
+    if ($ultimo) {
+        $viana_era_casa = stripos($ultimo['sigla_casa'], $pat) !== false || stripos($ultimo['sigla_casa'], 'viana') !== false;
+        $viana_ganhou   = ($viana_era_casa && $ultimo['vencedor'] === 'casa')
+                       || (!$viana_era_casa && $ultimo['vencedor'] === 'fora');
+
+        if ($viana_ganhou) {
+            // Viana favorito — odds moderadas
+            return [
+                'odd_casa' => $e_viana_casa ? 2.00 : 1.75,
+                'odd_fora' => $e_viana_casa ? 1.75 : 2.00,
+                'pct_casa' => $e_viana_casa ? 60   : 40,
+                'pct_fora' => $e_viana_casa ? 40   : 60,
+                'contexto' => 'favorito',
+            ];
+        } else {
+            // Viana azarão — odds máximas (mais emoção!)
+            return [
+                'odd_casa' => $e_viana_casa ? 4.00 : 1.25,
+                'odd_fora' => $e_viana_casa ? 1.25 : 4.00,
+                'pct_casa' => $e_viana_casa ? 25   : 75,
+                'pct_fora' => $e_viana_casa ? 75   : 25,
+                'contexto' => 'azarao',
+            ];
+        }
+    }
+
+    // Sem histórico — odds base
+    return [
+        'odd_casa' => $e_viana_casa ? 3.00 : 1.50,
+        'odd_fora' => $e_viana_casa ? 1.50 : 3.00,
+        'pct_casa' => $e_viana_casa ? 40   : 60,
+        'pct_fora' => $e_viana_casa ? 60   : 40,
+        'contexto' => 'base',
+    ];
 }
 
-// ─── CALCULAR ODDS ────────────────────────────────────────────────────────────
+// Compatibilidade — wrapper antigo
 function cbv_ap_calcular_odds($wr_casa, $wr_fora) {
-    $total = $wr_casa + $wr_fora;
-    if ($total <= 0) { $wr_casa = 0.5; $wr_fora = 0.5; $total = 1; }
-    $pct_casa = $wr_casa / $total;
-    $pct_fora = $wr_fora / $total;
-    // Margem da casa de 10%
-    $odd_casa = round(max(1.05, (1 / $pct_casa) * 0.90), 2);
-    $odd_fora = round(max(1.05, (1 / $pct_fora) * 0.90), 2);
-    return [
-        'odd_casa'  => $odd_casa,
-        'odd_fora'  => $odd_fora,
-        'pct_casa'  => round($pct_casa * 100),
-        'pct_fora'  => round($pct_fora * 100),
-    ];
+    return ['odd_casa'=>1.85,'odd_fora'=>1.85,'pct_casa'=>50,'pct_fora'=>50];
 }
 
 // ─── APOSTAS: LER / ESCREVER ─────────────────────────────────────────────────
@@ -356,60 +350,159 @@ add_action('rest_api_init', function() {
         'methods'             => 'GET',
         'permission_callback' => '__return_true',
         'callback'            => function() {
-            $dir  = ABSPATH . 'data_apostas/';
-            $html = cbv_ap_fetch(
-                'https://www.fpb.pt/calendario/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-                $dir . 'ap_cal.html',
-                3600
-            );
+            $html = cbv_ap_get_html_cal(); // ficheiro local do site
             $jogos    = cbv_ap_parse_fpb($html);
-            $stats    = cbv_ap_get_stats_cached();
             $logo_map = cbv_ap_logo_map();
             $hoje     = strtotime(date('Y-m-d'));
+
+            // Resultados desta época — lê ficheiro já produzido pelo site
+            $jogos_epoca = cbv_ap_parse_fpb(cbv_ap_get_html_res());
+
             $resultado = [];
 
             foreach ($jogos as $j) {
                 if (!$j['ts'] || $j['ts'] < $hoje) continue;
                 if ($j['tem_resultado']) continue;
 
-                // Usa sempre o logo_map pela sigla — fonte mais fiável que o parser
                 $logo_fb   = 'https://sav2.fpb.pt/old_uploads/CLU/CLU_'.CBV_AP_CLUBE_ID.'_LOGO.jpg';
                 $logo_casa = cbv_ap_get_logo($j['sigla_casa'], $logo_map, $j['logo_casa'] ?: $logo_fb);
                 $logo_fora = cbv_ap_get_logo($j['sigla_fora'], $logo_map, $j['logo_fora'] ?: $logo_fb);
 
-                // Win rates
-                $wr_casa = isset($stats[$j['id_casa']]) ? $stats[$j['id_casa']]['winRate'] : 0.50;
-                $wr_fora = isset($stats[$j['id_fora']]) ? $stats[$j['id_fora']]['winRate'] : 0.50;
-                $odds    = cbv_ap_calcular_odds($wr_casa, $wr_fora);
-
-                // Stats das equipas
-                $stats_casa = $stats[$j['id_casa']] ?? ['sigla'=>$j['sigla_casa'],'logo'=>$logo_casa,'jogos'=>0,'vitorias'=>0,'derrotas'=>0,'winRate'=>0.5];
-                $stats_fora = $stats[$j['id_fora']] ?? ['sigla'=>$j['sigla_fora'],'logo'=>$logo_fora,'jogos'=>0,'vitorias'=>0,'derrotas'=>0,'winRate'=>0.5];
+                // Odds baseadas no último jogo desta época
+                $odds = cbv_ap_calcular_odds_jogo($j['sigla_casa'], $j['sigla_fora'], $jogos_epoca);
 
                 $resultado[] = [
-                    'id'          => md5($j['link']),
-                    'link'        => $j['link'],
-                    'ts'          => $j['ts'],
-                    'data'        => $j['data'],
-                    'hora'        => $j['hora'],
-                    'comp'        => $j['comp'],
-                    'sigla_casa'  => $j['sigla_casa'],
-                    'sigla_fora'  => $j['sigla_fora'],
-                    'id_casa'     => $j['id_casa'],
-                    'id_fora'     => $j['id_fora'],
-                    'logo_casa'   => $logo_casa,
-                    'logo_fora'   => $logo_fora,
-                    'odd_casa'    => $odds['odd_casa'],
-                    'odd_fora'    => $odds['odd_fora'],
-                    'pct_casa'    => $odds['pct_casa'],
-                    'pct_fora'    => $odds['pct_fora'],
-                    'stats_casa'  => $stats_casa,
-                    'stats_fora'  => $stats_fora,
+                    'id'         => md5($j['link']),
+                    'link'       => $j['link'],
+                    'ts'         => $j['ts'],
+                    'data'       => $j['data'],
+                    'hora'       => $j['hora'],
+                    'comp'       => $j['comp'],
+                    'sigla_casa' => $j['sigla_casa'],
+                    'sigla_fora' => $j['sigla_fora'],
+                    'id_casa'    => $j['id_casa'],
+                    'id_fora'    => $j['id_fora'],
+                    'logo_casa'  => $logo_casa,
+                    'logo_fora'  => $logo_fora,
+                    'odd_casa'   => $odds['odd_casa'],
+                    'odd_fora'   => $odds['odd_fora'],
+                    'pct_casa'   => $odds['pct_casa'],
+                    'pct_fora'   => $odds['pct_fora'],
+                    'contexto'   => $odds['contexto'], // favorito / azarao / base / neutro
                 ];
             }
 
             usort($resultado, fn($a,$b) => $a['ts'] - $b['ts']);
             return rest_ensure_response($resultado);
+        },
+    ]);
+
+    // GET /cbv/v1/apostas/resultados — jogos passados com resultado
+    register_rest_route('cbv/v1', '/apostas/resultados', [
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'callback'            => function() {
+            $html  = cbv_ap_get_html_res();
+            $jogos = cbv_ap_parse_fpb($html);
+            $logo_map = cbv_ap_logo_map();
+            $logo_fb  = 'https://sav2.fpb.pt/old_uploads/CLU/CLU_'.CBV_AP_CLUBE_ID.'_LOGO.jpg';
+            $resultado = [];
+
+            foreach ($jogos as $j) {
+                if (!$j['tem_resultado']) continue;
+                $logo_casa = cbv_ap_get_logo($j['sigla_casa'], $logo_map, $j['logo_casa'] ?: $logo_fb);
+                $logo_fora = cbv_ap_get_logo($j['sigla_fora'], $logo_map, $j['logo_fora'] ?: $logo_fb);
+                $wr_casa   = isset($stats[$j['id_casa']]) ? $stats[$j['id_casa']]['winRate'] : 0.50;
+                $wr_fora   = isset($stats[$j['id_fora']]) ? $stats[$j['id_fora']]['winRate'] : 0.50;
+                $odds      = cbv_ap_calcular_odds($wr_casa, $wr_fora);
+                $resultado[] = [
+                    'id'         => md5($j['link']),
+                    'ts'         => $j['ts'],
+                    'data'       => $j['data'],
+                    'hora'       => $j['hora'],
+                    'comp'       => $j['comp'],
+                    'sigla_casa' => $j['sigla_casa'],
+                    'sigla_fora' => $j['sigla_fora'],
+                    'logo_casa'  => $logo_casa,
+                    'logo_fora'  => $logo_fora,
+                    'odd_casa'   => $odds['odd_casa'],
+                    'odd_fora'   => $odds['odd_fora'],
+                    'pct_casa'   => $odds['pct_casa'],
+                    'pct_fora'   => $odds['pct_fora'],
+                    'tem_resultado' => true,
+                    'score_casa' => $j['score_casa'],
+                    'score_fora' => $j['score_fora'],
+                    'vencedor'   => $j['vencedor'],
+                ];
+            }
+            usort($resultado, fn($a,$b) => $b['ts'] - $a['ts']);
+            return rest_ensure_response($resultado);
+        },
+    ]);
+
+    // POST /cbv/v1/apostas/enriquecer — atualiza apostas sem dados com info dos jogos FPB
+    register_rest_route('cbv/v1', '/apostas/enriquecer', [
+        'methods'             => 'POST',
+        'permission_callback' => function(){ return current_user_can('manage_options'); },
+        'callback'            => function() {
+            $todas    = cbv_ap_get_todas_apostas();
+            $logo_map = cbv_ap_logo_map();
+            $logo_fb  = 'https://sav2.fpb.pt/old_uploads/CLU/CLU_'.CBV_AP_CLUBE_ID.'_LOGO.jpg';
+
+            // Carrega todos os jogos (cal + res)
+            $jogos_cal = cbv_ap_parse_fpb(cbv_ap_get_html_cal());
+            $jogos_res = cbv_ap_parse_fpb(cbv_ap_get_html_res());
+            $todos_jogos = array_merge($jogos_cal, $jogos_res);
+
+            // Indexa por jogo_id
+            $idx = [];
+            foreach ($todos_jogos as $j) {
+                $idx[md5($j['link'])] = $j;
+            }
+
+            $atualizadas = 0;
+            foreach ($todas as &$aposta) {
+                // Só enriquece apostas sem siglas
+                if (!empty($aposta['sigla_casa']) && !empty($aposta['sigla_fora'])) continue;
+                if (!isset($idx[$aposta['jogo_id']])) continue;
+
+                $j = $idx[$aposta['jogo_id']];
+                $aposta['sigla_casa'] = $j['sigla_casa'] ?? $j['ec'] ?? '';
+                $aposta['sigla_fora'] = $j['sigla_fora'] ?? $j['ef'] ?? '';
+                $aposta['logo_casa']  = cbv_ap_get_logo($aposta['sigla_casa'], $logo_map, $j['logo_casa'] ?? $j['lc'] ?? $logo_fb);
+                $aposta['logo_fora']  = cbv_ap_get_logo($aposta['sigla_fora'], $logo_map, $j['logo_fora'] ?? $j['lf'] ?? $logo_fb);
+                $aposta['comp']       = $j['comp'] ?? '';
+                $aposta['data']       = $j['data'] ?? '';
+                $aposta['hora']       = $j['hora'] ?? '';
+                $atualizadas++;
+            }
+            unset($aposta);
+
+            if ($atualizadas > 0) cbv_ap_guardar_apostas($todas);
+
+            return rest_ensure_response([
+                'sucesso'     => true,
+                'atualizadas' => $atualizadas,
+                'total'       => count($todas),
+            ]);
+        },
+    ]);
+
+    // GET /cbv/v1/apostas/refresh-info — quando foi o último refresh e quando será o próximo
+    register_rest_route('cbv/v1', '/apostas/refresh-info', [
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'callback'            => function() {
+            $ultimo   = (int) get_option('cbv_fpb_ultimo_refresh', 0);
+            if (!$ultimo && file_exists(CBV_AP_RES_FILE)) {
+                $ultimo = filemtime(CBV_AP_RES_FILE);
+            }
+            $proximo  = $ultimo ? $ultimo + 3600 : time() + 3600;
+            return rest_ensure_response([
+                'ultimo_refresh'  => $ultimo,
+                'proximo_refresh' => $proximo,
+                'proximo_hora'    => $proximo ? date('H:i', $proximo) : '--:--',
+            ]);
         },
     ]);
 
@@ -449,14 +542,18 @@ add_action('rest_api_init', function() {
                 $a['resolvida_em'] = time();
                 $found = true;
                 $moedas_novas = $moedas + $a['montante'];
+                $a_cancelada  = $a; // guarda para resposta
                 break;
             }
             unset($a);
             if (!$found) return new WP_Error('not_found', 'Aposta não encontrada', ['status'=>404]);
             cbv_ap_guardar_apostas($todas);
             return rest_ensure_response([
-                'sucesso' => true,
-                'moedas'  => $moedas_novas,
+                'sucesso'           => true,
+                'moedas'            => $moedas_novas,
+                'moedas_devolvidas' => $a_cancelada['montante'] ?? 0,
+                'saldo_anterior'    => $moedas,
+                'saldo_atual'       => $moedas_novas,
             ]);
         },
     ]);
@@ -505,19 +602,13 @@ add_action('rest_api_init', function() {
 
             // Buscar odds do jogo
             $odd = 1.5; // fallback
-            $dir  = ABSPATH . 'data_apostas/';
-            $html = cbv_ap_fetch(
-                'https://www.fpb.pt/calendario/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-                $dir . 'ap_cal.html', 3600
-            );
+            // Lê ficheiro de calendário já produzido pelo snippet do site
+            $html = cbv_ap_get_html_cal();
             $jogos = cbv_ap_parse_fpb($html);
-            $stats = cbv_ap_get_stats_cached();
             foreach ($jogos as $j) {
                 if (md5($j['link']) === $jogo_id) {
-                    $wr_casa = isset($stats[$j['id_casa']]) ? $stats[$j['id_casa']]['winRate'] : 0.5;
-                    $wr_fora = isset($stats[$j['id_fora']]) ? $stats[$j['id_fora']]['winRate'] : 0.5;
-                    $odds    = cbv_ap_calcular_odds($wr_casa, $wr_fora);
-                    $odd     = $escolha === 'casa' ? $odds['odd_casa'] : $odds['odd_fora'];
+                    $odds_j  = cbv_ap_calcular_odds_jogo($j['sigla_casa'], $j['sigla_fora'], cbv_ap_parse_fpb(cbv_ap_get_html_res()));
+                    $odd     = $escolha === 'casa' ? $odds_j['odd_casa'] : $odds_j['odd_fora'];
                     break;
                 }
             }
@@ -529,7 +620,38 @@ add_action('rest_api_init', function() {
                 if (md5($jg['link']) === $jogo_id) { $ts_jogo = $jg['ts'] ?: 0; break; }
             }
 
-            $aposta = [
+            // Dados do jogo para mostrar no histórico mesmo depois do jogo terminar
+            $jogo_data = [];
+            $logo_map  = cbv_ap_logo_map();
+            $logo_fb   = 'https://sav2.fpb.pt/old_uploads/CLU/CLU_'.CBV_AP_CLUBE_ID.'_LOGO.jpg';
+            foreach ($jogos as $jg) {
+                if (md5($jg['link']) === $jogo_id) {
+                    $jogo_data = [
+                        'sigla_casa' => $jg['sigla_casa'],
+                        'sigla_fora' => $jg['sigla_fora'],
+                        'logo_casa'  => cbv_ap_get_logo($jg['sigla_casa'], $logo_map, $jg['logo_casa'] ?: $logo_fb),
+                        'logo_fora'  => cbv_ap_get_logo($jg['sigla_fora'], $logo_map, $jg['logo_fora'] ?: $logo_fb),
+                        'comp'       => $jg['comp'],
+                        'data'       => $jg['data'],
+                        'hora'       => $jg['hora'],
+                        'pct_casa'   => 0,
+                        'pct_fora'   => 0,
+                        'odd_casa'   => 0,
+                        'odd_fora'   => 0,
+                    ];
+                    // Odds
+                    $wr_c = isset($stats[$jg['id_casa']]) ? $stats[$jg['id_casa']]['winRate'] : 0.5;
+                    $wr_f = isset($stats[$jg['id_fora']]) ? $stats[$jg['id_fora']]['winRate'] : 0.5;
+                    $o    = cbv_ap_calcular_odds($wr_c, $wr_f);
+                    $jogo_data['pct_casa']  = $o['pct_casa'];
+                    $jogo_data['pct_fora']  = $o['pct_fora'];
+                    $jogo_data['odd_casa']  = $o['odd_casa'];
+                    $jogo_data['odd_fora']  = $o['odd_fora'];
+                    break;
+                }
+            }
+
+            $aposta = array_merge([
                 'id'        => uniqid('ap_'),
                 'uid'       => $uid,
                 'username'  => wp_get_current_user()->display_name,
@@ -545,7 +667,7 @@ add_action('rest_api_init', function() {
                 'ganhou'    => null,
                 'payout'    => null,
                 'notificado'=> false,
-            ];
+            ], $jogo_data);
             $todas[] = $aposta;
             cbv_ap_guardar_apostas($todas);
 
@@ -563,13 +685,8 @@ add_action('rest_api_init', function() {
         'methods'             => 'POST',
         'permission_callback' => function() { return current_user_can('manage_options'); },
         'callback'            => function() {
-            $dir      = ABSPATH . 'data_apostas/';
-            // Força re-fetch dos resultados
-            @unlink($dir . 'ap_res.html');
-            $res_html = cbv_ap_fetch(
-                'https://www.fpb.pt/resultados/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-                $dir . 'ap_res.html', 0
-            );
+            // Lê ficheiro local do site
+            $res_html = cbv_ap_get_html_res();
             $resultados = cbv_ap_parse_fpb($res_html);
 
             // Índice: jogo_id → vencedor
@@ -621,12 +738,10 @@ add_action('rest_api_init', function() {
         'methods'             => 'POST',
         'permission_callback' => function() { return current_user_can('manage_options'); },
         'callback'            => function() {
-            @unlink(CBV_AP_STATS_FILE);
-            $stats = cbv_ap_atualizar_stats();
+            // Stats já não existem — odds baseadas no último jogo
             return rest_ensure_response([
                 'sucesso' => true,
-                'equipas' => count($stats),
-                'stats'   => $stats,
+                'mensagem' => 'Stats removidas — odds calculadas por histórico desta época',
             ]);
         },
     ]);
@@ -637,13 +752,8 @@ add_action('rest_api_init', function() {
 // ─── CRON AUTOMÁTICO — resolve apostas diariamente ───────────────────────────
 add_action('cbv_apostas_cron', 'cbv_ap_cron_resolver');
 function cbv_ap_cron_resolver() {
-    $dir = ABSPATH . 'data_apostas/';
-    // Força re-fetch resultados
-    @unlink($dir . 'ap_res.html');
-    $res_html = cbv_ap_fetch(
-        'https://www.fpb.pt/resultados/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-        $dir . 'ap_res.html', 0
-    );
+    // Lê ficheiro local já produzido pelo snippet do site
+    $res_html = cbv_ap_get_html_res();
     $resultados = cbv_ap_parse_fpb($res_html);
     $res_idx = [];
     foreach ($resultados as $r) {
@@ -652,19 +762,41 @@ function cbv_ap_cron_resolver() {
         }
     }
     $todas = cbv_ap_get_todas_apostas();
-    $dir2  = ABSPATH . 'data_apostas/';
-    $cal_html = cbv_ap_fetch(
-        'https://www.fpb.pt/calendario/clube_'.CBV_AP_CLUBE_ID.'/?clube='.CBV_AP_CLUBE_ID.'&epoca='.urlencode(CBV_AP_EPOCA),
-        $dir2 . 'ap_cal.html', 3600
-    );
+    $cal_html  = cbv_ap_get_html_cal();
     $jogos_cal = cbv_ap_parse_fpb($cal_html);
-    $stats = cbv_ap_get_stats_cached();
     $logo_map = cbv_ap_logo_map();
     $logo_fb  = 'https://sav2.fpb.pt/old_uploads/CLU/CLU_'.CBV_AP_CLUBE_ID.'_LOGO.jpg';
+
+    // Índice de todos os jogos conhecidos (cal + res) para detetar cancelamentos
+    $todos_jogos_idx = [];
+    foreach ($jogos_cal as $j)  $todos_jogos_idx[md5($j['link'])] = true;
+    foreach ($resultados as $j) $todos_jogos_idx[md5($j['link'])] = true;
 
     $agora = time();
     foreach ($todas as &$aposta) {
         if ($aposta['estado'] !== 'pendente') continue;
+
+        // Jogo desapareceu dos dados FPB após 24h → provavelmente cancelado
+        $ts_jogo = $aposta['ts_jogo'] ?? 0;
+        if ($ts_jogo > 0
+            && ($agora - $ts_jogo) > 86400
+            && !isset($todos_jogos_idx[$aposta['jogo_id']])
+            && $aposta['estado'] === 'pendente'
+        ) {
+            $uid = $aposta['uid'];
+            // Reembolso + 1 moeda bónus
+            $reembolso = $aposta['montante'] + 1;
+            // Adiciona moedas diretamente via user_meta (mesmo método do sistema de gamificação)
+            $moedas_atuais = (int) get_user_meta($uid, 'cbv_moedas', true);
+            update_user_meta($uid, 'cbv_moedas', $moedas_atuais + $reembolso);
+            $aposta['estado']       = 'devolvida';
+            $aposta['ganhou']       = null;
+            $aposta['payout']       = $reembolso;
+            $aposta['resolvida_em'] = $agora;
+            $aposta['motivo']       = 'jogo_cancelado';
+            $aposta['notificado']   = false;
+            continue;
+        }
 
         // Tem resultado → resolve
         if (isset($res_idx[$aposta['jogo_id']])) {
